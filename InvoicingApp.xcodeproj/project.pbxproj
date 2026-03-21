@@ -47,6 +47,9 @@
 		A10001038 /* CurrencyText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000038; };
 		A10001039 /* DateRangePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000039; };
 		A10001040 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000040; };
+		A10001041 /* ImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000042; };
+		A10001042 /* ImportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000043; };
+		A10001043 /* ImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000044; };
 		A10001099 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A10009001; };
 /* End PBXBuildFile section */
 
@@ -92,6 +95,9 @@
 		A10000039 /* DateRangePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateRangePickerView.swift; sourceTree = "<group>"; };
 		A10000040 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A10000041 /* InvoicingApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = InvoicingApp.entitlements; sourceTree = "<group>"; };
+		A10000042 /* ImportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportService.swift; sourceTree = "<group>"; };
+		A10000043 /* ImportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportViewModel.swift; sourceTree = "<group>"; };
+		A10000044 /* ImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportView.swift; sourceTree = "<group>"; };
 		A10000050 /* InvoicingApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InvoicingApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -157,6 +163,7 @@
 				A10000009 /* CalculationService.swift */,
 				A10000010 /* InvoiceGenerationService.swift */,
 				A10000011 /* PDFExportService.swift */,
+				A10000042 /* ImportService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -171,6 +178,7 @@
 				A10000016 /* SummaryViewModel.swift */,
 				A10000017 /* ClientManagementViewModel.swift */,
 				A10000018 /* SettingsViewModel.swift */,
+				A10000043 /* ImportViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -243,6 +251,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000034 /* SettingsView.swift */,
+				A10000044 /* ImportView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -381,6 +390,9 @@
 				A10001037 /* StatusBadgeView.swift in Sources */,
 				A10001038 /* CurrencyText.swift in Sources */,
 				A10001039 /* DateRangePickerView.swift in Sources */,
+				A10001041 /* ImportService.swift in Sources */,
+				A10001042 /* ImportViewModel.swift in Sources */,
+				A10001043 /* ImportView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @StateObject private var vm = SettingsViewModel()
     @ObservedObject var supabaseService = SupabaseService.shared
+    @State private var showImport = false
 
     var body: some View {
         Form {
@@ -59,6 +60,10 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Data Import") {
+                Button("Import Historical Data...") { showImport = true }
+            }
+
             if let success = vm.successMessage {
                 Section {
                     Label(success, systemImage: "checkmark.circle.fill")
@@ -75,5 +80,8 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("Settings")
+        .sheet(isPresented: $showImport) {
+            ImportView()
+        }
     }
 }
