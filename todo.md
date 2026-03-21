@@ -4,7 +4,8 @@ Entries View:
 - Add option to add new client from client selection dropdown in entries creation view
 
 Invoices View:
-- Possibly change right-pane to inspector styling, move filter options to menu bar and center them
+- Move Breakdown by Client to a new Stats tab
+- Change right-pane to inspector styling, move filter options to menu bar and center them. In this inspector panel, display the selected invoice details (so clicking an invoice from the summary should open it in the inspector. Add a button to the inspector to view which takes you to the full single invoice view)
 
 
 

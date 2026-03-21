@@ -44,7 +44,6 @@
 		A10001035 /* ClientPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000035 /* ClientPickerView.swift */; };
 		A10001036 /* AmountPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000036 /* AmountPreviewView.swift */; };
 		A10001037 /* StatusBadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000037 /* StatusBadgeView.swift */; };
-		B1D5984FBA007147C5D2B7E6 /* StatusMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A377F60621A5EF4ABB82B2 /* StatusMenuView.swift */; };
 		A10001038 /* CurrencyText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000038 /* CurrencyText.swift */; };
 		A10001039 /* DateRangePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000039 /* DateRangePickerView.swift */; };
 		A10001040 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000040 /* Assets.xcassets */; };
@@ -92,7 +91,6 @@
 		A10000035 /* ClientPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientPickerView.swift; sourceTree = "<group>"; };
 		A10000036 /* AmountPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmountPreviewView.swift; sourceTree = "<group>"; };
 		A10000037 /* StatusBadgeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBadgeView.swift; sourceTree = "<group>"; };
-		B1A377F60621A5EF4ABB82B2 /* StatusMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusMenuView.swift; sourceTree = "<group>"; };
 		A10000038 /* CurrencyText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyText.swift; sourceTree = "<group>"; };
 		A10000039 /* DateRangePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateRangePickerView.swift; sourceTree = "<group>"; };
 		A10000040 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -229,7 +227,6 @@
 				A10000035 /* ClientPickerView.swift */,
 				A10000036 /* AmountPreviewView.swift */,
 				A10000037 /* StatusBadgeView.swift */,
-				B1A377F60621A5EF4ABB82B2 /* StatusMenuView.swift */,
 				A10000038 /* CurrencyText.swift */,
 				A10000039 /* DateRangePickerView.swift */,
 			);
@@ -391,7 +388,6 @@
 				A10001035 /* ClientPickerView.swift in Sources */,
 				A10001036 /* AmountPreviewView.swift in Sources */,
 				A10001037 /* StatusBadgeView.swift in Sources */,
-				B1D5984FBA007147C5D2B7E6 /* StatusMenuView.swift in Sources */,
 				A10001038 /* CurrencyText.swift in Sources */,
 				A10001039 /* DateRangePickerView.swift in Sources */,
 				A10001041 /* ImportService.swift in Sources */,
