@@ -187,5 +187,12 @@ struct EntriesListView: View {
                 Label("Delete", systemImage: "trash")
             }
         }
+        .contextMenu {
+            Button(role: .destructive) {
+                entryToDelete = entry
+            } label: {
+                Label("Delete Entry…", systemImage: "trash")
+            }
+        }
     }
 }

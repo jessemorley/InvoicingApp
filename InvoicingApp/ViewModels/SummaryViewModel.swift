@@ -9,7 +9,7 @@ enum DateRangePreset: String, CaseIterable {
 enum StatusFilter: String, CaseIterable {
     case all = "All"
     case draft = "Draft"
-    case issued = "Invoiced"
+    case issued = "Issued"
     case paid = "Paid"
 }
 

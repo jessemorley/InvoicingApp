@@ -4,6 +4,12 @@ struct SummaryView: View {
     @StateObject private var vm = SummaryViewModel()
     @State private var invoiceToDelete: Invoice?
 
+    private static let rowDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "dd/MM/yyyy"
+        return f
+    }()
+
     var body: some View {
         HStack(spacing: 0) {
             // Main invoice list
@@ -200,12 +206,18 @@ struct SummaryView: View {
     private func invoiceRow(_ invoice: Invoice, clientName: String) -> some View {
         NavigationLink(destination: InvoiceDetailView(invoice: invoice)) {
             HStack {
-                Text(invoice.issuedDateValue, style: .date)
-                    .frame(width: 100, alignment: .leading)
+                Text(Self.rowDateFormatter.string(from: invoice.issuedDateValue))
+                    .frame(width: 120, alignment: .leading)
                 Text(invoice.invoiceNumber)
                     .font(.body.monospacedDigit())
                     .frame(width: 80, alignment: .leading)
                 Text(clientName)
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(clientChipColor(clientName).opacity(0.15))
+                    .foregroundStyle(clientChipColor(clientName))
+                    .clipShape(Capsule())
                     .frame(maxWidth: .infinity, alignment: .leading)
                 CurrencyText(amount: invoice.total)
                     .font(.body.monospacedDigit())
@@ -216,6 +228,7 @@ struct SummaryView: View {
                 .buttonStyle(.plain)
                 .frame(width: 80)
             }
+            .padding(.vertical, 6)
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button(role: .destructive) {
@@ -223,6 +236,22 @@ struct SummaryView: View {
             } label: {
                 Label("Delete", systemImage: "trash")
             }
+        }
+        .contextMenu {
+            Button(role: .destructive) {
+                invoiceToDelete = invoice
+            } label: {
+                Label("Delete Invoice…", systemImage: "trash")
+            }
+        }
+    }
+
+    private func clientChipColor(_ name: String) -> Color {
+        switch name {
+        case let n where n.contains("ICONIC"): return .purple
+        case let n where n.contains("Images"): return .blue
+        case let n where n.contains("JD"): return .orange
+        default: return .gray
         }
     }
 }

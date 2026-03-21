@@ -7,11 +7,16 @@ Invoices View:
 - Possibly change right-pane to inspector styling, move filter options to menu bar and center them
 
 
+
 Settings:
 - Add option to mark invoice as issued when exported as pdf (on by default)
+- Move settings to separate window (like a typical macos app), with tabs for General, Personal Info, Login, Import
 
 Invoice Preview:
 - Add option to delete an invoice from the invoice preview view
 
 Generate Invoices:
 - Remove this is a separate tab. Instead, add a generate invoices button to the entries view. Clicking it should show a window with a summary of the invoices that will be created along with options to create invoices or cancel
+
+Features
+- Build export feature
