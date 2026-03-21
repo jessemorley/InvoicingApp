@@ -4,6 +4,7 @@ struct CalendarDayCell: View {
     let date: Date
     let entries: [Entry]
     let clientMap: [UUID: Client]
+    let invoiceMap: [UUID: Invoice]
     let onSelect: (Entry) -> Void
 
     private var isToday: Bool {
@@ -21,17 +22,25 @@ struct CalendarDayCell: View {
             ForEach(entries) { entry in
                 Button(action: { onSelect(entry) }) {
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(clientMap[entry.clientId]?.name ?? "")
-                            .font(.system(size: 9, weight: .semibold))
-                            .lineLimit(1)
+                        HStack(spacing: 2) {
+                            Text(clientMap[entry.clientId]?.name ?? "")
+                                .font(.system(size: 10, weight: .semibold))
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                            if let status = invoiceStatus(for: entry) {
+                                Image(systemName: status.icon)
+                                    .font(.system(size: 8))
+                                    .foregroundStyle(status.color)
+                            }
+                        }
                         if let desc = entryDescription(entry) {
                             Text(desc)
-                                .font(.system(size: 8))
+                                .font(.system(size: 9))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         }
                         CurrencyText(amount: entry.totalAmount)
-                            .font(.system(size: 9))
+                            .font(.system(size: 10))
                     }
                     .padding(3)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -41,7 +50,7 @@ struct CalendarDayCell: View {
                 .buttonStyle(.plain)
             }
         }
-        .frame(minHeight: 80)
+        .frame(maxHeight: .infinity, alignment: .top)
         .padding(4)
         .background(isToday ? Color.blue.opacity(0.05) : Color.clear)
     }
@@ -60,6 +69,17 @@ struct CalendarDayCell: View {
             return entry.description
         case .manual:
             return entry.description
+        }
+    }
+
+    private func invoiceStatus(for entry: Entry) -> (icon: String, color: Color)? {
+        guard let invoiceId = entry.invoiceId,
+              let invoice = invoiceMap[invoiceId] else { return nil }
+        switch invoice.status {
+        case .draft, .issued:
+            return ("doc.text.fill", .orange)
+        case .paid:
+            return ("checkmark.circle.fill", .green)
         }
     }
 

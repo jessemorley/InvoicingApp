@@ -1,4 +1,9 @@
 - Instead of a separate log entries tab, add a + button to the top left of the menubar in entries view
-- Stretch calendar view cells to fill window vertically (as well as horizontally)
 - Add option to delete an invoice from the invoice preview view
-- Add invoice status indicator icon to entries in calendar view (uninvoiced, invoice created, paid)
+- Add option to add new client from client selection dropdown in entries creation view
+
+Invoices View:
+- Change date range selection in invoices view to dropdown with: Financial Year (Default), Last 6 Months, Selected Date Range (Show data picker when selected)
+- Move date range selection to menubar
+- Add option to group by client in menubar (off by default) (with the finder group by icon)
+

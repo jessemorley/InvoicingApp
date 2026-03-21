@@ -29,6 +29,7 @@ struct EntriesListView: View {
                     CalendarView(
                         entriesByDate: vm.entriesByDate,
                         clientMap: vm.clientMap,
+                        invoiceMap: vm.invoiceMap,
                         onSelect: { _ in }
                     )
                 }

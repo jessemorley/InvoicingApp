@@ -3,6 +3,7 @@ import SwiftUI
 struct CalendarView: View {
     let entriesByDate: [Date: [Entry]]
     let clientMap: [UUID: Client]
+    let invoiceMap: [UUID: Invoice]
     let onSelect: (Entry) -> Void
 
     @State private var currentMonth: Date = {
@@ -63,24 +64,28 @@ struct CalendarView: View {
 
             // Day cells grid
             let days = daysInMonth
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 1) {
-                ForEach(days, id: \.self) { date in
-                    if let date {
-                        CalendarDayCell(
-                            date: date,
-                            entries: entriesByDate[Calendar.current.startOfDay(for: date)] ?? [],
-                            clientMap: clientMap,
-                            onSelect: onSelect
-                        )
-                    } else {
-                        Color.clear
-                            .frame(minHeight: 80)
+            let rowCount = (days.count + 6) / 7
+            GeometryReader { geo in
+                let rowHeight = max(80, (geo.size.height) / CGFloat(rowCount))
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 1) {
+                    ForEach(days, id: \.self) { date in
+                        if let date {
+                            CalendarDayCell(
+                                date: date,
+                                entries: entriesByDate[Calendar.current.startOfDay(for: date)] ?? [],
+                                clientMap: clientMap,
+                                invoiceMap: invoiceMap,
+                                onSelect: onSelect
+                            )
+                            .frame(height: rowHeight)
+                        } else {
+                            Color.clear
+                                .frame(height: rowHeight)
+                        }
                     }
                 }
+                .padding(.horizontal)
             }
-            .padding(.horizontal)
-
-            Spacer()
         }
     }
 
