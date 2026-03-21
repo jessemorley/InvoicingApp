@@ -1,3 +1,4 @@
-- Enter break manually rather than up/down arrows
-- Remove the amounts toggle on the entries page (always show amounts)
+- Add today button to calendar view
 - The Summary tab should be called Invoices
+- Bug: Editing an images that sell entry, didn't give me a field for break to edit
+- Break entry: remove the 0 from "Break 0", right-align the entry field like the rest of the lines

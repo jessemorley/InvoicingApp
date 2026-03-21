@@ -25,6 +25,13 @@ struct HourlyEntryForm: View {
         DatePicker("Start Time", selection: $vm.startTime, displayedComponents: .hourAndMinute)
         DatePicker("Finish Time", selection: $vm.finishTime, displayedComponents: .hourAndMinute)
 
-        Stepper("Break: \(vm.breakMinutes) min", value: $vm.breakMinutes, in: 0...120, step: 5)
+        HStack {
+            Text("Break")
+            TextField("0", value: $vm.breakMinutes, format: .number)
+                .frame(width: 60)
+                .textFieldStyle(.roundedBorder)
+            Text("min")
+                .foregroundStyle(.secondary)
+        }
     }
 }

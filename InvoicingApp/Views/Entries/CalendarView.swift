@@ -3,7 +3,6 @@ import SwiftUI
 struct CalendarView: View {
     let entriesByDate: [Date: [Entry]]
     let clientMap: [UUID: Client]
-    let showAmounts: Bool
     let onSelect: (Entry) -> Void
 
     @State private var currentMonth: Date = {
@@ -52,7 +51,6 @@ struct CalendarView: View {
                             date: date,
                             entries: entriesByDate[Calendar.current.startOfDay(for: date)] ?? [],
                             clientMap: clientMap,
-                            showAmounts: showAmounts,
                             onSelect: onSelect
                         )
                     } else {

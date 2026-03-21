@@ -24,9 +24,6 @@ struct EntriesListView: View {
                     }
                 }
                 .frame(width: 200)
-
-                Toggle("Amounts", isOn: $vm.showAmounts)
-                    .toggleStyle(.switch)
             }
             .padding()
 
@@ -56,7 +53,6 @@ struct EntriesListView: View {
                     CalendarView(
                         entriesByDate: vm.entriesByDate,
                         clientMap: vm.clientMap,
-                        showAmounts: vm.showAmounts,
                         onSelect: { _ in }
                     )
                 }
@@ -156,7 +152,7 @@ struct EntriesListView: View {
             EntryRowView(
                 entry: entry,
                 client: vm.clientMap[entry.clientId],
-                showAmount: vm.showAmounts
+                showAmount: true
             )
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
