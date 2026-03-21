@@ -6,26 +6,26 @@ struct CalendarView: View {
     let showAmounts: Bool
     let onSelect: (Entry) -> Void
 
-    @State private var currentWeekStart: Date = {
+    @State private var currentMonth: Date = {
         let cal = Calendar.current
-        let today = Date()
-        return cal.dateInterval(of: .weekOfYear, for: today)?.start ?? today
+        let comps = cal.dateComponents([.year, .month], from: Date())
+        return cal.date(from: comps) ?? Date()
     }()
 
     private let dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
     var body: some View {
         VStack(spacing: 0) {
-            // Week navigation
+            // Month navigation
             HStack {
-                Button(action: previousWeek) {
+                Button(action: previousMonth) {
                     Image(systemName: "chevron.left")
                 }
                 Spacer()
-                Text(weekRangeString)
+                Text(monthYearString)
                     .font(.headline)
                 Spacer()
-                Button(action: nextWeek) {
+                Button(action: nextMonth) {
                     Image(systemName: "chevron.right")
                 }
             }
@@ -43,17 +43,22 @@ struct CalendarView: View {
             }
             .padding(.horizontal)
 
-            // Day cells
+            // Day cells grid
+            let days = daysInMonth
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 1) {
-                ForEach(0..<7, id: \.self) { offset in
-                    let date = Calendar.current.date(byAdding: .day, value: offset, to: weekStartMonday) ?? currentWeekStart
-                    CalendarDayCell(
-                        date: date,
-                        entries: entriesByDate[Calendar.current.startOfDay(for: date)] ?? [],
-                        clientMap: clientMap,
-                        showAmounts: showAmounts,
-                        onSelect: onSelect
-                    )
+                ForEach(days, id: \.self) { date in
+                    if let date {
+                        CalendarDayCell(
+                            date: date,
+                            entries: entriesByDate[Calendar.current.startOfDay(for: date)] ?? [],
+                            clientMap: clientMap,
+                            showAmounts: showAmounts,
+                            onSelect: onSelect
+                        )
+                    } else {
+                        Color.clear
+                            .frame(minHeight: 80)
+                    }
                 }
             }
             .padding(.horizontal)
@@ -62,29 +67,36 @@ struct CalendarView: View {
         }
     }
 
-    private var weekStartMonday: Date {
+    /// Returns an array of optional Dates for the grid.
+    /// `nil` entries represent blank cells before the first day of the month.
+    private var daysInMonth: [Date?] {
         let cal = Calendar.current
-        var start = currentWeekStart
-        // Adjust to Monday if needed
-        let weekday = cal.component(.weekday, from: start)
-        let daysFromMonday = (weekday + 5) % 7
-        start = cal.date(byAdding: .day, value: -daysFromMonday, to: start) ?? start
-        return start
+        let range = cal.range(of: .day, in: .month, for: currentMonth)!
+        let firstDay = currentMonth
+        // weekday: 1=Sun, 2=Mon... convert to Mon=0
+        let firstWeekday = cal.component(.weekday, from: firstDay)
+        let leadingBlanks = (firstWeekday + 5) % 7 // days before Monday
+
+        var days: [Date?] = Array(repeating: nil, count: leadingBlanks)
+        for day in range {
+            if let date = cal.date(bySetting: .day, value: day, of: currentMonth) {
+                days.append(date)
+            }
+        }
+        return days
     }
 
-    private var weekRangeString: String {
+    private var monthYearString: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        let start = weekStartMonday
-        let end = Calendar.current.date(byAdding: .day, value: 6, to: start) ?? start
-        return "\(formatter.string(from: start)) – \(formatter.string(from: end))"
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: currentMonth)
     }
 
-    private func previousWeek() {
-        currentWeekStart = Calendar.current.date(byAdding: .weekOfYear, value: -1, to: currentWeekStart) ?? currentWeekStart
+    private func previousMonth() {
+        currentMonth = Calendar.current.date(byAdding: .month, value: -1, to: currentMonth) ?? currentMonth
     }
 
-    private func nextWeek() {
-        currentWeekStart = Calendar.current.date(byAdding: .weekOfYear, value: 1, to: currentWeekStart) ?? currentWeekStart
+    private func nextMonth() {
+        currentMonth = Calendar.current.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
     }
 }

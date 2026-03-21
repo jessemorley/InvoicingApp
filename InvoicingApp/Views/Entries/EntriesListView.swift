@@ -90,6 +90,7 @@ struct EntriesListView: View {
                     ForEach(group.entries) { entry in
                         entryRow(entry)
                     }
+                    groupSummaryRow(group)
                 }
             }
         }
@@ -109,6 +110,34 @@ struct EntriesListView: View {
         } message: {
             Text("This action cannot be undone.")
         }
+    }
+
+    private func groupSummaryRow(_ group: EntriesListViewModel.ClientWeekGroup) -> some View {
+        HStack {
+            Text("\(group.entries.count) entries")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            CurrencyText(amount: group.subtotal)
+                .font(.subheadline.monospacedDigit().bold())
+
+            if group.allUninvoiced {
+                Button {
+                    Task { await vm.invoiceGroup(group) }
+                } label: {
+                    Label("Invoice", systemImage: "doc.text")
+                        .font(.subheadline)
+                }
+                .buttonStyle(.bordered)
+            } else if group.allInvoiced {
+                Label("Invoiced", systemImage: "checkmark.circle.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(.green)
+            }
+        }
+        .padding(.vertical, 2)
     }
 
     private func entryRow(_ entry: Entry) -> some View {

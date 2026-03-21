@@ -42,6 +42,18 @@ final class EntriesListViewModel: ObservableObject {
         let clientId: UUID
         let weekStart: Date
         let entries: [Entry]
+
+        var subtotal: Decimal {
+            entries.reduce(0) { $0 + $1.baseAmount + $1.bonusAmount }
+        }
+
+        var allInvoiced: Bool {
+            entries.allSatisfy { $0.invoiceId != nil }
+        }
+
+        var allUninvoiced: Bool {
+            entries.allSatisfy { $0.invoiceId == nil }
+        }
     }
 
     var groupedByClientWeek: [ClientWeekGroup] {
@@ -90,6 +102,22 @@ final class EntriesListViewModel: ObservableObject {
             if let idx = entries.firstIndex(where: { $0.id == entry.id }) {
                 entries[idx] = entry
             }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func invoiceGroup(_ group: ClientWeekGroup) async {
+        guard let client = clientMap[group.clientId] else { return }
+        let service = InvoiceGenerationService()
+        let entryGroup = ClientEntryGroup(
+            id: client.id,
+            client: client,
+            entries: group.entries
+        )
+        do {
+            _ = try await service.generateInvoices(for: [entryGroup])
+            await loadData()
         } catch {
             errorMessage = error.localizedDescription
         }
