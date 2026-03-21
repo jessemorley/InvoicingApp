@@ -30,6 +30,10 @@ final class LogEntryViewModel: ObservableObject {
     @Published var manualAmount: String = ""
     @Published var paysSuper: Bool = true
 
+    // Edit mode
+    var editingEntry: Entry?
+    var onEditSave: ((Entry) -> Void)?
+
     // State
     @Published var isSaving = false
     @Published var showSaveSuccess = false
@@ -77,6 +81,47 @@ final class LogEntryViewModel: ObservableObject {
         }
     }
 
+    func populateFromEntry(_ entry: Entry, client: Client) {
+        editingEntry = entry
+        selectedClient = client
+        date = entry.dateValue
+        dayType = entry.dayType ?? .full
+        workflowType = entry.workflowType ?? "Apparel"
+        brand = entry.brand ?? ""
+        skus = entry.skus.map { "\($0)" } ?? ""
+        role = entry.role ?? "Photographer"
+        shootClient = entry.shootClient ?? ""
+        entryDescription = entry.description ?? ""
+        manualAmount = "\(NSDecimalNumber(decimal: entry.baseAmount))"
+        breakMinutes = entry.breakMinutes ?? 0
+        paysSuper = client.paysSuper
+
+        if let start = entry.startTime {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "HH:mm:ss"
+            if let parsed = formatter.date(from: start) {
+                let cal = Calendar.current
+                startTime = cal.date(bySettingHour: cal.component(.hour, from: parsed),
+                                     minute: cal.component(.minute, from: parsed),
+                                     second: 0, of: Date()) ?? startTime
+            }
+        }
+        if let finish = entry.finishTime {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "HH:mm:ss"
+            if let parsed = formatter.date(from: finish) {
+                let cal = Calendar.current
+                finishTime = cal.date(bySettingHour: cal.component(.hour, from: parsed),
+                                      minute: cal.component(.minute, from: parsed),
+                                      second: 0, of: Date()) ?? finishTime
+            }
+        }
+
+        if client.billingType == .dayRate {
+            Task { await loadWorkflowRates(for: client) }
+        }
+    }
+
     func onClientSelected(_ client: Client) {
         selectedClient = client
         paysSuper = client.paysSuper
@@ -109,17 +154,17 @@ final class LogEntryViewModel: ObservableObject {
         isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
         let entry = Entry(
-            id: UUID(),
+            id: editingEntry?.id ?? UUID(),
             clientId: client.id,
             date: dateFormatter.string(from: date),
-            invoiceId: nil,
+            invoiceId: editingEntry?.invoiceId,
             billingTypeSnapshot: client.billingType,
             dayType: client.billingType == .dayRate ? dayType : nil,
             workflowType: client.billingType == .dayRate && dayType == .full ? workflowType : nil,
             brand: workflowType == "Own Brand" ? brand : nil,
             skus: Int(skus),
-            role: client.name == "Images That Sell" ? role : nil,
-            shootClient: client.name == "Images That Sell" ? shootClient : nil,
+            role: client.billingType == .hourly ? role : nil,
+            shootClient: client.billingType == .hourly ? shootClient : nil,
             description: entryDescription.isEmpty ? nil : entryDescription,
             startTime: client.billingType == .hourly ? timeString(from: startTime) : nil,
             finishTime: client.billingType == .hourly ? timeString(from: finishTime) : nil,
@@ -129,14 +174,20 @@ final class LogEntryViewModel: ObservableObject {
             bonusAmount: calc.bonusAmount,
             superAmount: calc.superAmount,
             totalAmount: calc.totalAmount,
-            createdAt: isoFormatter.string(from: Date())
+            createdAt: editingEntry?.createdAt ?? isoFormatter.string(from: Date())
         )
 
         do {
-            try await supabase.insert(into: "entries", value: entry)
+            if let onEditSave {
+                try await supabase.update(in: "entries", id: entry.id, value: entry)
+                onEditSave(entry)
+            } else {
+                try await supabase.insert(into: "entries", value: entry)
+            }
             showSaveSuccess = true
-            resetFields()
-            // Auto-dismiss success message
+            if editingEntry == nil {
+                resetFields()
+            }
             try? await Task.sleep(for: .seconds(2))
             showSaveSuccess = false
         } catch {
