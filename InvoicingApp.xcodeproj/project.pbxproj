@@ -1,0 +1,601 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10001001 /* InvoicingApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000001; };
+		A10001002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000002; };
+		A10001003 /* Client.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000003; };
+		A10001004 /* ClientWorkflowRate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000004; };
+		A10001005 /* Entry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000005; };
+		A10001006 /* Invoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000006; };
+		A10001007 /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000007; };
+		A10001008 /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000008; };
+		A10001009 /* CalculationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000009; };
+		A10001010 /* InvoiceGenerationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000010; };
+		A10001011 /* PDFExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000011; };
+		A10001012 /* LogEntryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012; };
+		A10001013 /* EntriesListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000013; };
+		A10001014 /* GenerateInvoicesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000014; };
+		A10001015 /* InvoiceDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000015; };
+		A10001016 /* SummaryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000016; };
+		A10001017 /* ClientManagementViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000017; };
+		A10001018 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000018; };
+		A10001019 /* LogEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000019; };
+		A10001020 /* IconicEntryForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020; };
+		A10001021 /* HourlyEntryForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000021; };
+		A10001022 /* ManualEntryForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000022; };
+		A10001023 /* EntriesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000023; };
+		A10001024 /* EntryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000024; };
+		A10001025 /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000025; };
+		A10001026 /* CalendarDayCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000026; };
+		A10001027 /* EntryDetailEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000027; };
+		A10001028 /* GenerateInvoicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000028; };
+		A10001029 /* InvoiceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000029; };
+		A10001030 /* SummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000030; };
+		A10001031 /* ClientListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000031; };
+		A10001032 /* ClientEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000032; };
+		A10001033 /* WorkflowRateTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000033; };
+		A10001034 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000034; };
+		A10001035 /* ClientPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000035; };
+		A10001036 /* AmountPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000036; };
+		A10001037 /* StatusBadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000037; };
+		A10001038 /* CurrencyText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000038; };
+		A10001039 /* DateRangePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000039; };
+		A10001040 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000040; };
+		A10001099 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A10009001; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A10000001 /* InvoicingApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoicingApp.swift; sourceTree = "<group>"; };
+		A10000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A10000003 /* Client.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Client.swift; sourceTree = "<group>"; };
+		A10000004 /* ClientWorkflowRate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientWorkflowRate.swift; sourceTree = "<group>"; };
+		A10000005 /* Entry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entry.swift; sourceTree = "<group>"; };
+		A10000006 /* Invoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Invoice.swift; sourceTree = "<group>"; };
+		A10000007 /* UserSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSettings.swift; sourceTree = "<group>"; };
+		A10000008 /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
+		A10000009 /* CalculationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculationService.swift; sourceTree = "<group>"; };
+		A10000010 /* InvoiceGenerationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceGenerationService.swift; sourceTree = "<group>"; };
+		A10000011 /* PDFExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFExportService.swift; sourceTree = "<group>"; };
+		A10000012 /* LogEntryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogEntryViewModel.swift; sourceTree = "<group>"; };
+		A10000013 /* EntriesListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntriesListViewModel.swift; sourceTree = "<group>"; };
+		A10000014 /* GenerateInvoicesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateInvoicesViewModel.swift; sourceTree = "<group>"; };
+		A10000015 /* InvoiceDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceDetailViewModel.swift; sourceTree = "<group>"; };
+		A10000016 /* SummaryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryViewModel.swift; sourceTree = "<group>"; };
+		A10000017 /* ClientManagementViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientManagementViewModel.swift; sourceTree = "<group>"; };
+		A10000018 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
+		A10000019 /* LogEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogEntryView.swift; sourceTree = "<group>"; };
+		A10000020 /* IconicEntryForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconicEntryForm.swift; sourceTree = "<group>"; };
+		A10000021 /* HourlyEntryForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HourlyEntryForm.swift; sourceTree = "<group>"; };
+		A10000022 /* ManualEntryForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualEntryForm.swift; sourceTree = "<group>"; };
+		A10000023 /* EntriesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntriesListView.swift; sourceTree = "<group>"; };
+		A10000024 /* EntryRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryRowView.swift; sourceTree = "<group>"; };
+		A10000025 /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
+		A10000026 /* CalendarDayCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarDayCell.swift; sourceTree = "<group>"; };
+		A10000027 /* EntryDetailEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailEditView.swift; sourceTree = "<group>"; };
+		A10000028 /* GenerateInvoicesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateInvoicesView.swift; sourceTree = "<group>"; };
+		A10000029 /* InvoiceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceDetailView.swift; sourceTree = "<group>"; };
+		A10000030 /* SummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
+		A10000031 /* ClientListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientListView.swift; sourceTree = "<group>"; };
+		A10000032 /* ClientEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientEditView.swift; sourceTree = "<group>"; };
+		A10000033 /* WorkflowRateTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkflowRateTableView.swift; sourceTree = "<group>"; };
+		A10000034 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A10000035 /* ClientPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientPickerView.swift; sourceTree = "<group>"; };
+		A10000036 /* AmountPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmountPreviewView.swift; sourceTree = "<group>"; };
+		A10000037 /* StatusBadgeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBadgeView.swift; sourceTree = "<group>"; };
+		A10000038 /* CurrencyText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyText.swift; sourceTree = "<group>"; };
+		A10000039 /* DateRangePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateRangePickerView.swift; sourceTree = "<group>"; };
+		A10000040 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A10000041 /* InvoicingApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = InvoicingApp.entitlements; sourceTree = "<group>"; };
+		A10000050 /* InvoicingApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InvoicingApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A10002001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10001099 /* Supabase in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A10003000 /* Root */ = {
+			isa = PBXGroup;
+			children = (
+				A10003001 /* InvoicingApp */,
+				A10003099 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A10003099 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A10000050 /* InvoicingApp.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A10003001 /* InvoicingApp */ = {
+			isa = PBXGroup;
+			children = (
+				A10000001 /* InvoicingApp.swift */,
+				A10000002 /* ContentView.swift */,
+				A10000041 /* InvoicingApp.entitlements */,
+				A10003002 /* Models */,
+				A10003003 /* Services */,
+				A10003004 /* ViewModels */,
+				A10003005 /* Views */,
+				A10003010 /* Resources */,
+			);
+			path = InvoicingApp;
+			sourceTree = "<group>";
+		};
+		A10003002 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A10000003 /* Client.swift */,
+				A10000004 /* ClientWorkflowRate.swift */,
+				A10000005 /* Entry.swift */,
+				A10000006 /* Invoice.swift */,
+				A10000007 /* UserSettings.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A10003003 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A10000008 /* SupabaseService.swift */,
+				A10000009 /* CalculationService.swift */,
+				A10000010 /* InvoiceGenerationService.swift */,
+				A10000011 /* PDFExportService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A10003004 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A10000012 /* LogEntryViewModel.swift */,
+				A10000013 /* EntriesListViewModel.swift */,
+				A10000014 /* GenerateInvoicesViewModel.swift */,
+				A10000015 /* InvoiceDetailViewModel.swift */,
+				A10000016 /* SummaryViewModel.swift */,
+				A10000017 /* ClientManagementViewModel.swift */,
+				A10000018 /* SettingsViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A10003005 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A10003006 /* LogEntry */,
+				A10003007 /* Entries */,
+				A10003008 /* Invoices */,
+				A10003011 /* Summary */,
+				A10003012 /* Clients */,
+				A10003013 /* Settings */,
+				A10003009 /* Components */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A10003006 /* LogEntry */ = {
+			isa = PBXGroup;
+			children = (
+				A10000019 /* LogEntryView.swift */,
+				A10000020 /* IconicEntryForm.swift */,
+				A10000021 /* HourlyEntryForm.swift */,
+				A10000022 /* ManualEntryForm.swift */,
+			);
+			path = LogEntry;
+			sourceTree = "<group>";
+		};
+		A10003007 /* Entries */ = {
+			isa = PBXGroup;
+			children = (
+				A10000023 /* EntriesListView.swift */,
+				A10000024 /* EntryRowView.swift */,
+				A10000025 /* CalendarView.swift */,
+				A10000026 /* CalendarDayCell.swift */,
+				A10000027 /* EntryDetailEditView.swift */,
+			);
+			path = Entries;
+			sourceTree = "<group>";
+		};
+		A10003008 /* Invoices */ = {
+			isa = PBXGroup;
+			children = (
+				A10000028 /* GenerateInvoicesView.swift */,
+				A10000029 /* InvoiceDetailView.swift */,
+			);
+			path = Invoices;
+			sourceTree = "<group>";
+		};
+		A10003011 /* Summary */ = {
+			isa = PBXGroup;
+			children = (
+				A10000030 /* SummaryView.swift */,
+			);
+			path = Summary;
+			sourceTree = "<group>";
+		};
+		A10003012 /* Clients */ = {
+			isa = PBXGroup;
+			children = (
+				A10000031 /* ClientListView.swift */,
+				A10000032 /* ClientEditView.swift */,
+				A10000033 /* WorkflowRateTableView.swift */,
+			);
+			path = Clients;
+			sourceTree = "<group>";
+		};
+		A10003013 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				A10000034 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		A10003009 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A10000035 /* ClientPickerView.swift */,
+				A10000036 /* AmountPreviewView.swift */,
+				A10000037 /* StatusBadgeView.swift */,
+				A10000038 /* CurrencyText.swift */,
+				A10000039 /* DateRangePickerView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		A10003010 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A10000040 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A10004001 /* InvoicingApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10006001 /* Build configuration list for PBXNativeTarget "InvoicingApp" */;
+			buildPhases = (
+				A10005001 /* Sources */,
+				A10002001 /* Frameworks */,
+				A10005002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = InvoicingApp;
+			packageProductDependencies = (
+				A10009001 /* Supabase */,
+			);
+			productName = InvoicingApp;
+			productReference = A10000050 /* InvoicingApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A10007001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1540;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					A10004001 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+				};
+			};
+			buildConfigurationList = A10006003 /* Build configuration list for PBXProject "InvoicingApp" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A10003000;
+			packageReferences = (
+				A10008001 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
+			productRefGroup = A10003099 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A10004001 /* InvoicingApp */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A10005002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10001040 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A10005001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10001001 /* InvoicingApp.swift in Sources */,
+				A10001002 /* ContentView.swift in Sources */,
+				A10001003 /* Client.swift in Sources */,
+				A10001004 /* ClientWorkflowRate.swift in Sources */,
+				A10001005 /* Entry.swift in Sources */,
+				A10001006 /* Invoice.swift in Sources */,
+				A10001007 /* UserSettings.swift in Sources */,
+				A10001008 /* SupabaseService.swift in Sources */,
+				A10001009 /* CalculationService.swift in Sources */,
+				A10001010 /* InvoiceGenerationService.swift in Sources */,
+				A10001011 /* PDFExportService.swift in Sources */,
+				A10001012 /* LogEntryViewModel.swift in Sources */,
+				A10001013 /* EntriesListViewModel.swift in Sources */,
+				A10001014 /* GenerateInvoicesViewModel.swift in Sources */,
+				A10001015 /* InvoiceDetailViewModel.swift in Sources */,
+				A10001016 /* SummaryViewModel.swift in Sources */,
+				A10001017 /* ClientManagementViewModel.swift in Sources */,
+				A10001018 /* SettingsViewModel.swift in Sources */,
+				A10001019 /* LogEntryView.swift in Sources */,
+				A10001020 /* IconicEntryForm.swift in Sources */,
+				A10001021 /* HourlyEntryForm.swift in Sources */,
+				A10001022 /* ManualEntryForm.swift in Sources */,
+				A10001023 /* EntriesListView.swift in Sources */,
+				A10001024 /* EntryRowView.swift in Sources */,
+				A10001025 /* CalendarView.swift in Sources */,
+				A10001026 /* CalendarDayCell.swift in Sources */,
+				A10001027 /* EntryDetailEditView.swift in Sources */,
+				A10001028 /* GenerateInvoicesView.swift in Sources */,
+				A10001029 /* InvoiceDetailView.swift in Sources */,
+				A10001030 /* SummaryView.swift in Sources */,
+				A10001031 /* ClientListView.swift in Sources */,
+				A10001032 /* ClientEditView.swift in Sources */,
+				A10001033 /* WorkflowRateTableView.swift in Sources */,
+				A10001034 /* SettingsView.swift in Sources */,
+				A10001035 /* ClientPickerView.swift in Sources */,
+				A10001036 /* AmountPreviewView.swift in Sources */,
+				A10001037 /* StatusBadgeView.swift in Sources */,
+				A10001038 /* CurrencyText.swift in Sources */,
+				A10001039 /* DateRangePickerView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A10006010 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A10006011 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		A10006020 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = InvoicingApp/InvoicingApp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jessemorley.InvoicingApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A10006021 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = InvoicingApp/InvoicingApp.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jessemorley.InvoicingApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A10006003 /* Build configuration list for PBXProject "InvoicingApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10006010 /* Debug */,
+				A10006011 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A10006001 /* Build configuration list for PBXNativeTarget "InvoicingApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10006020 /* Debug */,
+				A10006021 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A10008001 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A10009001 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A10008001;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A10007001 /* Project object */;
+}

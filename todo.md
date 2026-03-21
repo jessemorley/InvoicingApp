@@ -1,0 +1,2 @@
+- add ability to remove entries
+- add ability to remove invoices (prompt if user also wants to delete entries)
