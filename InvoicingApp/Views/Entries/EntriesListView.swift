@@ -5,30 +5,6 @@ struct EntriesListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Toolbar
-            HStack {
-                Picker("View", selection: $vm.viewMode) {
-                    ForEach(EntriesViewMode.allCases, id: \.self) { mode in
-                        Text(mode.rawValue).tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 200)
-
-                Spacer()
-
-                Picker("Client", selection: $vm.selectedClientId) {
-                    Text("All Clients").tag(nil as UUID?)
-                    ForEach(vm.activeClients) { client in
-                        Text(client.name).tag(client.id as UUID?)
-                    }
-                }
-                .frame(width: 200)
-            }
-            .padding()
-
-            Divider()
-
             if let error = vm.errorMessage {
                 Text(error)
                     .foregroundStyle(.red)
@@ -59,6 +35,25 @@ struct EntriesListView: View {
             }
         }
         .navigationTitle("Entries")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Picker("View", selection: $vm.viewMode) {
+                    ForEach(EntriesViewMode.allCases, id: \.self) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .fixedSize()
+            }
+            ToolbarItem(placement: .automatic) {
+                Picker("Client", selection: $vm.selectedClientId) {
+                    Text("All Clients").tag(nil as UUID?)
+                    ForEach(vm.activeClients) { client in
+                        Text(client.name).tag(client.id as UUID?)
+                    }
+                }
+            }
+        }
         .task { await vm.loadData() }
     }
 

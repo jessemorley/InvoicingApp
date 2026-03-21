@@ -16,17 +16,36 @@ struct CalendarView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Month navigation
-            HStack {
+            HStack(spacing: 12) {
+                Text(monthYearString)
+                    .font(.title2.bold())
+
+                Spacer()
+
                 Button(action: previousMonth) {
                     Image(systemName: "chevron.left")
+                        .font(.body.weight(.semibold))
+                        .frame(width: 28, height: 28)
+                        .background(.quaternary, in: Circle())
                 }
-                Spacer()
-                Text(monthYearString)
-                    .font(.headline)
-                Spacer()
+                .buttonStyle(.plain)
+
+                Button(action: goToToday) {
+                    Text("Today")
+                        .font(.body.weight(.medium))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 5)
+                        .background(.quaternary, in: Capsule())
+                }
+                .buttonStyle(.plain)
+
                 Button(action: nextMonth) {
                     Image(systemName: "chevron.right")
+                        .font(.body.weight(.semibold))
+                        .frame(width: 28, height: 28)
+                        .background(.quaternary, in: Circle())
                 }
+                .buttonStyle(.plain)
             }
             .padding()
 
@@ -88,6 +107,12 @@ struct CalendarView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
         return formatter.string(from: currentMonth)
+    }
+
+    private func goToToday() {
+        let cal = Calendar.current
+        let comps = cal.dateComponents([.year, .month], from: Date())
+        currentMonth = cal.date(from: comps) ?? Date()
     }
 
     private func previousMonth() {
