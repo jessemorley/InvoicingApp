@@ -1,4 +1,3 @@
 - Add today button to calendar view
 - The Summary tab should be called Invoices
-- Bug: Editing an images that sell entry, didn't give me a field for break to edit
-- Break entry: remove the 0 from "Break 0", right-align the entry field like the rest of the lines
+- Bug: Editing an images that sell entry, didn't give me a field for break to edit. The edit entry interface should just be exactly the entry creation interface, just with the info already filled.

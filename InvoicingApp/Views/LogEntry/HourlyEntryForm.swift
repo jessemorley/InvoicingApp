@@ -27,9 +27,17 @@ struct HourlyEntryForm: View {
 
         HStack {
             Text("Break")
-            TextField("0", value: $vm.breakMinutes, format: .number)
-                .frame(width: 60)
-                .textFieldStyle(.roundedBorder)
+            Spacer()
+            TextField(
+                "",
+                text: Binding(
+                    get: { vm.breakMinutes == 0 ? "" : "\(vm.breakMinutes)" },
+                    set: { vm.breakMinutes = Int($0) ?? 0 }
+                )
+            )
+            .frame(width: 50)
+            .textFieldStyle(.roundedBorder)
+            .multilineTextAlignment(.trailing)
             Text("min")
                 .foregroundStyle(.secondary)
         }
