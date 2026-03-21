@@ -68,32 +68,27 @@ struct EntriesListView: View {
 
     @State private var entryToDelete: Entry?
 
+    private static let weekFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "d MMM"
+        return f
+    }()
+
+    private func sectionTitle(for group: EntriesListViewModel.ClientWeekGroup) -> String {
+        let clientName = vm.clientMap[group.clientId]?.name ?? "Unknown"
+        let calendar = Calendar.current
+        let weekEnd = calendar.date(byAdding: .day, value: 6, to: group.weekStart) ?? group.weekStart
+        let start = Self.weekFormatter.string(from: group.weekStart)
+        let end = Self.weekFormatter.string(from: weekEnd)
+        return "\(clientName) — \(start) – \(end)"
+    }
+
     private var entriesListContent: some View {
         List {
-            ForEach(vm.filteredEntries) { entry in
-                NavigationLink {
-                    EntryDetailEditView(
-                        entry: entry,
-                        client: vm.clientMap[entry.clientId],
-                        onSave: { updated in
-                            Task { await vm.updateEntry(updated) }
-                        },
-                        onDelete: {
-                            entryToDelete = entry
-                        }
-                    )
-                } label: {
-                    EntryRowView(
-                        entry: entry,
-                        client: vm.clientMap[entry.clientId],
-                        showAmount: vm.showAmounts
-                    )
-                }
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                    Button(role: .destructive) {
-                        entryToDelete = entry
-                    } label: {
-                        Label("Delete", systemImage: "trash")
+            ForEach(vm.groupedByClientWeek) { group in
+                Section(sectionTitle(for: group)) {
+                    ForEach(group.entries) { entry in
+                        entryRow(entry)
                     }
                 }
             }
@@ -113,6 +108,34 @@ struct EntriesListView: View {
             }
         } message: {
             Text("This action cannot be undone.")
+        }
+    }
+
+    private func entryRow(_ entry: Entry) -> some View {
+        NavigationLink {
+            EntryDetailEditView(
+                entry: entry,
+                client: vm.clientMap[entry.clientId],
+                onSave: { updated in
+                    Task { await vm.updateEntry(updated) }
+                },
+                onDelete: {
+                    entryToDelete = entry
+                }
+            )
+        } label: {
+            EntryRowView(
+                entry: entry,
+                client: vm.clientMap[entry.clientId],
+                showAmount: vm.showAmounts
+            )
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button(role: .destructive) {
+                entryToDelete = entry
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
         }
     }
 }

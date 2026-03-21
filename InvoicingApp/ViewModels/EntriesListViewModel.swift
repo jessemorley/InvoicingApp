@@ -37,6 +37,31 @@ final class EntriesListViewModel: ObservableObject {
         Dictionary(uniqueKeysWithValues: clients.map { ($0.id, $0) })
     }
 
+    struct ClientWeekGroup: Identifiable {
+        let id: String // "clientId-yearWeek"
+        let clientId: UUID
+        let weekStart: Date
+        let entries: [Entry]
+    }
+
+    var groupedByClientWeek: [ClientWeekGroup] {
+        let calendar = Calendar.current
+        var dict: [String: (clientId: UUID, weekStart: Date, entries: [Entry])] = [:]
+
+        for entry in filteredEntries {
+            let comps = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: entry.dateValue)
+            let weekStart = calendar.date(from: comps) ?? entry.dateValue
+            let key = "\(entry.clientId)-\(comps.yearForWeekOfYear ?? 0)-\(comps.weekOfYear ?? 0)"
+            if dict[key] == nil {
+                dict[key] = (clientId: entry.clientId, weekStart: weekStart, entries: [])
+            }
+            dict[key]?.entries.append(entry)
+        }
+
+        return dict.map { ClientWeekGroup(id: $0.key, clientId: $0.value.clientId, weekStart: $0.value.weekStart, entries: $0.value.entries.sorted { $0.date < $1.date }) }
+            .sorted { $0.weekStart > $1.weekStart }
+    }
+
     // Calendar support
     var entriesByDate: [Date: [Entry]] {
         let calendar = Calendar.current

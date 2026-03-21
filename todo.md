@@ -1,2 +1,3 @@
-- add ability to remove entries
-- add ability to remove invoices (prompt if user also wants to delete entries)
+- Enter break manually rather than up/down arrows
+- Remove the amounts toggle on the entries page (always show amounts)
+- The Summary tab should be called Invoices
