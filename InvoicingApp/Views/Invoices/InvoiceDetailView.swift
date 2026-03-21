@@ -2,6 +2,8 @@ import SwiftUI
 
 struct InvoiceDetailView: View {
     @StateObject private var vm: InvoiceDetailViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var showDeleteConfirmation = false
 
     init(invoice: Invoice) {
         self._vm = StateObject(wrappedValue: InvoiceDetailViewModel(invoice: invoice))
@@ -107,12 +109,41 @@ struct InvoiceDetailView: View {
                         Task { await vm.exportPDF() }
                     }
                     .buttonStyle(.borderedProminent)
+
+                    Spacer()
+
+                    Button("Delete Invoice", role: .destructive) {
+                        showDeleteConfirmation = true
+                    }
+                    .buttonStyle(.bordered)
                 }
             }
             .padding(24)
         }
         .navigationTitle("Invoice \(vm.invoice.invoiceNumber)")
         .task { await vm.loadDetails() }
+        .confirmationDialog(
+            "Delete invoice \(vm.invoice.invoiceNumber)?",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete invoice only (keep entries)") {
+                Task {
+                    if await vm.deleteInvoice(deleteEntries: false) {
+                        dismiss()
+                    }
+                }
+            }
+            Button("Delete invoice and entries", role: .destructive) {
+                Task {
+                    if await vm.deleteInvoice(deleteEntries: true) {
+                        dismiss()
+                    }
+                }
+            }
+        } message: {
+            Text("What would you like to do with the linked entries?")
+        }
     }
 
     private var nextStatusLabel: String {

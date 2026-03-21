@@ -169,8 +169,8 @@ struct EntriesListView: View {
                 onSave: { updated in
                     Task { await vm.updateEntry(updated) }
                 },
-                onDelete: {
-                    entryToDelete = entry
+                onDelete: { entry in
+                    Task { await vm.deleteEntry(entry) }
                 }
             )
         } label: {

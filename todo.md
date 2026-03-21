@@ -12,3 +12,6 @@ Settings:
 
 Invoice Preview:
 - Add option to delete an invoice from the invoice preview view
+
+Generate Invoices:
+- Remove this is a separate tab. Instead, add a generate invoices button to the entries view. Clicking it should show a window with a summary of the invoices that will be created along with options to create invoices or cancel

@@ -7,9 +7,10 @@ struct EntryDetailEditView: View {
     let entry: Entry
     let client: Client?
     var onSave: ((Entry) -> Void)?
-    var onDelete: (() -> Void)?
+    var onDelete: ((Entry) -> Void)?
+    @State private var showDeleteConfirmation = false
 
-    init(entry: Entry, client: Client?, onSave: ((Entry) -> Void)? = nil, onDelete: (() -> Void)? = nil) {
+    init(entry: Entry, client: Client?, onSave: ((Entry) -> Void)? = nil, onDelete: ((Entry) -> Void)? = nil) {
         self.entry = entry
         self.client = client
         self.onSave = onSave
@@ -63,8 +64,10 @@ struct EntryDetailEditView: View {
                     .buttonStyle(.borderedProminent)
                     .disabled(vm.isSaving)
 
-                    if let onDelete {
-                        Button("Delete Entry", role: .destructive, action: onDelete)
+                    if onDelete != nil {
+                        Button("Delete Entry", role: .destructive) {
+                            showDeleteConfirmation = true
+                        }
                     }
                 }
             }
@@ -85,6 +88,18 @@ struct EntryDetailEditView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("Edit Entry")
+        .confirmationDialog(
+            "Delete this entry?",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                onDelete?(entry)
+                dismiss()
+            }
+        } message: {
+            Text("This action cannot be undone.")
+        }
         .task {
             await vm.loadClients()
             if let client {

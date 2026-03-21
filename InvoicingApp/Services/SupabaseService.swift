@@ -165,10 +165,13 @@ final class SupabaseService: ObservableObject {
 
     func delete(from table: String, id: UUID) async throws {
         guard let client else { throw ServiceError.notConfigured }
-        try await client.from(table)
+        print("[DELETE] table=\(table) id=\(id.uuidString)")
+        let response = try await client.from(table)
             .delete()
             .eq("id", value: id.uuidString)
             .execute()
+        let raw = String(data: response.data, encoding: .utf8) ?? ""
+        print("[DELETE] response: \(raw)")
     }
 
     // MARK: - RPC
@@ -225,10 +228,13 @@ final class SupabaseService: ObservableObject {
 
     func deleteEntriesByInvoiceId(_ invoiceId: UUID) async throws {
         guard let client else { throw ServiceError.notConfigured }
-        try await client.from("entries")
+        print("[DELETE ENTRIES] invoice_id=\(invoiceId.uuidString)")
+        let response = try await client.from("entries")
             .delete()
             .eq("invoice_id", value: invoiceId.uuidString)
             .execute()
+        let raw = String(data: response.data, encoding: .utf8) ?? ""
+        print("[DELETE ENTRIES] response: \(raw)")
     }
 
     func updateEntries(ids: [UUID], invoiceId: UUID) async throws {

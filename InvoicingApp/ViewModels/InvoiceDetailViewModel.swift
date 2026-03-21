@@ -50,6 +50,21 @@ final class InvoiceDetailViewModel: ObservableObject {
         }
     }
 
+    func deleteInvoice(deleteEntries: Bool) async -> Bool {
+        do {
+            if deleteEntries {
+                try await supabase.deleteEntriesByInvoiceId(invoice.id)
+            } else {
+                try await supabase.clearInvoiceId(forInvoiceId: invoice.id)
+            }
+            try await supabase.delete(from: "invoices", id: invoice.id)
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
     func exportPDF() async {
         guard let client else { return }
         do {

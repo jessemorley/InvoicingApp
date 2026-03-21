@@ -131,9 +131,12 @@ final class EntriesListViewModel: ObservableObject {
 
     func deleteEntry(_ entry: Entry) async {
         do {
+            print("[EntriesListVM] Deleting entry id=\(entry.id)")
             try await supabase.delete(from: "entries", id: entry.id)
+            print("[EntriesListVM] Delete succeeded, removing from local list")
             entries.removeAll { $0.id == entry.id }
         } catch {
+            print("[EntriesListVM] Delete failed: \(error)")
             errorMessage = error.localizedDescription
         }
     }
