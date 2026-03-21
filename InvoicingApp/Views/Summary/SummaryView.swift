@@ -204,32 +204,34 @@ struct SummaryView: View {
     }
 
     private func invoiceRow(_ invoice: Invoice, clientName: String) -> some View {
-        NavigationLink(destination: InvoiceDetailView(invoice: invoice)) {
-            HStack {
-                Text(Self.rowDateFormatter.string(from: invoice.issuedDateValue))
-                    .frame(width: 120, alignment: .leading)
-                Text(invoice.invoiceNumber)
-                    .font(.body.monospacedDigit())
-                    .frame(width: 80, alignment: .leading)
-                Text(clientName)
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(clientChipColor(clientName).opacity(0.15))
-                    .foregroundStyle(clientChipColor(clientName))
-                    .clipShape(Capsule())
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                CurrencyText(amount: invoice.total)
-                    .font(.body.monospacedDigit())
-                    .frame(width: 100, alignment: .trailing)
-                Button(action: { Task { await vm.toggleStatus(for: invoice) } }) {
-                    StatusBadgeView(status: invoice.status)
+        HStack {
+            NavigationLink(destination: InvoiceDetailView(invoice: invoice)) {
+                HStack {
+                    Text(Self.rowDateFormatter.string(from: invoice.issuedDateValue))
+                        .frame(width: 120, alignment: .leading)
+                    Text(invoice.invoiceNumber)
+                        .font(.body.monospacedDigit())
+                        .frame(width: 80, alignment: .leading)
+                    Text(clientName)
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(clientChipColor(clientName).opacity(0.15))
+                        .foregroundStyle(clientChipColor(clientName))
+                        .clipShape(Capsule())
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    CurrencyText(amount: invoice.total)
+                        .font(.body.monospacedDigit())
+                        .frame(width: 100, alignment: .trailing)
                 }
-                .buttonStyle(.plain)
-                .frame(width: 80)
             }
-            .padding(.vertical, 6)
+            .buttonStyle(.plain)
+            StatusMenuView(invoice: invoice) { newStatus in
+                Task { await vm.updateStatus(for: invoice, to: newStatus) }
+            }
+            .frame(width: 90)
         }
+        .padding(.vertical, 6)
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button(role: .destructive) {
                 invoiceToDelete = invoice

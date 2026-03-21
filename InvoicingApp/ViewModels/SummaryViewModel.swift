@@ -94,7 +94,7 @@ final class SummaryViewModel: ObservableObject {
             }
             if invoice.status == .paid {
                 breakdowns[invoice.clientId]?.paid += invoice.total
-            } else {
+            } else if invoice.status == .issued {
                 breakdowns[invoice.clientId]?.outstanding += invoice.total
             }
         }
@@ -177,14 +177,8 @@ final class SummaryViewModel: ObservableObject {
         }
     }
 
-    func toggleStatus(for invoice: Invoice) async {
-        let newStatus: InvoiceStatus
-        switch invoice.status {
-        case .draft: newStatus = .issued
-        case .issued: newStatus = .paid
-        case .paid: newStatus = .draft
-        }
-
+    func updateStatus(for invoice: Invoice, to newStatus: InvoiceStatus) async {
+        guard newStatus != invoice.status else { return }
         do {
             try await supabase.update(
                 in: "invoices",
