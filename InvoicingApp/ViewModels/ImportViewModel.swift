@@ -15,7 +15,9 @@ final class ImportViewModel: ObservableObject {
 
     private let importService = ImportService()
     private var parsedData: ImportData?
-    private var importResult: ImportService.ImportResult?
+
+    private static let entryIdsKey = "importedEntryIds"
+    private static let invoiceIdsKey = "importedInvoiceIds"
 
     var filesSelected: Bool {
         entriesFileURL != nil && invoicesFileURL != nil
@@ -26,7 +28,21 @@ final class ImportViewModel: ObservableObject {
     }
 
     var canRollback: Bool {
-        importComplete && !rolledBack && importResult != nil
+        !rolledBack && hasSavedImport
+    }
+
+    private var hasSavedImport: Bool {
+        UserDefaults.standard.stringArray(forKey: Self.entryIdsKey) != nil
+    }
+
+    init() {
+        // Restore state if a previous import exists
+        if hasSavedImport {
+            importComplete = true
+            let entryCount = UserDefaults.standard.stringArray(forKey: Self.entryIdsKey)?.count ?? 0
+            let invoiceCount = UserDefaults.standard.stringArray(forKey: Self.invoiceIdsKey)?.count ?? 0
+            importSummary = "Previous import: \(entryCount) entries, \(invoiceCount) invoices"
+        }
     }
 
     func runDryRun() async {
@@ -71,7 +87,7 @@ final class ImportViewModel: ObservableObject {
 
         do {
             let result = try await importService.executeImport(data: data)
-            importResult = result
+            saveImportIds(entryIds: result.entryIds, invoiceIds: result.invoiceIds)
             importComplete = true
             importSummary = "Imported \(result.entriesInserted) entries and \(result.invoicesInserted) invoices"
         } catch {
@@ -82,16 +98,17 @@ final class ImportViewModel: ObservableObject {
     }
 
     func rollbackImport() async {
-        guard let result = importResult else { return }
+        guard let (entryIds, invoiceIds) = loadImportIds() else { return }
 
         isRollingBack = true
         errorMessage = nil
 
         do {
             let deleted = try await importService.rollbackImport(
-                entryIds: result.entryIds,
-                invoiceIds: result.invoiceIds
+                entryIds: entryIds,
+                invoiceIds: invoiceIds
             )
+            clearImportIds()
             rolledBack = true
             importSummary = "Rolled back: deleted \(deleted.entriesDeleted) entries and \(deleted.invoicesDeleted) invoices"
         } catch {
@@ -99,5 +116,28 @@ final class ImportViewModel: ObservableObject {
         }
 
         isRollingBack = false
+    }
+
+    // MARK: - Persist import IDs to UserDefaults
+
+    private func saveImportIds(entryIds: [UUID], invoiceIds: [UUID]) {
+        UserDefaults.standard.set(entryIds.map(\.uuidString), forKey: Self.entryIdsKey)
+        UserDefaults.standard.set(invoiceIds.map(\.uuidString), forKey: Self.invoiceIdsKey)
+    }
+
+    private func loadImportIds() -> (entryIds: [UUID], invoiceIds: [UUID])? {
+        guard let entryStrings = UserDefaults.standard.stringArray(forKey: Self.entryIdsKey),
+              let invoiceStrings = UserDefaults.standard.stringArray(forKey: Self.invoiceIdsKey) else {
+            return nil
+        }
+        return (
+            entryIds: entryStrings.compactMap { UUID(uuidString: $0) },
+            invoiceIds: invoiceStrings.compactMap { UUID(uuidString: $0) }
+        )
+    }
+
+    private func clearImportIds() {
+        UserDefaults.standard.removeObject(forKey: Self.entryIdsKey)
+        UserDefaults.standard.removeObject(forKey: Self.invoiceIdsKey)
     }
 }
