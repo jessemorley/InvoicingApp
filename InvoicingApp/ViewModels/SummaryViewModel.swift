@@ -13,6 +13,13 @@ enum StatusFilter: String, CaseIterable {
     case paid = "Paid"
 }
 
+struct ClientBreakdown: Identifiable {
+    let id: UUID
+    let name: String
+    var paid: Decimal
+    var outstanding: Decimal
+}
+
 struct ClientInvoiceGroup: Identifiable {
     let id: UUID
     let client: Client
@@ -75,6 +82,41 @@ final class SummaryViewModel: ObservableObject {
 
     var outstandingTotal: Decimal {
         filteredInvoices.filter { $0.status != .paid }.reduce(0) { $0 + $1.total }
+    }
+
+    var clientBreakdowns: [ClientBreakdown] {
+        let clientMap = Dictionary(uniqueKeysWithValues: clients.map { ($0.id, $0) })
+        var breakdowns: [UUID: ClientBreakdown] = [:]
+        for invoice in filteredInvoices {
+            let name = clientMap[invoice.clientId]?.name ?? "Unknown"
+            if breakdowns[invoice.clientId] == nil {
+                breakdowns[invoice.clientId] = ClientBreakdown(id: invoice.clientId, name: name, paid: 0, outstanding: 0)
+            }
+            if invoice.status == .paid {
+                breakdowns[invoice.clientId]?.paid += invoice.total
+            } else {
+                breakdowns[invoice.clientId]?.outstanding += invoice.total
+            }
+        }
+        return Array(breakdowns.values).sorted { ($0.paid + $0.outstanding) > ($1.paid + $1.outstanding) }
+    }
+
+    var topClientBreakdowns: [ClientBreakdown] {
+        let sorted = clientBreakdowns
+        if sorted.count <= 3 { return sorted }
+        let top3 = Array(sorted.prefix(3))
+        let rest = sorted.dropFirst(3)
+        let other = ClientBreakdown(
+            id: UUID(),
+            name: "Other",
+            paid: rest.reduce(0) { $0 + $1.paid },
+            outstanding: rest.reduce(0) { $0 + $1.outstanding }
+        )
+        return top3 + [other]
+    }
+
+    var totalPaid: Decimal {
+        filteredInvoices.filter { $0.status == .paid }.reduce(0) { $0 + $1.total }
     }
 
     init() {
