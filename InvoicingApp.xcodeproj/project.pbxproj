@@ -7,50 +7,50 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A10001001 /* InvoicingApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000001; };
-		A10001002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000002; };
-		A10001003 /* Client.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000003; };
-		A10001004 /* ClientWorkflowRate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000004; };
-		A10001005 /* Entry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000005; };
-		A10001006 /* Invoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000006; };
-		A10001007 /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000007; };
-		A10001008 /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000008; };
-		A10001009 /* CalculationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000009; };
-		A10001010 /* InvoiceGenerationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000010; };
-		A10001011 /* PDFExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000011; };
-		A10001012 /* LogEntryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012; };
-		A10001013 /* EntriesListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000013; };
-		A10001014 /* GenerateInvoicesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000014; };
-		A10001015 /* InvoiceDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000015; };
-		A10001016 /* SummaryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000016; };
-		A10001017 /* ClientManagementViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000017; };
-		A10001018 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000018; };
-		A10001019 /* LogEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000019; };
-		A10001020 /* IconicEntryForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020; };
-		A10001021 /* HourlyEntryForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000021; };
-		A10001022 /* ManualEntryForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000022; };
-		A10001023 /* EntriesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000023; };
-		A10001024 /* EntryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000024; };
-		A10001025 /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000025; };
-		A10001026 /* CalendarDayCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000026; };
-		A10001027 /* EntryDetailEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000027; };
-		A10001028 /* GenerateInvoicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000028; };
-		A10001029 /* InvoiceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000029; };
-		A10001030 /* SummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000030; };
-		A10001031 /* ClientListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000031; };
-		A10001032 /* ClientEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000032; };
-		A10001033 /* WorkflowRateTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000033; };
-		A10001034 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000034; };
-		A10001035 /* ClientPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000035; };
-		A10001036 /* AmountPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000036; };
-		A10001037 /* StatusBadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000037; };
-		A10001038 /* CurrencyText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000038; };
-		A10001039 /* DateRangePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000039; };
-		A10001040 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000040; };
-		A10001041 /* ImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000042; };
-		A10001042 /* ImportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000043; };
-		A10001043 /* ImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000044; };
-		A10001099 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A10009001; };
+		A10001001 /* InvoicingApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000001 /* InvoicingApp.swift */; };
+		A10001002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000002 /* ContentView.swift */; };
+		A10001003 /* Client.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000003 /* Client.swift */; };
+		A10001004 /* ClientWorkflowRate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000004 /* ClientWorkflowRate.swift */; };
+		A10001005 /* Entry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000005 /* Entry.swift */; };
+		A10001006 /* Invoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000006 /* Invoice.swift */; };
+		A10001007 /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000007 /* UserSettings.swift */; };
+		A10001008 /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000008 /* SupabaseService.swift */; };
+		A10001009 /* CalculationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000009 /* CalculationService.swift */; };
+		A10001010 /* InvoiceGenerationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000010 /* InvoiceGenerationService.swift */; };
+		A10001011 /* PDFExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000011 /* PDFExportService.swift */; };
+		A10001012 /* LogEntryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000012 /* LogEntryViewModel.swift */; };
+		A10001013 /* EntriesListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000013 /* EntriesListViewModel.swift */; };
+		A10001014 /* GenerateInvoicesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000014 /* GenerateInvoicesViewModel.swift */; };
+		A10001015 /* InvoiceDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000015 /* InvoiceDetailViewModel.swift */; };
+		A10001016 /* SummaryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000016 /* SummaryViewModel.swift */; };
+		A10001017 /* ClientManagementViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000017 /* ClientManagementViewModel.swift */; };
+		A10001018 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000018 /* SettingsViewModel.swift */; };
+		A10001019 /* LogEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000019 /* LogEntryView.swift */; };
+		A10001020 /* IconicEntryForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020 /* IconicEntryForm.swift */; };
+		A10001021 /* HourlyEntryForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000021 /* HourlyEntryForm.swift */; };
+		A10001022 /* ManualEntryForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000022 /* ManualEntryForm.swift */; };
+		A10001023 /* EntriesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000023 /* EntriesListView.swift */; };
+		A10001024 /* EntryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000024 /* EntryRowView.swift */; };
+		A10001025 /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000025 /* CalendarView.swift */; };
+		A10001026 /* CalendarDayCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000026 /* CalendarDayCell.swift */; };
+		A10001027 /* EntryDetailEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000027 /* EntryDetailEditView.swift */; };
+		A10001028 /* GenerateInvoicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000028 /* GenerateInvoicesView.swift */; };
+		A10001029 /* InvoiceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000029 /* InvoiceDetailView.swift */; };
+		A10001030 /* SummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000030 /* SummaryView.swift */; };
+		A10001031 /* ClientListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000031 /* ClientListView.swift */; };
+		A10001032 /* ClientEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000032 /* ClientEditView.swift */; };
+		A10001033 /* WorkflowRateTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000033 /* WorkflowRateTableView.swift */; };
+		A10001034 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000034 /* SettingsView.swift */; };
+		A10001035 /* ClientPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000035 /* ClientPickerView.swift */; };
+		A10001036 /* AmountPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000036 /* AmountPreviewView.swift */; };
+		A10001037 /* StatusBadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000037 /* StatusBadgeView.swift */; };
+		A10001038 /* CurrencyText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000038 /* CurrencyText.swift */; };
+		A10001039 /* DateRangePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000039 /* DateRangePickerView.swift */; };
+		A10001040 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000040 /* Assets.xcassets */; };
+		A10001041 /* ImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000042 /* ImportService.swift */; };
+		A10001042 /* ImportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000043 /* ImportViewModel.swift */; };
+		A10001043 /* ImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000044 /* ImportView.swift */; };
+		A10001099 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A10009001 /* Supabase */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -113,20 +113,12 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		A10003000 /* Root */ = {
+		A10003000 = {
 			isa = PBXGroup;
 			children = (
 				A10003001 /* InvoicingApp */,
 				A10003099 /* Products */,
 			);
-			sourceTree = "<group>";
-		};
-		A10003099 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				A10000050 /* InvoicingApp.app */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 		A10003001 /* InvoicingApp */ = {
@@ -229,6 +221,26 @@
 			path = Invoices;
 			sourceTree = "<group>";
 		};
+		A10003009 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A10000035 /* ClientPickerView.swift */,
+				A10000036 /* AmountPreviewView.swift */,
+				A10000037 /* StatusBadgeView.swift */,
+				A10000038 /* CurrencyText.swift */,
+				A10000039 /* DateRangePickerView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		A10003010 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A10000040 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		A10003011 /* Summary */ = {
 			isa = PBXGroup;
 			children = (
@@ -256,24 +268,12 @@
 			path = Settings;
 			sourceTree = "<group>";
 		};
-		A10003009 /* Components */ = {
+		A10003099 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A10000035 /* ClientPickerView.swift */,
-				A10000036 /* AmountPreviewView.swift */,
-				A10000037 /* StatusBadgeView.swift */,
-				A10000038 /* CurrencyText.swift */,
-				A10000039 /* DateRangePickerView.swift */,
+				A10000050 /* InvoicingApp.app */,
 			);
-			path = Components;
-			sourceTree = "<group>";
-		};
-		A10003010 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				A10000040 /* Assets.xcassets */,
-			);
-			path = Resources;
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -307,7 +307,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1540;
-				LastUpgradeCheck = 1540;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					A10004001 = {
 						CreatedOnToolsVersion = 15.4;
@@ -433,6 +433,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -456,6 +457,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -495,6 +497,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -511,6 +514,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
@@ -524,8 +528,13 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_FILE_ACCESS_DOWNLOADS_FOLDER = readwrite;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -550,8 +559,13 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_FILE_ACCESS_DOWNLOADS_FOLDER = readwrite;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -570,20 +584,20 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A10006003 /* Build configuration list for PBXProject "InvoicingApp" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				A10006010 /* Debug */,
-				A10006011 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		A10006001 /* Build configuration list for PBXNativeTarget "InvoicingApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A10006020 /* Debug */,
 				A10006021 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A10006003 /* Build configuration list for PBXProject "InvoicingApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10006010 /* Debug */,
+				A10006011 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -604,7 +618,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		A10009001 /* Supabase */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A10008001;
+			package = A10008001 /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
 		};
 /* End XCSwiftPackageProductDependency section */
