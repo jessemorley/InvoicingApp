@@ -58,6 +58,7 @@ struct EntriesListView: View {
     }
 
     @State private var entryToDelete: Entry?
+    @State private var selectedInvoice: Invoice?
 
     private static let weekFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -84,6 +85,21 @@ struct EntriesListView: View {
                     groupSummaryRow(group)
                 }
             }
+        }
+        .background {
+            NavigationLink(
+                isActive: Binding(
+                    get: { selectedInvoice != nil },
+                    set: { if !$0 { selectedInvoice = nil } }
+                )
+            ) {
+                if let invoice = selectedInvoice {
+                    InvoiceDetailView(invoice: invoice)
+                }
+            } label: {
+                EmptyView()
+            }
+            .hidden()
         }
         .confirmationDialog(
             "Delete this entry?",
@@ -123,12 +139,25 @@ struct EntriesListView: View {
                 }
                 .buttonStyle(.bordered)
             } else if group.allInvoiced {
-                Label("Invoiced", systemImage: "checkmark.circle.fill")
-                    .font(.subheadline)
-                    .foregroundStyle(.green)
+                if let invoiceId = group.entries.first?.invoiceId,
+                   let invoice = vm.invoiceMap[invoiceId] {
+                    Button {
+                        selectedInvoice = invoice
+                    } label: {
+                        Label(invoice.invoiceNumber, systemImage: "checkmark.circle.fill")
+                            .font(.subheadline)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(Color(red: 0.1, green: 0.6, blue: 0.3))
+                } else {
+                    Label("Invoiced", systemImage: "checkmark.circle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.green)
+                }
             }
         }
         .padding(.vertical, 2)
+        .listRowSeparator(.hidden)
     }
 
     private func entryRow(_ entry: Entry) -> some View {

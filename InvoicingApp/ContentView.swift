@@ -4,7 +4,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     case logEntry = "Log Entry"
     case entries = "Entries"
     case generateInvoices = "Generate Invoices"
-    case summary = "Summary"
+    case summary = "Invoices"
     case clients = "Clients"
     case settings = "Settings"
 

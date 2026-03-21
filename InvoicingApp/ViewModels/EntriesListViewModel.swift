@@ -11,6 +11,7 @@ final class EntriesListViewModel: ObservableObject {
     private let supabase = SupabaseService.shared
 
     @Published var entries: [Entry] = []
+    @Published var invoices: [Invoice] = []
     @Published var clients: [Client] = []
     @Published var viewMode: EntriesViewMode = .list
     @Published var showAmounts = true
@@ -35,6 +36,10 @@ final class EntriesListViewModel: ObservableObject {
 
     var clientMap: [UUID: Client] {
         Dictionary(uniqueKeysWithValues: clients.map { ($0.id, $0) })
+    }
+
+    var invoiceMap: [UUID: Invoice] {
+        Dictionary(uniqueKeysWithValues: invoices.map { ($0.id, $0) })
     }
 
     struct ClientWeekGroup: Identifiable {
@@ -90,6 +95,7 @@ final class EntriesListViewModel: ObservableObject {
         do {
             clients = try await supabase.fetch(from: "clients", orderBy: "name")
             entries = try await supabase.fetch(from: "entries", orderBy: "date", ascending: false)
+            invoices = try await supabase.fetch(from: "invoices", orderBy: "invoice_number")
         } catch {
             errorMessage = error.localizedDescription
         }

@@ -103,7 +103,7 @@ struct SummaryView: View {
                 .padding()
             }
         }
-        .navigationTitle("Summary")
+        .navigationTitle("Invoices")
         .task { await vm.loadData() }
         .confirmationDialog(
             "Delete invoice \(invoiceToDelete?.invoiceNumber ?? "")?",

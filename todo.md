@@ -1,3 +1,4 @@
-- Add today button to calendar view
-- The Summary tab should be called Invoices
-- Bug: Editing an Images that Sell entry didn't give me a field for break to edit. The edit entry interface should just be exactly the entry creation interface, just with the info already filled.
+- Instead of a separate log entries tab, add a + button to the top left of the menubar in entries view
+- Stretch calendar view cells to fill window vertically (as well as horizontally)
+- Add option to delete an invoice from the invoice preview view
+- Add invoice status indicator icon to entries in calendar view (uninvoiced, invoice created, paid)

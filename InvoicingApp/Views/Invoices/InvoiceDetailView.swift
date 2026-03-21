@@ -38,8 +38,12 @@ struct InvoiceDetailView: View {
                 // Line items
                 VStack(spacing: 0) {
                     HStack {
-                        Text("Item").font(.caption.bold())
-                        Spacer()
+                        Text("Date").font(.caption.bold())
+                            .frame(width: 110, alignment: .leading)
+                        Text("Description").font(.caption.bold())
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("Hours").font(.caption.bold())
+                            .frame(width: 60, alignment: .trailing)
                         Text("Amount").font(.caption.bold())
                             .frame(width: 100, alignment: .trailing)
                     }
@@ -49,8 +53,12 @@ struct InvoiceDetailView: View {
 
                     ForEach(vm.entries) { entry in
                         HStack {
-                            Text(entryDescription(entry))
-                            Spacer()
+                            Text(entryDateString(entry))
+                                .frame(width: 110, alignment: .leading)
+                            Text(entryDescriptionOnly(entry))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Text(entryHoursString(entry))
+                                .frame(width: 60, alignment: .trailing)
                             CurrencyText(amount: entry.baseAmount + entry.bonusAmount)
                                 .frame(width: 100, alignment: .trailing)
                         }
@@ -115,28 +123,34 @@ struct InvoiceDetailView: View {
         }
     }
 
-    private func entryDescription(_ entry: Entry) -> String {
+    private func entryDateString(_ entry: Entry) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEE, MMM d"
-        let dateStr = formatter.string(from: entry.dateValue)
+        return formatter.string(from: entry.dateValue)
+    }
 
+    private func entryDescriptionOnly(_ entry: Entry) -> String {
         switch entry.billingTypeSnapshot {
         case .dayRate:
             if let workflow = entry.workflowType {
                 if workflow == "Own Brand" {
-                    return "\(dateStr) \(entry.brand ?? "Own Brand")"
+                    return entry.brand ?? "Own Brand"
                 }
-                return "\(dateStr) \(workflow)"
+                return workflow
             }
-            return "\(dateStr) Creative Assist"
+            return "Creative Assist"
         case .hourly:
-            let hours = entry.hoursWorked.map { "\(NSDecimalNumber(decimal: $0))h" } ?? ""
             if let shootClient = entry.shootClient {
-                return "\(dateStr) \(shootClient) (\(entry.role ?? "")) \(hours)"
+                return "\(shootClient) (\(entry.role ?? ""))"
             }
-            return "\(dateStr) \(entry.description ?? "") \(hours)"
+            return entry.description ?? ""
         case .manual:
-            return "\(dateStr) \(entry.description ?? "")"
+            return entry.description ?? ""
         }
+    }
+
+    private func entryHoursString(_ entry: Entry) -> String {
+        guard entry.billingTypeSnapshot == .hourly, let hours = entry.hoursWorked else { return "" }
+        return "\(NSDecimalNumber(decimal: hours))h"
     }
 }
