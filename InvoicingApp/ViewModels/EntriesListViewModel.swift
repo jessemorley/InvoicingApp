@@ -18,6 +18,7 @@ final class EntriesListViewModel: ObservableObject {
     @Published var selectedClientId: UUID?
     @Published var startDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
     @Published var endDate: Date = Date()
+    @Published var groupByWeek = false
     @Published var isLoading = false
     @Published var errorMessage: String?
 
@@ -76,6 +77,34 @@ final class EntriesListViewModel: ObservableObject {
         }
 
         return dict.map { ClientWeekGroup(id: $0.key, clientId: $0.value.clientId, weekStart: $0.value.weekStart, entries: $0.value.entries.sorted { $0.date < $1.date }) }
+            .sorted { $0.weekStart > $1.weekStart }
+    }
+
+    struct WeekGroup: Identifiable {
+        let id: String // "year-week"
+        let weekStart: Date
+        let entries: [Entry]
+
+        var subtotal: Decimal {
+            entries.reduce(0) { $0 + $1.baseAmount + $1.bonusAmount }
+        }
+    }
+
+    var groupedByWeek: [WeekGroup] {
+        let calendar = Calendar.current
+        var dict: [String: (weekStart: Date, entries: [Entry])] = [:]
+
+        for entry in filteredEntries {
+            let comps = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: entry.dateValue)
+            let weekStart = calendar.date(from: comps) ?? entry.dateValue
+            let key = "\(comps.yearForWeekOfYear ?? 0)-\(comps.weekOfYear ?? 0)"
+            if dict[key] == nil {
+                dict[key] = (weekStart: weekStart, entries: [])
+            }
+            dict[key]?.entries.append(entry)
+        }
+
+        return dict.map { WeekGroup(id: $0.key, weekStart: $0.value.weekStart, entries: $0.value.entries.sorted { $0.date < $1.date }) }
             .sorted { $0.weekStart > $1.weekStart }
     }
 

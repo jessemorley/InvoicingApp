@@ -3,7 +3,6 @@ Entries View:
 - Add start finish and break times to list view where applicable
 - Add option to add new client from client selection dropdown in entries creation view
 - Instead of opening the edit entry view when clicking an entry, open the details in an inspector panel. The fields should be editible if the invoice has not been created yet.
-- Calendar view: make vertically scrollable, like the Calendar macos app
 - List view: Option to group in weeks (display week total for each group)
 
 Invoices View:

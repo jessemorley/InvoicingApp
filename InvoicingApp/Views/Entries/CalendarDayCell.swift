@@ -53,7 +53,7 @@ struct CalendarDayCell: View {
                     .padding(3)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(clientColor(for: entry).opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 3))
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
                 }
                 .buttonStyle(.plain)
             }

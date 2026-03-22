@@ -66,7 +66,7 @@ struct CalendarView: View {
             let days = sixWeekGrid
             GeometryReader { geo in
                 let rowHeight = geo.size.height / 6
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 1), count: 7), spacing: 1) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 0) {
                     ForEach(Array(days.enumerated()), id: \.offset) { _, date in
                         if let date {
                             CalendarDayCell(
@@ -78,12 +78,14 @@ struct CalendarView: View {
                             )
                             .frame(height: rowHeight)
                         } else {
-                            Color(nsColor: .controlBackgroundColor)
+                            Color.clear
                                 .frame(height: rowHeight)
                         }
                     }
                 }
-                .background(Color(nsColor: .separatorColor))
+                .overlay {
+                    calendarGridLines(rows: 6, cols: 7)
+                }
                 .padding(.horizontal)
             }
         }
@@ -130,5 +132,20 @@ struct CalendarView: View {
 
     private func nextMonth() {
         currentMonth = Calendar.current.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
+    }
+
+    private func calendarGridLines(rows: Int, cols: Int) -> some View {
+        Canvas { context, size in
+            let shading = GraphicsContext.Shading.color(Color(nsColor: .separatorColor))
+            for row in 0...rows {
+                let y = CGFloat(row) * size.height / CGFloat(rows)
+                context.fill(Path(CGRect(x: 0, y: y - 0.5, width: size.width, height: 1)), with: shading)
+            }
+            for col in 0...cols {
+                let x = CGFloat(col) * size.width / CGFloat(cols)
+                context.fill(Path(CGRect(x: x - 0.5, y: 0, width: 1, height: size.height)), with: shading)
+            }
+        }
+        .allowsHitTesting(false)
     }
 }

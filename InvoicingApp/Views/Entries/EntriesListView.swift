@@ -66,6 +66,14 @@ struct EntriesListView: View {
                     }
                 }
             }
+            if vm.viewMode == .list {
+                ToolbarItem(placement: .automatic) {
+                    Toggle(isOn: $vm.groupByWeek) {
+                        Label("Group by Week", systemImage: "calendar.day.timeline.leading")
+                    }
+                    .toggleStyle(.button)
+                }
+            }
             ToolbarItem(placement: .automatic) {
                 Button {
                     showInspector.toggle()
@@ -115,15 +123,48 @@ struct EntriesListView: View {
         return "\(clientName) — \(start) – \(end)"
     }
 
+    private func weekSectionTitle(for group: EntriesListViewModel.WeekGroup) -> String {
+        let calendar = Calendar.current
+        let weekEnd = calendar.date(byAdding: .day, value: 6, to: group.weekStart) ?? group.weekStart
+        let start = Self.weekFormatter.string(from: group.weekStart)
+        let end = Self.weekFormatter.string(from: weekEnd)
+        return "\(start) – \(end)"
+    }
+
+    private func weekSummaryRow(_ group: EntriesListViewModel.WeekGroup) -> some View {
+        HStack {
+            Text("\(group.entries.count) entries")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Spacer()
+            CurrencyText(amount: group.subtotal)
+                .font(.subheadline.monospacedDigit().bold())
+        }
+        .padding(.vertical, 2)
+        .listRowSeparator(.hidden)
+    }
+
     private var entriesListContent: some View {
         List(selection: $selectedEntryID) {
-            ForEach(vm.groupedByClientWeek) { group in
-                Section(sectionTitle(for: group)) {
-                    ForEach(group.entries) { entry in
-                        entryRow(entry)
-                            .tag(entry.id)
+            if vm.groupByWeek {
+                ForEach(vm.groupedByWeek) { group in
+                    Section(weekSectionTitle(for: group)) {
+                        ForEach(group.entries) { entry in
+                            entryRow(entry)
+                                .tag(entry.id)
+                        }
+                        weekSummaryRow(group)
                     }
-                    groupSummaryRow(group)
+                }
+            } else {
+                ForEach(vm.groupedByClientWeek) { group in
+                    Section(sectionTitle(for: group)) {
+                        ForEach(group.entries) { entry in
+                            entryRow(entry)
+                                .tag(entry.id)
+                        }
+                        groupSummaryRow(group)
+                    }
                 }
             }
         }
