@@ -33,8 +33,12 @@ struct GeneralSettingsTab: View {
         Form {
             Section("Invoice Numbering") {
                 TextField("Prefix", text: $vm.settings.invoicePrefix)
-                Stepper("Count from: \(vm.settings.invoiceCountFrom)",
-                        value: $vm.settings.invoiceCountFrom, in: 1...99999)
+                Stepper("Next number: \(vm.nextInvoiceNumber)",
+                        value: $vm.nextInvoiceNumber, in: 1...99999)
+                LabeledContent("Next invoice") {
+                    Text("\(vm.settings.invoicePrefix)\(vm.nextInvoiceNumber)")
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Section("Preferences") {
@@ -63,6 +67,7 @@ struct GeneralSettingsTab: View {
             }
         }
         .formStyle(.grouped)
+        .task { await vm.loadNextNumber() }
     }
 }
 

@@ -190,6 +190,24 @@ final class SupabaseService: ObservableObject {
         return number
     }
 
+    func fetchLastInvoiceNumber() async throws -> Int {
+        guard let client else { throw ServiceError.notConfigured }
+        struct Row: Decodable { let last_number: Int }
+        let rows: [Row] = try await client.from("invoice_sequence").select().execute().value
+        guard let row = rows.first else {
+            throw ServiceError.rpcError("No invoice_sequence row found")
+        }
+        return row.last_number
+    }
+
+    func updateLastInvoiceNumber(_ number: Int) async throws {
+        guard let client else { throw ServiceError.notConfigured }
+        try await client.from("invoice_sequence")
+            .update(["last_number": number])
+            .gte("last_number", value: 0)  // WHERE true equivalent
+            .execute()
+    }
+
     // MARK: - Specialized Queries
 
     func fetchUninvoicedEntries() async throws -> [Entry] {

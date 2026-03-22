@@ -7,6 +7,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var supabaseAnonKey: String
     @Published var email: String = ""
     @Published var password: String = ""
+    @Published var nextInvoiceNumber: Int = 0
     @Published var isSaving = false
     @Published var isSigningIn = false
     @Published var errorMessage: String?
@@ -20,10 +21,25 @@ final class SettingsViewModel: ObservableObject {
         self.supabaseAnonKey = UserDefaults.standard.string(forKey: "supabaseAnonKey") ?? ""
     }
 
+    func loadNextNumber() async {
+        do {
+            let lastNumber = try await supabase.fetchLastInvoiceNumber()
+            nextInvoiceNumber = lastNumber + 1
+        } catch {
+            // Non-critical — field just won't populate
+        }
+    }
+
     func saveSettings() {
         settings.save()
-        successMessage = "Settings saved"
         Task {
+            do {
+                try await supabase.updateLastInvoiceNumber(nextInvoiceNumber - 1)
+            } catch {
+                errorMessage = error.localizedDescription
+                return
+            }
+            successMessage = "Settings saved"
             try? await Task.sleep(for: .seconds(2))
             successMessage = nil
         }
