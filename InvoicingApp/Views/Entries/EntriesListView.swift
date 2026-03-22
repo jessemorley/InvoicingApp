@@ -2,6 +2,15 @@ import SwiftUI
 
 struct EntriesListView: View {
     @StateObject private var vm = EntriesListViewModel()
+    @State private var selectedEntryID: UUID?
+    @State private var showInspector = true
+    @State private var entryToDelete: Entry?
+    @State private var selectedInvoice: Invoice?
+
+    private var selectedEntry: Entry? {
+        guard let id = selectedEntryID else { return nil }
+        return vm.filteredEntries.first { $0.id == id }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -30,7 +39,10 @@ struct EntriesListView: View {
                         entriesByDate: vm.entriesByDate,
                         clientMap: vm.clientMap,
                         invoiceMap: vm.invoiceMap,
-                        onSelect: { _ in }
+                        onSelect: { entry in
+                            selectedEntryID = entry.id
+                            showInspector = true
+                        }
                     )
                 }
             }
@@ -54,12 +66,39 @@ struct EntriesListView: View {
                     }
                 }
             }
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    showInspector.toggle()
+                } label: {
+                    Label("Inspector", systemImage: "sidebar.trailing")
+                }
+            }
         }
+        .inspector(isPresented: $showInspector) {
+            if let entry = selectedEntry, let client = vm.clientMap[entry.clientId] {
+                EntryInspectorView(
+                    entry: entry,
+                    client: client,
+                    onSave: { updated in
+                        Task { await vm.updateEntry(updated) }
+                    },
+                    onDelete: { entry in
+                        Task { await vm.deleteEntry(entry) }
+                        selectedEntryID = nil
+                    }
+                )
+                .id(entry.id)
+            } else {
+                ContentUnavailableView(
+                    "No Selection",
+                    systemImage: "doc.text",
+                    description: Text("Select an entry to view details.")
+                )
+            }
+        }
+        .inspectorColumnWidth(min: 280, ideal: 320, max: 400)
         .task { await vm.loadData() }
     }
-
-    @State private var entryToDelete: Entry?
-    @State private var selectedInvoice: Invoice?
 
     private static let weekFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -77,11 +116,12 @@ struct EntriesListView: View {
     }
 
     private var entriesListContent: some View {
-        List {
+        List(selection: $selectedEntryID) {
             ForEach(vm.groupedByClientWeek) { group in
                 Section(sectionTitle(for: group)) {
                     ForEach(group.entries) { entry in
                         entryRow(entry)
+                            .tag(entry.id)
                     }
                     groupSummaryRow(group)
                 }
@@ -162,24 +202,11 @@ struct EntriesListView: View {
     }
 
     private func entryRow(_ entry: Entry) -> some View {
-        NavigationLink {
-            EntryDetailEditView(
-                entry: entry,
-                client: vm.clientMap[entry.clientId],
-                onSave: { updated in
-                    Task { await vm.updateEntry(updated) }
-                },
-                onDelete: { entry in
-                    Task { await vm.deleteEntry(entry) }
-                }
-            )
-        } label: {
-            EntryRowView(
-                entry: entry,
-                client: vm.clientMap[entry.clientId],
-                showAmount: true
-            )
-        }
+        EntryRowView(
+            entry: entry,
+            client: vm.clientMap[entry.clientId],
+            showAmount: true
+        )
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button(role: .destructive) {
                 entryToDelete = entry

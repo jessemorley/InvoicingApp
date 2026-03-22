@@ -50,9 +50,10 @@ struct CalendarDayCell: View {
                 .buttonStyle(.plain)
             }
         }
-        .frame(maxHeight: .infinity, alignment: .top)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(4)
         .background(isToday ? Color.blue.opacity(0.05) : Color.clear)
+        .border(Color(nsColor: .separatorColor), width: 0.5)
     }
 
     private func entryDescription(_ entry: Entry) -> String? {

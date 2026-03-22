@@ -62,13 +62,12 @@ struct CalendarView: View {
             }
             .padding(.horizontal)
 
-            // Day cells grid
-            let days = daysInMonth
-            let rowCount = (days.count + 6) / 7
+            // Day cells grid — always 6 rows so the layout is stable
+            let days = sixWeekGrid
             GeometryReader { geo in
-                let rowHeight = max(80, (geo.size.height) / CGFloat(rowCount))
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 1) {
-                    ForEach(days, id: \.self) { date in
+                let rowHeight = geo.size.height / 6
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 0) {
+                    ForEach(Array(days.enumerated()), id: \.offset) { _, date in
                         if let date {
                             CalendarDayCell(
                                 date: date,
@@ -81,6 +80,7 @@ struct CalendarView: View {
                         } else {
                             Color.clear
                                 .frame(height: rowHeight)
+                                .border(Color(nsColor: .separatorColor), width: 0.5)
                         }
                     }
                 }
@@ -89,9 +89,9 @@ struct CalendarView: View {
         }
     }
 
-    /// Returns an array of optional Dates for the grid.
-    /// `nil` entries represent blank cells before the first day of the month.
-    private var daysInMonth: [Date?] {
+    /// Returns a 42-element array (6 weeks) of optional Dates for the grid.
+    /// `nil` entries represent blank cells outside the current month.
+    private var sixWeekGrid: [Date?] {
         let cal = Calendar.current
         let range = cal.range(of: .day, in: .month, for: currentMonth)!
         let firstDay = currentMonth
@@ -104,6 +104,10 @@ struct CalendarView: View {
             if let date = cal.date(bySetting: .day, value: day, of: currentMonth) {
                 days.append(date)
             }
+        }
+        // Pad to 42 (6 full weeks)
+        while days.count < 42 {
+            days.append(nil)
         }
         return days
     }

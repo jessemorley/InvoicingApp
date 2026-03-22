@@ -34,6 +34,7 @@
 		A10001025 /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000025 /* CalendarView.swift */; };
 		A10001026 /* CalendarDayCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000026 /* CalendarDayCell.swift */; };
 		A10001027 /* EntryDetailEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000027 /* EntryDetailEditView.swift */; };
+		A10009003 /* EntryInspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10009002 /* EntryInspectorView.swift */; };
 		A10001028 /* GenerateInvoicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000028 /* GenerateInvoicesView.swift */; };
 		A10001029 /* InvoiceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000029 /* InvoiceDetailView.swift */; };
 		A10001030 /* SummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000030 /* SummaryView.swift */; };
@@ -83,6 +84,7 @@
 		A10000025 /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
 		A10000026 /* CalendarDayCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarDayCell.swift; sourceTree = "<group>"; };
 		A10000027 /* EntryDetailEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailEditView.swift; sourceTree = "<group>"; };
+		A10009002 /* EntryInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryInspectorView.swift; sourceTree = "<group>"; };
 		A10000028 /* GenerateInvoicesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateInvoicesView.swift; sourceTree = "<group>"; };
 		A10000029 /* InvoiceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceDetailView.swift; sourceTree = "<group>"; };
 		A10000030 /* SummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
@@ -213,6 +215,7 @@
 				A10000025 /* CalendarView.swift */,
 				A10000026 /* CalendarDayCell.swift */,
 				A10000027 /* EntryDetailEditView.swift */,
+				A10009002 /* EntryInspectorView.swift */,
 			);
 			path = Entries;
 			sourceTree = "<group>";
@@ -392,6 +395,7 @@
 				A10001025 /* CalendarView.swift in Sources */,
 				A10001026 /* CalendarDayCell.swift in Sources */,
 				A10001027 /* EntryDetailEditView.swift in Sources */,
+				A10009003 /* EntryInspectorView.swift in Sources */,
 				A10001028 /* GenerateInvoicesView.swift in Sources */,
 				A10001029 /* InvoiceDetailView.swift in Sources */,
 				A10001030 /* SummaryView.swift in Sources */,
