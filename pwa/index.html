@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Invoicing</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Invoicing">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --accent: #007AFF; }
+
+        body {
+            font-family: -apple-system, 'SF Pro Display', 'Inter', sans-serif;
+            background: #f2f2f7;
+            -webkit-tap-highlight-color: transparent;
+            color: #1c1c1e;
+            overflow-x: hidden;
+        }
+
+        /* Screens */
+        .screen { display: none; }
+        .screen.active { display: flex; flex-direction: column; }
+
+        /* Tab bar */
+        #tabBar {
+            position: fixed;
+            bottom: 0;
+            left: 0; right: 0;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0,0,0,0.1);
+            padding-bottom: env(safe-area-inset-bottom);
+            z-index: 100;
+        }
+
+        /* Inputs */
+        .input-field {
+            background: #fff;
+            border: 1.5px solid transparent;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .input-field:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(0,122,255,0.1);
+        }
+
+        /* Segmented control */
+        .seg-ctrl {
+            background: #e5e5ea;
+            border-radius: 10px;
+            padding: 2px;
+            display: grid;
+        }
+        .seg-btn {
+            border-radius: 8px;
+            padding: 8px 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: #3c3c43;
+            background: transparent;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .seg-btn.active {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08);
+        }
+
+        /* Progressive disclosure */
+        .reveal {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+        }
+        .reveal.open {
+            max-height: 2000px;
+            opacity: 1;
+        }
+
+        /* Clear button */
+        .clear-btn { opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .has-client .clear-btn { opacity: 1; pointer-events: auto; }
+
+        /* Summary card */
+        .summary-card {
+            border: 2px solid #e5e5ea;
+            border-radius: 2rem;
+        }
+
+        /* Primary button */
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            font-weight: 700;
+            font-size: 17px;
+            border-radius: 14px;
+            padding: 18px;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            box-shadow: 0 4px 16px rgba(0,122,255,0.25);
+        }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary.success { background: #34c759; box-shadow: 0 4px 16px rgba(52,199,89,0.3); }
+        .btn-primary:disabled { background: #aeaeb2; box-shadow: none; cursor: default; }
+
+        /* Autocomplete */
+        #autocompleteList {
+            position: absolute;
+            left: 0; right: 0;
+            top: calc(100% + 8px);
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            z-index: 200;
+            overflow: hidden;
+            display: none;
+        }
+
+        /* Super toggle */
+        .toggle-wrap input[type=checkbox] { display: none; }
+        .toggle-track {
+            width: 51px; height: 31px;
+            background: #e5e5ea;
+            border-radius: 16px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .toggle-thumb {
+            position: absolute;
+            top: 2px; left: 2px;
+            width: 27px; height: 27px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+            transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+        }
+        .toggle-wrap input:checked + .toggle-track { background: var(--accent); }
+        .toggle-wrap input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
+
+        /* Recent entries list */
+        .entry-row {
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .client-badge {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 3px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        /* Login */
+        #loginScreen {
+            background: #fff;
+            min-height: 100dvh;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 32px;
+        }
+
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            background: transparent;
+            bottom: 0; color: transparent; cursor: pointer;
+            height: auto; left: 0; position: absolute; right: 0; top: 0; width: auto;
+        }
+
+        /* Workflow picker buttons */
+        .workflow-btn {
+            flex: 1;
+            padding: 10px 4px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: 1.5px solid #e5e5ea;
+            background: #fff;
+            color: #3c3c43;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .workflow-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(0,122,255,0.06);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════════════ -->
+<div id="loginScreen" class="screen active">
+    <div class="w-full max-w-sm">
+        <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-8">Jesse Morley Photography</p>
+        <h1 class="text-3xl font-bold text-slate-900 mb-8">Sign In</h1>
+        <div class="space-y-3">
+            <input id="loginEmail" type="email" placeholder="Email" autocomplete="email"
+                class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400">
+            <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password"
+                class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400">
+        </div>
+        <p id="loginError" class="text-red-500 text-sm mt-3 hidden"></p>
+        <button id="loginBtn" class="btn-primary mt-6">Sign In</button>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN APP SHELL (shown after login)
+═══════════════════════════════════════════════ -->
+<div id="appShell" class="screen" style="min-height: 100dvh;">
+
+    <!-- ── Log Entry Tab ── -->
+    <div id="tabLog" class="flex-1 overflow-y-auto pb-32" style="padding-top: env(safe-area-inset-top)">
+        <div class="max-w-md mx-auto px-5 pt-10 space-y-6">
+
+            <div class="flex items-center justify-between">
+                <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">New Entry</p>
+                <button id="signOutBtn" class="text-[13px] text-slate-400 font-medium">Sign Out</button>
+            </div>
+
+            <!-- Client selector -->
+            <div id="clientContainer" class="relative">
+                <div class="relative flex items-center">
+                    <input type="text" id="clientInput" placeholder="Client" autocomplete="off"
+                        class="input-field w-full rounded-2xl px-5 py-5 text-[17px] placeholder-slate-400 pr-12 font-medium">
+                    <button id="clearClient" class="clear-btn absolute right-4 p-1 rounded-full bg-slate-200 text-slate-500">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="autocompleteList"></div>
+            </div>
+
+            <!-- Dependent fields (revealed after client select) -->
+            <div id="entryFields" class="reveal space-y-4">
+
+                <!-- Date -->
+                <div class="bg-white rounded-2xl px-5 py-3">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Date</span>
+                    <input type="date" id="entryDate" class="bg-transparent w-full text-[17px] font-medium outline-none">
+                </div>
+
+                <!-- ── DAY RATE FIELDS ── -->
+                <div id="dayRateFields" class="hidden space-y-4">
+
+                    <!-- Day type segmented -->
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">Day Type</span>
+                        <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
+                            <button class="seg-btn active" data-day="full" onclick="setDayType('full')">Full Day</button>
+                            <button class="seg-btn" data-day="half" onclick="setDayType('half')">Half Day</button>
+                        </div>
+                    </div>
+
+                    <!-- Workflow (full day only) -->
+                    <div id="workflowSection" class="reveal open space-y-4">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">Workflow</span>
+                            <div class="flex gap-2" id="workflowBtns">
+                                <button class="workflow-btn active" data-wf="Apparel" onclick="setWorkflow('Apparel')">Apparel</button>
+                                <button class="workflow-btn" data-wf="Product" onclick="setWorkflow('Product')">Product</button>
+                                <button class="workflow-btn" data-wf="Own Brand" onclick="setWorkflow('Own Brand')">Own Brand</button>
+                            </div>
+                        </div>
+
+                        <!-- Own Brand: brand name -->
+                        <div id="brandField" class="hidden">
+                            <input type="text" id="brandInput" placeholder="Brand name"
+                                class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium">
+                        </div>
+
+                        <!-- Apparel/Product: SKUs -->
+                        <div id="skuField" class="hidden">
+                            <div class="bg-white rounded-2xl px-5 py-3">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">SKUs Shot</span>
+                                <input type="number" id="skuInput" placeholder="0" min="0"
+                                    class="bg-transparent w-full text-[17px] font-medium outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ── HOURLY FIELDS ── -->
+                <div id="hourlyFields" class="hidden space-y-4">
+
+                    <!-- ITS: Shoot client + Role -->
+                    <div id="itsFields" class="hidden space-y-4">
+                        <input type="text" id="shootClientInput" placeholder="Shoot Client"
+                            class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">Role</span>
+                            <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
+                                <button class="seg-btn active" data-role="Photographer" onclick="setRole('Photographer')">Photographer</button>
+                                <button class="seg-btn" data-role="Operator" onclick="setRole('Operator')">Operator</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generic hourly: description -->
+                    <div id="hourlyDescField" class="hidden">
+                        <textarea id="hourlyDesc" rows="2" placeholder="Description"
+                            class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"></textarea>
+                    </div>
+
+                    <!-- Times -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white rounded-2xl px-5 py-3">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Start</span>
+                            <input type="time" id="startTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
+                        </div>
+                        <div class="bg-white rounded-2xl px-5 py-3">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">End</span>
+                            <input type="time" id="finishTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
+                        </div>
+                    </div>
+
+                    <!-- Break -->
+                    <div class="bg-white p-5 rounded-2xl flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Break</span>
+                            <div class="flex items-baseline gap-1">
+                                <input type="number" id="breakMinutes" value="0" min="0" step="5"
+                                    class="bg-transparent border-none p-0 w-12 text-[17px] font-bold focus:ring-0 text-slate-800 outline-none">
+                                <span class="text-slate-400 text-xs font-bold uppercase">min</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="adjustBreak(15)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all">+15</button>
+                            <button onclick="adjustBreak(30)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all">+30</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── MANUAL FIELDS ── -->
+                <div id="manualFields" class="hidden space-y-4">
+                    <textarea id="manualDesc" rows="2" placeholder="Description"
+                        class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"></textarea>
+                    <div class="bg-white rounded-2xl px-5 py-3">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Amount ($)</span>
+                        <input type="number" id="manualAmount" placeholder="0.00" step="0.01" min="0"
+                            class="bg-transparent w-full text-[17px] font-medium outline-none">
+                    </div>
+                    <!-- Super toggle -->
+                    <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
+                        <div>
+                            <p class="text-[15px] font-semibold text-slate-800">Include Super (12%)</p>
+                            <p id="superToggleLabel" class="text-[12px] text-slate-400 mt-0.5">Off</p>
+                        </div>
+                        <label class="toggle-wrap">
+                            <input type="checkbox" id="superToggle">
+                            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- ── SUMMARY CARD ── -->
+                <div class="summary-card p-6 bg-white">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total</p>
+                            <h2 id="displayTotal" class="text-4xl font-bold tracking-tight text-slate-900">$0.00</h2>
+                        </div>
+                        <div class="text-right" id="durationBlock">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Duration</p>
+                            <p id="displayDuration" class="text-xl font-bold text-slate-700">0h 0m</p>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5 pt-4 border-t border-slate-100">
+                        <div id="baseLine" class="flex justify-between items-center">
+                            <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Base</span>
+                            <span id="displayBase" class="text-[14px] font-bold text-slate-600">$0.00</span>
+                        </div>
+                        <div id="bonusLine" class="flex justify-between items-center hidden">
+                            <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Bonus</span>
+                            <span id="displayBonus" class="text-[14px] font-bold text-[#34c759]">+$0.00</span>
+                        </div>
+                        <div id="superLine" class="flex justify-between items-center">
+                            <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Super (12%)</span>
+                            <span id="displaySuper" class="text-[14px] font-bold text-[#007AFF]">+$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save button -->
+                <div class="pt-1 pb-2">
+                    <button id="saveBtn" class="btn-primary" disabled>Save Entry</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Recent Entries Tab ── -->
+    <div id="tabRecent" class="flex-1 overflow-y-auto pb-32 hidden" style="padding-top: env(safe-area-inset-top)">
+        <div class="max-w-md mx-auto px-5 pt-10 space-y-4">
+            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Last 14 Days</p>
+            <div id="recentList" class="space-y-2">
+                <p class="text-slate-400 text-sm py-8 text-center">Loading entries...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Tab Bar ── -->
+    <nav id="tabBar" class="flex">
+        <button onclick="switchTab('log')" id="tabBtnLog"
+            class="flex-1 flex flex-col items-center py-3 gap-1 text-[#007AFF]">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 4v16m8-8H4"/>
+            </svg>
+            <span class="text-[10px] font-semibold">New Entry</span>
+        </button>
+        <button onclick="switchTab('recent')" id="tabBtnRecent"
+            class="flex-1 flex flex-col items-center py-3 gap-1 text-slate-400">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <span class="text-[10px] font-semibold">Recent</span>
+        </button>
+    </nav>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// CONFIG  (replace before deploying)
+// ─────────────────────────────────────────────
+const SUPABASE_URL      = 'https://cmbycqzjlwvydemaxrtb.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_UYYQBD6MkiRxpv7Z_-sIGA_riCDJQzD';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let allClients       = [];
+let workflowRates    = [];
+let selectedClient   = null;
+let currentDayType   = 'full';
+let currentWorkflow  = 'Apparel';
+let currentRole      = 'Photographer';
+let superOverride    = false;   // for manual clients
+
+// ─────────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────────
+async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+        showApp();
+        await loadData();
+    } else {
+        showLogin();
+    }
+}
+
+function showLogin() {
+    document.getElementById('loginScreen').classList.add('active');
+    document.getElementById('appShell').classList.remove('active');
+}
+
+function showApp() {
+    document.getElementById('loginScreen').classList.remove('active');
+    document.getElementById('appShell').classList.add('active');
+}
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errEl    = document.getElementById('loginError');
+    const btn      = document.getElementById('loginBtn');
+
+    btn.disabled   = true;
+    btn.textContent = 'Signing in…';
+    errEl.classList.add('hidden');
+
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    btn.disabled   = false;
+    btn.textContent = 'Sign In';
+
+    if (error) {
+        errEl.textContent = error.message;
+        errEl.classList.remove('hidden');
+    } else {
+        showApp();
+        await loadData();
+    }
+});
+
+document.getElementById('signOutBtn').addEventListener('click', async () => {
+    await sb.auth.signOut();
+    resetForm();
+    switchTab('log');
+    showLogin();
+});
+
+// ─────────────────────────────────────────────
+// DATA LOADING
+// ─────────────────────────────────────────────
+async function loadData() {
+    const [{ data: clients }, { data: rates }] = await Promise.all([
+        sb.from('clients').select('*').eq('is_active', true).order('name'),
+        sb.from('client_workflow_rates').select('*')
+    ]);
+    allClients   = clients || [];
+    workflowRates = rates || [];
+
+    setDefaultDate();
+    loadRecentEntries();
+}
+
+function setDefaultDate() {
+    const today = new Date();
+    const yyyy  = today.getFullYear();
+    const mm    = String(today.getMonth() + 1).padStart(2, '0');
+    const dd    = String(today.getDate()).padStart(2, '0');
+    document.getElementById('entryDate').value = `${yyyy}-${mm}-${dd}`;
+}
+
+// ─────────────────────────────────────────────
+// TAB SWITCHING
+// ─────────────────────────────────────────────
+function switchTab(tab) {
+    const isLog    = tab === 'log';
+    document.getElementById('tabLog').classList.toggle('hidden', !isLog);
+    document.getElementById('tabRecent').classList.toggle('hidden', isLog);
+
+    const blue  = 'text-[#007AFF]';
+    const grey  = 'text-slate-400';
+    const logBtn    = document.getElementById('tabBtnLog');
+    const recentBtn = document.getElementById('tabBtnRecent');
+
+    logBtn.className    = `flex-1 flex flex-col items-center py-3 gap-1 ${isLog ? blue : grey}`;
+    recentBtn.className = `flex-1 flex flex-col items-center py-3 gap-1 ${!isLog ? blue : grey}`;
+
+    if (!isLog) loadRecentEntries();
+}
+
+// ─────────────────────────────────────────────
+// CLIENT AUTOCOMPLETE
+// ─────────────────────────────────────────────
+const clientInput     = document.getElementById('clientInput');
+const clientContainer = document.getElementById('clientContainer');
+const autocompleteList = document.getElementById('autocompleteList');
+
+clientInput.addEventListener('input', () => {
+    const val = clientInput.value.trim();
+    autocompleteList.innerHTML = '';
+
+    if (!val) { autocompleteList.style.display = 'none'; return; }
+
+    const matches = allClients.filter(c =>
+        c.name.toLowerCase().includes(val.toLowerCase())
+    );
+
+    if (!matches.length) { autocompleteList.style.display = 'none'; return; }
+
+    matches.forEach(client => {
+        const el = document.createElement('div');
+        el.className = 'px-5 py-4 cursor-pointer active:bg-slate-50 border-b border-slate-100 last:border-0';
+        el.innerHTML = `
+            <div class="font-bold text-slate-800">${client.name}</div>
+            <div class="text-[11px] text-slate-400 font-bold uppercase tracking-tight">${rateLabel(client)}</div>`;
+        el.addEventListener('click', () => selectClient(client));
+        autocompleteList.appendChild(el);
+    });
+    autocompleteList.style.display = 'block';
+});
+
+function rateLabel(c) {
+    if (c.billing_type === 'day_rate') return `$${c.rate_full_day}/full · $${c.rate_half_day}/half`;
+    if (c.billing_type === 'hourly')   return `$${c.rate_hourly}/hr`;
+    return 'Manual billing';
+}
+
+function selectClient(client) {
+    selectedClient = client;
+    clientInput.value    = client.name;
+    clientInput.disabled = true;
+    clientContainer.classList.add('has-client');
+    autocompleteList.style.display = 'none';
+    showEntryFields(client);
+}
+
+document.getElementById('clearClient').addEventListener('click', () => {
+    clientInput.value    = '';
+    clientInput.disabled = false;
+    clientContainer.classList.remove('has-client');
+    selectedClient = null;
+    document.getElementById('entryFields').classList.remove('open');
+    setTimeout(() => clientInput.focus(), 50);
+});
+
+// Close autocomplete on outside click
+document.addEventListener('click', (e) => {
+    if (!clientContainer.contains(e.target)) {
+        autocompleteList.style.display = 'none';
+    }
+});
+
+// ─────────────────────────────────────────────
+// SHOW ENTRY FIELDS (client-aware)
+// ─────────────────────────────────────────────
+function showEntryFields(client) {
+    // Hide all billing sections first
+    document.getElementById('dayRateFields').classList.add('hidden');
+    document.getElementById('hourlyFields').classList.add('hidden');
+    document.getElementById('manualFields').classList.add('hidden');
+    document.getElementById('durationBlock').classList.add('hidden');
+    document.getElementById('bonusLine').classList.add('hidden');
+    document.getElementById('superLine').classList.add('hidden');
+
+    if (client.billing_type === 'day_rate') {
+        document.getElementById('dayRateFields').classList.remove('hidden');
+        document.getElementById('bonusLine').classList.remove('hidden');
+        if (client.pays_super) document.getElementById('superLine').classList.remove('hidden');
+        setDayType('full');
+
+    } else if (client.billing_type === 'hourly') {
+        document.getElementById('hourlyFields').classList.remove('hidden');
+        document.getElementById('durationBlock').classList.remove('hidden');
+        if (client.pays_super) document.getElementById('superLine').classList.remove('hidden');
+
+        // ITS-specific fields
+        const isITS = client.name.toLowerCase().includes('images that sell');
+        document.getElementById('itsFields').classList.toggle('hidden', !isITS);
+        document.getElementById('hourlyDescField').classList.toggle('hidden', isITS);
+
+        // Default times
+        document.getElementById('startTime').value  = '09:00';
+        document.getElementById('finishTime').value = '17:00';
+        document.getElementById('breakMinutes').value = '0';
+
+    } else { // manual
+        document.getElementById('manualFields').classList.remove('hidden');
+        // Pre-set super toggle from client setting
+        superOverride = client.pays_super;
+        const toggle  = document.getElementById('superToggle');
+        toggle.checked = superOverride;
+        updateSuperToggleLabel();
+        if (client.pays_super) document.getElementById('superLine').classList.remove('hidden');
+    }
+
+    document.getElementById('entryFields').classList.add('open');
+    document.getElementById('saveBtn').disabled = false;
+    recalculate();
+
+    setTimeout(() => {
+        document.getElementById('entryFields').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+}
+
+// ─────────────────────────────────────────────
+// DAY RATE CONTROLS
+// ─────────────────────────────────────────────
+function setDayType(type) {
+    currentDayType = type;
+    document.querySelectorAll('[data-day]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.day === type);
+    });
+
+    const workflowSection = document.getElementById('workflowSection');
+    const bonusLine       = document.getElementById('bonusLine');
+
+    if (type === 'full') {
+        workflowSection.classList.add('open');
+        bonusLine.classList.remove('hidden');
+    } else {
+        workflowSection.classList.remove('open');
+        bonusLine.classList.add('hidden');
+    }
+    recalculate();
+}
+
+function setWorkflow(wf) {
+    currentWorkflow = wf;
+    document.querySelectorAll('[data-wf]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.wf === wf);
+    });
+    document.getElementById('brandField').classList.toggle('hidden', wf !== 'Own Brand');
+    document.getElementById('skuField').classList.toggle('hidden', wf === 'Own Brand');
+    recalculate();
+}
+
+// ─────────────────────────────────────────────
+// HOURLY CONTROLS
+// ─────────────────────────────────────────────
+function setRole(role) {
+    currentRole = role;
+    document.querySelectorAll('[data-role]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.role === role);
+    });
+}
+
+window.adjustBreak = (val) => {
+    const el  = document.getElementById('breakMinutes');
+    el.value  = Math.max(0, parseInt(el.value || 0) + val);
+    recalculate();
+};
+
+// ─────────────────────────────────────────────
+// SUPER TOGGLE (manual clients)
+// ─────────────────────────────────────────────
+document.getElementById('superToggle').addEventListener('change', (e) => {
+    superOverride = e.target.checked;
+    document.getElementById('superLine').classList.toggle('hidden', !superOverride);
+    updateSuperToggleLabel();
+    recalculate();
+});
+
+function updateSuperToggleLabel() {
+    document.getElementById('superToggleLabel').textContent = superOverride ? 'Super will be added' : 'Off';
+}
+
+// ─────────────────────────────────────────────
+// CALCULATION
+// ─────────────────────────────────────────────
+function toMins(timeStr) {
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
+}
+
+function fmt(n) {
+    return '$' + Number(n).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function calcDayRate(client, dayType, workflow, skus) {
+    const base = dayType === 'full'
+        ? parseFloat(client.rate_full_day)
+        : parseFloat(client.rate_half_day);
+
+    let bonus = 0;
+    if (dayType === 'full') {
+        if (workflow === 'Own Brand') {
+            bonus = 40;
+        } else {
+            const clientRates = workflowRates.filter(r => r.client_id === client.id);
+            const rate = clientRates.find(r => r.workflow === workflow);
+            if (rate && skus != null) {
+                const s = parseInt(skus) || 0;
+                if (s >= rate.upper_limit_skus) {
+                    bonus = parseFloat(rate.max_bonus);
+                } else if (s > rate.kpi) {
+                    bonus = Math.min((s - rate.kpi) * parseFloat(rate.incentive_rate_per_sku), parseFloat(rate.max_bonus));
+                }
+            }
+        }
+    }
+
+    const subtotal = base + bonus;
+    const superAmt = client.pays_super ? subtotal * parseFloat(client.super_rate || 0.12) : 0;
+    return { base, bonus, superAmt, total: subtotal + superAmt, hoursWorked: null };
+}
+
+function calcHourly(client, startStr, finishStr, breakMins) {
+    if (!startStr || !finishStr) return null;
+    let diffMins = (toMins(finishStr) - toMins(startStr) + 1440) % 1440;
+    diffMins = Math.max(0, diffMins - (parseInt(breakMins) || 0));
+    // Round to nearest quarter hour
+    const roundedHours = Math.round(diffMins / 60 / 0.25) * 0.25;
+    const base     = roundedHours * parseFloat(client.rate_hourly);
+    const superAmt = client.pays_super ? base * parseFloat(client.super_rate || 0.12) : 0;
+    return { base, bonus: 0, superAmt, total: base + superAmt, hoursWorked: roundedHours, rawMins: diffMins };
+}
+
+function calcManual(amountStr, paysSuper, superRate) {
+    const base     = parseFloat(amountStr) || 0;
+    const superAmt = paysSuper ? base * parseFloat(superRate || 0.12) : 0;
+    return { base, bonus: 0, superAmt, total: base + superAmt, hoursWorked: null };
+}
+
+function recalculate() {
+    if (!selectedClient) return;
+
+    let result = null;
+
+    if (selectedClient.billing_type === 'day_rate') {
+        const skus = document.getElementById('skuInput').value;
+        result = calcDayRate(selectedClient, currentDayType, currentWorkflow, skus);
+
+    } else if (selectedClient.billing_type === 'hourly') {
+        const start  = document.getElementById('startTime').value;
+        const finish = document.getElementById('finishTime').value;
+        const brk    = document.getElementById('breakMinutes').value;
+        result = calcHourly(selectedClient, start, finish, brk);
+
+        if (result) {
+            const h = Math.floor(result.rawMins / 60);
+            const m = result.rawMins % 60;
+            document.getElementById('displayDuration').textContent = `${h}h ${m}m`;
+        }
+
+    } else { // manual
+        const amount = document.getElementById('manualAmount').value;
+        result = calcManual(amount, superOverride, selectedClient.super_rate);
+    }
+
+    if (!result) return;
+
+    document.getElementById('displayTotal').textContent = fmt(result.total);
+    document.getElementById('displayBase').textContent  = fmt(result.base);
+    document.getElementById('displayBonus').textContent = `+${fmt(result.bonus)}`;
+    document.getElementById('displaySuper').textContent = `+${fmt(result.superAmt)}`;
+}
+
+// Wire up recalc listeners
+['startTime', 'finishTime', 'breakMinutes', 'skuInput', 'manualAmount', 'brandInput']
+    .forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', recalculate);
+    });
+
+// ─────────────────────────────────────────────
+// SAVE ENTRY
+// ─────────────────────────────────────────────
+document.getElementById('saveBtn').addEventListener('click', async () => {
+    if (!selectedClient) return;
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    try {
+        const payload = buildPayload();
+        const { error } = await sb.from('entries').insert(payload);
+        if (error) throw error;
+
+        btn.textContent = 'Saved ✓';
+        btn.classList.add('success');
+        setTimeout(() => {
+            btn.classList.remove('success');
+            btn.textContent = 'Save Entry';
+            resetForm();
+        }, 2000);
+    } catch (err) {
+        alert('Error saving entry: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Save Entry';
+    }
+});
+
+function buildPayload() {
+    const date = document.getElementById('entryDate').value;
+    const base = {
+        client_id: selectedClient.id,
+        date,
+        billing_type_snapshot: selectedClient.billing_type,
+    };
+
+    if (selectedClient.billing_type === 'day_rate') {
+        const skus   = parseInt(document.getElementById('skuInput').value) || null;
+        const brand  = document.getElementById('brandInput').value.trim() || null;
+        const result = calcDayRate(selectedClient, currentDayType, currentWorkflow, skus);
+        return {
+            ...base,
+            day_type:      currentDayType,
+            workflow_type: currentDayType === 'full' ? currentWorkflow : null,
+            brand:         currentDayType === 'full' && currentWorkflow === 'Own Brand' ? brand : null,
+            skus:          currentDayType === 'full' && currentWorkflow !== 'Own Brand' ? skus : null,
+            base_amount:   result.base,
+            bonus_amount:  result.bonus,
+            super_amount:  result.superAmt,
+            total_amount:  result.total,
+        };
+
+    } else if (selectedClient.billing_type === 'hourly') {
+        const start  = document.getElementById('startTime').value;
+        const finish = document.getElementById('finishTime').value;
+        const brk    = parseInt(document.getElementById('breakMinutes').value) || 0;
+        const result = calcHourly(selectedClient, start, finish, brk);
+
+        const isITS = selectedClient.name.toLowerCase().includes('images that sell');
+        const shootClient = isITS ? document.getElementById('shootClientInput').value.trim() || null : null;
+        const role        = isITS ? currentRole : null;
+        const description = !isITS ? document.getElementById('hourlyDesc').value.trim() || null : null;
+
+        return {
+            ...base,
+            start_time:    start,
+            finish_time:   finish,
+            break_minutes: brk,
+            hours_worked:  result.hoursWorked,
+            shoot_client:  shootClient,
+            role,
+            description,
+            base_amount:   result.base,
+            bonus_amount:  0,
+            super_amount:  result.superAmt,
+            total_amount:  result.total,
+        };
+
+    } else { // manual
+        const amount = parseFloat(document.getElementById('manualAmount').value) || 0;
+        const desc   = document.getElementById('manualDesc').value.trim() || null;
+        const result = calcManual(amount, superOverride, selectedClient.super_rate);
+        return {
+            ...base,
+            description:  desc,
+            base_amount:  result.base,
+            bonus_amount: 0,
+            super_amount: result.superAmt,
+            total_amount: result.total,
+        };
+    }
+}
+
+function resetForm() {
+    clientInput.value    = '';
+    clientInput.disabled = false;
+    clientContainer.classList.remove('has-client');
+    selectedClient     = null;
+    currentDayType     = 'full';
+    currentWorkflow    = 'Apparel';
+    currentRole        = 'Photographer';
+
+    document.getElementById('entryFields').classList.remove('open');
+    document.getElementById('saveBtn').disabled = true;
+    document.getElementById('saveBtn').textContent = 'Save Entry';
+
+    // Reset amounts
+    document.getElementById('displayTotal').textContent = '$0.00';
+    document.getElementById('displayBase').textContent  = '$0.00';
+    document.getElementById('displayBonus').textContent = '+$0.00';
+    document.getElementById('displaySuper').textContent = '+$0.00';
+    document.getElementById('displayDuration').textContent = '0h 0m';
+
+    setDefaultDate();
+}
+
+// ─────────────────────────────────────────────
+// RECENT ENTRIES
+// ─────────────────────────────────────────────
+async function loadRecentEntries() {
+    const list = document.getElementById('recentList');
+    list.innerHTML = '<p class="text-slate-400 text-sm py-8 text-center">Loading…</p>';
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 14);
+    const yyyy = cutoff.getFullYear();
+    const mm   = String(cutoff.getMonth() + 1).padStart(2, '0');
+    const dd   = String(cutoff.getDate()).padStart(2, '0');
+
+    const { data, error } = await sb
+        .from('entries')
+        .select('*, clients(name, billing_type)')
+        .gte('date', `${yyyy}-${mm}-${dd}`)
+        .order('date', { ascending: false })
+        .limit(60);
+
+    if (error || !data?.length) {
+        list.innerHTML = '<p class="text-slate-400 text-sm py-8 text-center">No entries in the last 14 days.</p>';
+        return;
+    }
+
+    list.innerHTML = '';
+    data.forEach(entry => {
+        const clientName  = entry.clients?.name || 'Unknown';
+        const billingType = entry.clients?.billing_type || '';
+        const badgeColor  = badgeColors[billingType] || 'bg-slate-100 text-slate-500';
+        const description = entryDescription(entry);
+        const dateStr     = formatEntryDate(entry.date);
+        const total       = fmt(entry.total_amount);
+
+        const el = document.createElement('div');
+        el.className = 'entry-row';
+        el.innerHTML = `
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="client-badge ${badgeColor}">${clientName}</span>
+                    <span class="text-[12px] text-slate-400">${dateStr}</span>
+                </div>
+                <p class="text-[14px] font-semibold text-slate-700 truncate">${description}</p>
+            </div>
+            <span class="text-[16px] font-bold text-slate-900 shrink-0">${total}</span>`;
+        list.appendChild(el);
+    });
+}
+
+const badgeColors = {
+    'day_rate': 'bg-purple-100 text-purple-700',
+    'hourly':   'bg-blue-100 text-blue-700',
+    'manual':   'bg-amber-100 text-amber-700',
+};
+
+function entryDescription(entry) {
+    if (entry.description)  return entry.description;
+    if (entry.shoot_client) return entry.shoot_client + (entry.role ? ` · ${entry.role}` : '');
+    if (entry.day_type)     return (entry.day_type === 'full' ? 'Full day' : 'Half day')
+                                   + (entry.workflow_type ? ` · ${entry.workflow_type}` : '');
+    if (entry.hours_worked) return `${entry.hours_worked}h`;
+    return '—';
+}
+
+function formatEntryDate(dateStr) {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-');
+    const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+    return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+}
+
+// ─────────────────────────────────────────────
+// START
+// ─────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice TI63 - Jesse Morley</title>
+    <style>
+        /* Base Reset & Arial Font */
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+            color: #000;
+            line-height: 1.2;
+        }
+
+        /* A4 Page Setup */
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 10mm 15mm;
+            margin: 10mm auto;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        @media print {
+            body { background: white; }
+            .page {
+                margin: 0;
+                box-shadow: none;
+                width: 100%;
+                height: 100%;
+            }
+            .no-print { display: none; }
+        }
+
+        /* Top Header Section */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 80px; 
+        }
+
+        .address-block {
+            font-size: 13.5px;
+        }
+        .address-block p {
+            margin: 0 0 3px 0;
+        }
+
+        /* Invoice Title */
+        .invoice-title {
+            font-size: 52px; 
+            font-weight: 500;
+            margin: 0 0 70px 0;
+            letter-spacing: -1px;
+        }
+
+        /* Meta Info Section - Grid Aligned */
+        .meta-container {
+            display: flex;
+            margin-bottom: 120px; 
+            font-size: 13.5px;
+        }
+
+        /* Increased width to 28% to push BSB column further right */
+        .dates-block {
+            width: 28%; 
+        }
+        .dates-block p { margin: 0 0 4px 0; }
+
+        /* Bank info follows the dates-block */
+        .bank-block {
+            flex-grow: 1;
+        }
+        .bank-block p { margin: 0 0 4px 0; }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 100px;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px 0;
+            font-size: 13.5px;
+            font-weight: normal;
+        }
+
+        td {
+            padding: 6px 0;
+            vertical-align: top;
+            font-size: 13.5px;
+        }
+
+        /* Column widths - Fixed Grid */
+        /* Increased col-date to 28% to match the meta-container grid above */
+        .col-date { width: 28%; }
+        .col-item { width: 39%; }
+        .col-qty { width: 11%; text-align: right; }
+        .col-rate { width: 11%; text-align: right; }
+        .col-amount { width: 11%; text-align: right; }
+
+        /* Totals Area */
+        .totals-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            font-size: 13.5px;
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 4px 0;
+        }
+
+        .totals-row.grand-total {
+            margin-top: 40px;
+            font-weight: normal;
+        }
+
+        .label { text-align: left; }
+        .value { text-align: right; width: 100px; }
+
+        /* Utility */
+        .no-print {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <button class="no-print" onclick="window.print()">Print to PDF</button>
+
+    <div class="page">
+        <!-- Top Section -->
+        <div class="top-header">
+            <div class="address-block">
+                <p>Jesse Morley</p>
+                <p>ABN 62 622 680 864</p>
+                <p>1 Scouller Street</p>
+                <p>Marrickville, NSW 2204</p>
+            </div>
+            <div class="address-block">
+                <p>The ICONIC</p>
+                <p>jaime.linwood@theiconic.com.au</p>
+                <p>Unit 206, 30-40 Harcourt Parade Rosebery</p>
+                <p>Rosebery, NSW 2018</p>
+            </div>
+        </div>
+
+        <!-- Main Title -->
+        <h1 class="invoice-title">Invoice TI63</h1>
+
+        <!-- Dates and Bank Details - Grid Aligned with more space -->
+        <div class="meta-container">
+            <div class="dates-block">
+                <p>Issued Mar 16, 2026</p>
+                <p>Due Apr 15, 2026</p>
+            </div>
+            <div class="bank-block">
+                <p>BSB 313140 Account Number 12239852</p>
+                <p>Smart Future Trust, Member 192726, ABN 68964712340</p>
+                <p>USI 68964712340019</p>
+            </div>
+        </div>
+
+        <!-- Line Items -->
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-date">Item</th>
+                    <th class="col-item"></th>
+                    <th class="col-qty">Qty</th>
+                    <th class="col-rate">Rate</th>
+                    <th class="col-amount">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="col-date">Mon, Feb 9</td>
+                    <td class="col-item">Dazie</td>
+                    <td class="col-qty">1</td>
+                    <td class="col-rate">390</td>
+                    <td class="col-amount">390</td>
+                </tr>
+                <tr>
+                    <td class="col-date">Wed, Feb 11</td>
+                    <td class="col-item">Branded</td>
+                    <td class="col-qty">1</td>
+                    <td class="col-rate">350</td>
+                    <td class="col-amount">350</td>
+                </tr>
+                <tr>
+                    <td class="col-date">Thu, Feb 12</td>
+                    <td class="col-item">Branded</td>
+                    <td class="col-qty">1</td>
+                    <td class="col-rate">350</td>
+                    <td class="col-amount">350</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Totals Section -->
+        <div class="totals-section">
+            <div class="totals-row">
+                <span class="label">Subtotal</span>
+                <span class="value">1,090.00</span>
+            </div>
+            <div class="totals-row">
+                <span class="label">Super (12%)</span>
+                <span class="value">130.80</span>
+            </div>
+            <div class="totals-row grand-total">
+                <span class="label">Total</span>
+                <span class="value">$1,220.80</span>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
