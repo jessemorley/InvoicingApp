@@ -5,6 +5,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     case entries = "Entries"
     case generateInvoices = "Generate Invoices"
     case summary = "Invoices"
+    case stats = "Stats"
     case clients = "Clients"
     case settings = "Settings"
 
@@ -15,7 +16,8 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .logEntry: "square.and.pencil"
         case .entries: "list.bullet"
         case .generateInvoices: "plus.circle"
-        case .summary: "chart.bar"
+        case .summary: "doc.text"
+        case .stats: "chart.bar"
         case .clients: "person.2"
         case .settings: "gear"
         }
@@ -46,6 +48,8 @@ struct ContentView: View {
                 NavigationStack {
                     SummaryView()
                 }
+            case .stats:
+                StatsView()
             case .clients:
                 NavigationStack {
                     ClientListView()

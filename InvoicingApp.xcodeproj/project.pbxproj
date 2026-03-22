@@ -50,6 +50,8 @@
 		A10001041 /* ImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000042 /* ImportService.swift */; };
 		A10001042 /* ImportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000043 /* ImportViewModel.swift */; };
 		A10001043 /* ImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000044 /* ImportView.swift */; };
+		A10001045 /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000045 /* StatsView.swift */; };
+		A10001046 /* InvoiceInspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000046 /* InvoiceInspectorView.swift */; };
 		A10001099 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A10009001 /* Supabase */; };
 /* End PBXBuildFile section */
 
@@ -98,6 +100,8 @@
 		A10000042 /* ImportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportService.swift; sourceTree = "<group>"; };
 		A10000043 /* ImportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportViewModel.swift; sourceTree = "<group>"; };
 		A10000044 /* ImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportView.swift; sourceTree = "<group>"; };
+		A10000045 /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
+		A10000046 /* InvoiceInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceInspectorView.swift; sourceTree = "<group>"; };
 		A10000050 /* InvoicingApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InvoicingApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -182,6 +186,7 @@
 				A10003007 /* Entries */,
 				A10003008 /* Invoices */,
 				A10003011 /* Summary */,
+				A10003015 /* Stats */,
 				A10003012 /* Clients */,
 				A10003013 /* Settings */,
 				A10003009 /* Components */,
@@ -245,8 +250,17 @@
 			isa = PBXGroup;
 			children = (
 				A10000030 /* SummaryView.swift */,
+				A10000046 /* InvoiceInspectorView.swift */,
 			);
 			path = Summary;
+			sourceTree = "<group>";
+		};
+		A10003015 /* Stats */ = {
+			isa = PBXGroup;
+			children = (
+				A10000045 /* StatsView.swift */,
+			);
+			path = Stats;
 			sourceTree = "<group>";
 		};
 		A10003012 /* Clients */ = {
@@ -393,6 +407,8 @@
 				A10001041 /* ImportService.swift in Sources */,
 				A10001042 /* ImportViewModel.swift in Sources */,
 				A10001043 /* ImportView.swift in Sources */,
+				A10001045 /* StatsView.swift in Sources */,
+				A10001046 /* InvoiceInspectorView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

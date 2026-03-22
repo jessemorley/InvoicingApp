@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SummaryView: View {
     @StateObject private var vm = SummaryViewModel()
+    @State private var selectedInvoiceID: UUID?
+    @State private var showInspector = true
     @State private var invoiceToDelete: Invoice?
 
     private static let rowDateFormatter: DateFormatter = {
@@ -10,11 +12,86 @@ struct SummaryView: View {
         return f
     }()
 
+    private var selectedInvoice: Invoice? {
+        guard let id = selectedInvoiceID else { return nil }
+        return vm.filteredInvoices.first { $0.id == id }
+    }
+
     var body: some View {
-        HStack(spacing: 0) {
-            // Main invoice list
-            VStack(spacing: 0) {
-                // Filter bar
+        VStack(spacing: 0) {
+            if let error = vm.errorMessage {
+                Text(error)
+                    .foregroundStyle(.red)
+                    .padding()
+            }
+
+            if vm.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if vm.filteredInvoices.isEmpty {
+                ContentUnavailableView(
+                    "No Invoices",
+                    systemImage: "doc.text",
+                    description: Text("No invoices found for this period.")
+                )
+            } else {
+                List(selection: $selectedInvoiceID) {
+                    if vm.groupByClient {
+                        ForEach(vm.groups) { group in
+                            Section {
+                                ForEach(group.invoices) { invoice in
+                                    invoiceRow(invoice, clientName: group.client.name)
+                                        .tag(invoice.id)
+                                }
+                            } header: {
+                                HStack {
+                                    Text(group.client.name)
+                                        .font(.headline)
+                                    Spacer()
+                                    Text("Outstanding: ")
+                                        .foregroundStyle(.secondary)
+                                    CurrencyText(amount: group.outstanding)
+                                        .foregroundStyle(group.outstanding > 0 ? .red : .green)
+                                }
+                            }
+                        }
+                    } else {
+                        ForEach(vm.filteredInvoices) { invoice in
+                            invoiceRow(invoice, clientName: vm.clientName(for: invoice))
+                                .tag(invoice.id)
+                        }
+                    }
+                }
+
+                Divider()
+
+                // Footer totals
+                HStack {
+                    VStack(alignment: .leading) {
+                        HStack {
+                            Text("Gross Total:")
+                                .foregroundStyle(.secondary)
+                            CurrencyText(amount: vm.grossTotal)
+                                .font(.title3.monospacedDigit().bold())
+                        }
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing) {
+                        HStack {
+                            Text("Outstanding:")
+                                .foregroundStyle(.secondary)
+                            CurrencyText(amount: vm.outstandingTotal)
+                                .font(.title3.monospacedDigit().bold())
+                                .foregroundStyle(vm.outstandingTotal > 0 ? .red : .green)
+                        }
+                    }
+                }
+                .padding()
+            }
+        }
+        .navigationTitle("Invoices")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
                 HStack {
                     Picker("Date Range", selection: $vm.dateRangePreset) {
                         ForEach(DateRangePreset.allCases, id: \.self) { preset in
@@ -42,143 +119,31 @@ struct SummaryView: View {
                         Text("Group By")
                     }
                     .toggleStyle(.button)
-
-                    Spacer()
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-
-                Divider()
-
-                if let error = vm.errorMessage {
-                    Text(error)
-                        .foregroundStyle(.red)
-                        .padding()
-                }
-
-                if vm.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if vm.filteredInvoices.isEmpty {
-                    ContentUnavailableView(
-                        "No Invoices",
-                        systemImage: "doc.text",
-                        description: Text("No invoices found for this period.")
-                    )
-                } else {
-                    List {
-                        if vm.groupByClient {
-                            ForEach(vm.groups) { group in
-                                Section {
-                                    ForEach(group.invoices) { invoice in
-                                        invoiceRow(invoice, clientName: group.client.name)
-                                    }
-                                } header: {
-                                    HStack {
-                                        Text(group.client.name)
-                                            .font(.headline)
-                                        Spacer()
-                                        Text("Outstanding: ")
-                                            .foregroundStyle(.secondary)
-                                        CurrencyText(amount: group.outstanding)
-                                            .foregroundStyle(group.outstanding > 0 ? .red : .green)
-                                    }
-                                }
-                            }
-                        } else {
-                            ForEach(vm.filteredInvoices) { invoice in
-                                invoiceRow(invoice, clientName: vm.clientName(for: invoice))
-                            }
-                        }
-                    }
-
-                    Divider()
-
-                    // Footer totals
-                    HStack {
-                        VStack(alignment: .leading) {
-                            HStack {
-                                Text("Gross Total:")
-                                    .foregroundStyle(.secondary)
-                                CurrencyText(amount: vm.grossTotal)
-                                    .font(.title3.monospacedDigit().bold())
-                            }
-                        }
-                        Spacer()
-                        VStack(alignment: .trailing) {
-                            HStack {
-                                Text("Outstanding:")
-                                    .foregroundStyle(.secondary)
-                                CurrencyText(amount: vm.outstandingTotal)
-                                    .font(.title3.monospacedDigit().bold())
-                                    .foregroundStyle(vm.outstandingTotal > 0 ? .red : .green)
-                            }
-                        }
-                    }
-                    .padding()
                 }
             }
-            .frame(maxWidth: .infinity)
-
-            Divider()
-
-            // Right-hand breakdown pane
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Breakdown by Client")
-                    .font(.headline)
-
-                VStack(spacing: 8) {
-                    HStack {
-                        Text("Client")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        Text("Paid")
-                            .frame(width: 90, alignment: .trailing)
-                        Text("Outstanding")
-                            .frame(width: 90, alignment: .trailing)
-                    }
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.secondary)
-
-                    Divider()
-
-                    ForEach(vm.topClientBreakdowns) { breakdown in
-                        HStack {
-                            Text(breakdown.name)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            CurrencyText(amount: breakdown.paid)
-                                .font(.body.monospacedDigit())
-                                .frame(width: 90, alignment: .trailing)
-                                .foregroundStyle(.green)
-                            CurrencyText(amount: breakdown.outstanding)
-                                .font(.body.monospacedDigit())
-                                .frame(width: 90, alignment: .trailing)
-                                .foregroundStyle(breakdown.outstanding > 0 ? .red : .secondary)
-                        }
-                    }
-
-                    Divider()
-
-                    HStack {
-                        Text("Total")
-                            .bold()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        CurrencyText(amount: vm.totalPaid)
-                            .font(.body.monospacedDigit().bold())
-                            .frame(width: 90, alignment: .trailing)
-                            .foregroundStyle(.green)
-                        CurrencyText(amount: vm.outstandingTotal)
-                            .font(.body.monospacedDigit().bold())
-                            .frame(width: 90, alignment: .trailing)
-                            .foregroundStyle(vm.outstandingTotal > 0 ? .red : .secondary)
-                    }
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    showInspector.toggle()
+                } label: {
+                    Label("Inspector", systemImage: "sidebar.trailing")
                 }
-
-                Spacer()
             }
-            .padding()
-            .frame(width: 340)
         }
-        .navigationTitle("Invoices")
+        .inspector(isPresented: $showInspector) {
+            if let invoice = selectedInvoice {
+                InvoiceInspectorView(invoice: invoice) {
+                    Task { await vm.loadData() }
+                }
+                .id(invoice.id)
+            } else {
+                ContentUnavailableView(
+                    "No Selection",
+                    systemImage: "doc.text",
+                    description: Text("Select an invoice to view details.")
+                )
+            }
+        }
+        .inspectorColumnWidth(min: 280, ideal: 320, max: 400)
         .task { await vm.loadData() }
         .confirmationDialog(
             "Delete invoice \(invoiceToDelete?.invoiceNumber ?? "")?",
@@ -204,29 +169,27 @@ struct SummaryView: View {
     }
 
     private func invoiceRow(_ invoice: Invoice, clientName: String) -> some View {
-        NavigationLink(destination: InvoiceDetailView(invoice: invoice)) {
-            HStack {
-                Text(Self.rowDateFormatter.string(from: invoice.issuedDateValue))
-                    .frame(width: 120, alignment: .leading)
-                Text(invoice.invoiceNumber)
-                    .font(.body.monospacedDigit())
-                    .frame(width: 80, alignment: .leading)
-                Text(clientName)
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(clientChipColor(clientName).opacity(0.15))
-                    .foregroundStyle(clientChipColor(clientName))
-                    .clipShape(Capsule())
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                CurrencyText(amount: invoice.total)
-                    .font(.body.monospacedDigit())
-                    .frame(width: 100, alignment: .trailing)
-                StatusBadgeView(status: invoice.status)
-                    .frame(width: 80)
-            }
-            .padding(.vertical, 6)
+        HStack {
+            Text(Self.rowDateFormatter.string(from: invoice.issuedDateValue))
+                .frame(width: 120, alignment: .leading)
+            Text(invoice.invoiceNumber)
+                .font(.body.monospacedDigit())
+                .frame(width: 80, alignment: .leading)
+            Text(clientName)
+                .font(.caption)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
+                .background(clientChipColor(clientName).opacity(0.15))
+                .foregroundStyle(clientChipColor(clientName))
+                .clipShape(Capsule())
+                .frame(maxWidth: .infinity, alignment: .leading)
+            CurrencyText(amount: invoice.total)
+                .font(.body.monospacedDigit())
+                .frame(width: 100, alignment: .trailing)
+            StatusBadgeView(status: invoice.status)
+                .frame(width: 80)
         }
+        .padding(.vertical, 6)
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button(role: .destructive) {
                 invoiceToDelete = invoice
