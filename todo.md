@@ -19,15 +19,11 @@ Settings:
 Invoice Preview:
 - Information like start/finish/break times, full day/half day, etc. should be shown on the invoice line items
 
-Generate Invoices:
-
+PWA:
+- ability to edit entries from recent list (unless already invoiced)
+- abolity to delete entrties from recent list (unless already invoiced)
+- add invoice chips (invoice number and colour) to entries in recent list
 
 Features
 - Export feature
 - App seems to be relying on network connection to pull all data from supabase as needed without a local caching system, making the interface sluggish and unusable without a network connection. Plan a system to solve this.
-- The mobile PWA
-    A simple web interface hosted on Cloudflare Pages, hitting the same Supabase backend.
-    Screens:
-    1. **Log entry** — same client-aware form as macOS app, mobile-optimised layout
-    2. **Recent entries** — [text](mobilePWAprototype.html)
-    Auth via Supabase magic link or password, same credentials as macOS app.
