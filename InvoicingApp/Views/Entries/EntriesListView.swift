@@ -8,6 +8,7 @@ struct EntriesListView: View {
     @State private var selectedInvoice: Invoice?
     @State private var showLogEntry = false
     @State private var showGenerateSheet = false
+    @State private var hasInspectorAppeared = false
     @Binding var sidebarSelection: SidebarItem?
 
     private var selectedEntry: Entry? {
@@ -105,29 +106,33 @@ struct EntriesListView: View {
             }
         }
         .inspector(isPresented: $showInspector) {
-            if let entry = selectedEntry, let client = vm.clientMap[entry.clientId] {
-                EntryInspectorView(
-                    entry: entry,
-                    client: client,
-                    invoice: entry.invoiceId.flatMap { vm.invoiceMap[$0] },
-                    onSave: { updated in
-                        Task { await vm.updateEntry(updated) }
-                    },
-                    onDelete: { entry in
-                        Task { await vm.deleteEntry(entry) }
-                        selectedEntryID = nil
-                    }
-                )
-                .id(entry.id)
-            } else {
-                ContentUnavailableView(
-                    "No Selection",
-                    systemImage: "doc.text",
-                    description: Text("Select an entry to view details.")
-                )
+            Group {
+                if let entry = selectedEntry, let client = vm.clientMap[entry.clientId] {
+                    EntryInspectorView(
+                        entry: entry,
+                        client: client,
+                        invoice: entry.invoiceId.flatMap { vm.invoiceMap[$0] },
+                        onSave: { updated in
+                            Task { await vm.updateEntry(updated) }
+                        },
+                        onDelete: { entry in
+                            Task { await vm.deleteEntry(entry) }
+                            selectedEntryID = nil
+                        }
+                    )
+                    .id(entry.id)
+                } else {
+                    ContentUnavailableView(
+                        "No Selection",
+                        systemImage: "doc.text",
+                        description: Text("Select an entry to view details.")
+                    )
+                }
             }
+            .inspectorColumnWidth(min: 200, ideal: 320, max: 400)
+            .frame(minWidth: hasInspectorAppeared ? nil : 320)
+            .onAppear { hasInspectorAppeared = true }
         }
-        .inspectorColumnWidth(min: 280, ideal: 320, max: 400)
         .task { await vm.loadData() }
         .sheet(isPresented: $showLogEntry) {
             Task { await vm.loadData() }
