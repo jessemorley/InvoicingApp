@@ -23,7 +23,7 @@ PWA:
 - ability to edit entries from recent list (unless already invoiced)
 - abolity to delete entrties from recent list (unless already invoiced)
 - add invoice chips (invoice number and colour) to entries in recent list
-
+- move initial client text box to middle of screen to make it easier to reach on mobile
 Features
 - Export feature
 - App seems to be relying on network connection to pull all data from supabase as needed without a local caching system, making the interface sluggish and unusable without a network connection. Plan a system to solve this.
