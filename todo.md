@@ -2,8 +2,6 @@ Entries View:
 - Instead of a separate log entries tab, add a + button to the top left of the menubar in entries view (Replace "Entries" title)
 - Add start finish and break times to list view where applicable
 - Add option to add new client from client selection dropdown in entries creation view
-- Calendar view: add subtle borders to the day cells, like in the macos app
-- Calendar view: clicking an entry doesn't do anything—it should open it for editing
 - Instead of opening the edit entry view when clicking an entry, open the details in an inspector panel. The fields should be editible if the invoice has not been created yet.
 - Calendar view: make vertically scrollable, like the Calendar macos app
 - List view: Option to group in weeks (display week total for each group)

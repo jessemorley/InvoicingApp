@@ -66,7 +66,7 @@ struct CalendarView: View {
             let days = sixWeekGrid
             GeometryReader { geo in
                 let rowHeight = geo.size.height / 6
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 0) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 1), count: 7), spacing: 1) {
                     ForEach(Array(days.enumerated()), id: \.offset) { _, date in
                         if let date {
                             CalendarDayCell(
@@ -78,12 +78,12 @@ struct CalendarView: View {
                             )
                             .frame(height: rowHeight)
                         } else {
-                            Color.clear
+                            Color(nsColor: .controlBackgroundColor)
                                 .frame(height: rowHeight)
-                                .border(Color(nsColor: .separatorColor), width: 0.5)
                         }
                     }
                 }
+                .background(Color(nsColor: .separatorColor))
                 .padding(.horizontal)
             }
         }

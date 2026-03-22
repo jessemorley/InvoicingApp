@@ -11,6 +11,10 @@ struct CalendarDayCell: View {
         Calendar.current.isDateInToday(date)
     }
 
+    private var isWeekend: Bool {
+        Calendar.current.isDateInWeekend(date)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("\(Calendar.current.component(.day, from: date))")
@@ -27,10 +31,14 @@ struct CalendarDayCell: View {
                                 .font(.system(size: 10, weight: .semibold))
                                 .lineLimit(1)
                             Spacer(minLength: 0)
-                            if let status = invoiceStatus(for: entry) {
-                                Image(systemName: status.icon)
-                                    .font(.system(size: 8))
-                                    .foregroundStyle(status.color)
+                            if let inv = invoiceInfo(for: entry) {
+                                Text(inv.number)
+                                    .font(.system(size: 7, weight: .medium))
+                                    .padding(.horizontal, 3)
+                                    .padding(.vertical, 1)
+                                    .background(inv.color.opacity(0.15))
+                                    .foregroundStyle(inv.color)
+                                    .clipShape(Capsule())
                             }
                         }
                         if let desc = entryDescription(entry) {
@@ -52,8 +60,7 @@ struct CalendarDayCell: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(4)
-        .background(isToday ? Color.blue.opacity(0.05) : Color.clear)
-        .border(Color(nsColor: .separatorColor), width: 0.5)
+        .background(isToday ? Color.blue.opacity(0.05) : isWeekend ? Color.primary.opacity(0.03) : Color.clear)
     }
 
     private func entryDescription(_ entry: Entry) -> String? {
@@ -73,15 +80,15 @@ struct CalendarDayCell: View {
         }
     }
 
-    private func invoiceStatus(for entry: Entry) -> (icon: String, color: Color)? {
+    private func invoiceInfo(for entry: Entry) -> (number: String, color: Color)? {
         guard let invoiceId = entry.invoiceId,
               let invoice = invoiceMap[invoiceId] else { return nil }
-        switch invoice.status {
-        case .draft, .issued:
-            return ("doc.text.fill", .orange)
-        case .paid:
-            return ("checkmark.circle.fill", .green)
+        let color: Color = switch invoice.status {
+        case .draft: .gray
+        case .issued: .orange
+        case .paid: .green
         }
+        return (invoice.invoiceNumber, color)
     }
 
     private func clientColor(for entry: Entry) -> Color {
