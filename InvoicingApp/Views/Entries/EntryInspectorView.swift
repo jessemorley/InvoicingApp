@@ -3,6 +3,7 @@ import SwiftUI
 struct EntryInspectorView: View {
     let entry: Entry
     let client: Client?
+    var invoice: Invoice?
     var onSave: ((Entry) -> Void)?
     var onDelete: ((Entry) -> Void)?
 
@@ -19,13 +20,18 @@ struct EntryInspectorView: View {
                     Text(entry.dateValue, format: .dateTime.weekday(.wide).day().month(.wide))
                         .font(.title3.bold())
                     Spacer()
-                    if entry.invoiceId != nil {
-                        Label("Invoiced", systemImage: "doc.text.fill")
-                            .font(.caption)
+                    if let invoice {
+                        let color: Color = switch invoice.status {
+                        case .draft: .gray
+                        case .issued: .orange
+                        case .paid: .green
+                        }
+                        Text(invoice.invoiceNumber)
+                            .font(.caption.weight(.medium))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(.orange.opacity(0.15))
-                            .foregroundStyle(.orange)
+                            .background(color.opacity(0.15))
+                            .foregroundStyle(color)
                             .clipShape(Capsule())
                     }
                 }

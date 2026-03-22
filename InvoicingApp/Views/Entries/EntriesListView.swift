@@ -49,9 +49,9 @@ struct EntriesListView: View {
                     )
                 }
             }
-        }
-        .overlay(alignment: .bottom) {
+            // Uninvoiced entries bottom bar
             if !vm.uninvoicedGroups.isEmpty {
+                Divider()
                 HStack {
                     Image(systemName: "doc.text")
                         .foregroundStyle(.secondary)
@@ -68,7 +68,6 @@ struct EntriesListView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
-                .background(.ultraThinMaterial)
             }
         }
         .navigationTitle("Entries")
@@ -110,6 +109,7 @@ struct EntriesListView: View {
                 EntryInspectorView(
                     entry: entry,
                     client: client,
+                    invoice: entry.invoiceId.flatMap { vm.invoiceMap[$0] },
                     onSave: { updated in
                         Task { await vm.updateEntry(updated) }
                     },
@@ -204,11 +204,6 @@ struct EntriesListView: View {
                         groupSummaryRow(group)
                     }
                 }
-            }
-        }
-        .safeAreaInset(edge: .bottom) {
-            if !vm.uninvoicedGroups.isEmpty {
-                Spacer().frame(height: 50)
             }
         }
         .background {
