@@ -19,8 +19,17 @@ final class EntriesListViewModel: ObservableObject {
     @Published var startDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
     @Published var endDate: Date = Date()
     @Published var groupByWeek = false
+    @Published var uninvoicedGroups: [ClientEntryGroup] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
+
+    var uninvoicedEntryCount: Int {
+        uninvoicedGroups.reduce(0) { $0 + $1.entries.count }
+    }
+
+    var uninvoicedTotal: Decimal {
+        uninvoicedGroups.reduce(0) { $0 + $1.total }
+    }
 
     var activeClients: [Client] {
         clients.filter(\.isActive)
@@ -129,6 +138,15 @@ final class EntriesListViewModel: ObservableObject {
             errorMessage = error.localizedDescription
         }
         isLoading = false
+        await scanUninvoiced()
+    }
+
+    func scanUninvoiced() async {
+        do {
+            uninvoicedGroups = try await InvoiceGenerationService().scanUninvoicedEntries()
+        } catch {
+            // Non-critical — bottom bar just won't show
+        }
     }
 
     func updateEntry(_ entry: Entry) async {

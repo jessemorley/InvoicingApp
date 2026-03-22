@@ -2,7 +2,6 @@ import SwiftUI
 
 enum SidebarItem: String, CaseIterable, Identifiable {
     case entries = "Entries"
-    case generateInvoices = "Generate Invoices"
     case summary = "Invoices"
     case stats = "Stats"
     case clients = "Clients"
@@ -13,7 +12,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .entries: "list.bullet"
-        case .generateInvoices: "plus.circle"
         case .summary: "doc.text"
         case .stats: "chart.bar"
         case .clients: "person.2"
@@ -36,10 +34,8 @@ struct ContentView: View {
             switch selection {
             case .entries:
                 NavigationStack {
-                    EntriesListView()
+                    EntriesListView(sidebarSelection: $selection)
                 }
-            case .generateInvoices:
-                GenerateInvoicesView()
             case .summary:
                 NavigationStack {
                     SummaryView()

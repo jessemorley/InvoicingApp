@@ -7,6 +7,8 @@ struct EntriesListView: View {
     @State private var entryToDelete: Entry?
     @State private var selectedInvoice: Invoice?
     @State private var showLogEntry = false
+    @State private var showGenerateSheet = false
+    @Binding var sidebarSelection: SidebarItem?
 
     private var selectedEntry: Entry? {
         guard let id = selectedEntryID else { return nil }
@@ -46,6 +48,27 @@ struct EntriesListView: View {
                         }
                     )
                 }
+            }
+
+            // Uninvoiced entries bottom bar
+            if !vm.uninvoicedGroups.isEmpty {
+                HStack {
+                    Image(systemName: "doc.text")
+                        .foregroundStyle(.secondary)
+                    Text("\(vm.uninvoicedGroups.count) invoices · \(vm.uninvoicedEntryCount) entries uninvoiced")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    CurrencyText(amount: vm.uninvoicedTotal)
+                        .font(.subheadline.monospacedDigit().bold())
+                    Button("Generate") {
+                        showGenerateSheet = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(.bar)
             }
         }
         .navigationTitle("Entries")
@@ -111,6 +134,15 @@ struct EntriesListView: View {
         } content: {
             LogEntryView()
                 .frame(minWidth: 400, minHeight: 500)
+        }
+        .sheet(isPresented: $showGenerateSheet) {
+            Task { await vm.loadData() }
+        } content: {
+            GenerateInvoicesSheetView(onGenerated: {
+                showGenerateSheet = false
+                sidebarSelection = .summary
+            })
+            .frame(minWidth: 500, minHeight: 400)
         }
     }
 
