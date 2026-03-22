@@ -6,6 +6,7 @@ struct EntriesListView: View {
     @State private var showInspector = true
     @State private var entryToDelete: Entry?
     @State private var selectedInvoice: Invoice?
+    @State private var showLogEntry = false
 
     private var selectedEntry: Entry? {
         guard let id = selectedEntryID else { return nil }
@@ -49,6 +50,13 @@ struct EntriesListView: View {
         }
         .navigationTitle("Entries")
         .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button {
+                    showLogEntry = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
             ToolbarItem(placement: .principal) {
                 Picker("View", selection: $vm.viewMode) {
                     ForEach(EntriesViewMode.allCases, id: \.self) { mode in
@@ -106,6 +114,12 @@ struct EntriesListView: View {
         }
         .inspectorColumnWidth(min: 280, ideal: 320, max: 400)
         .task { await vm.loadData() }
+        .sheet(isPresented: $showLogEntry) {
+            Task { await vm.loadData() }
+        } content: {
+            LogEntryView()
+                .frame(minWidth: 400, minHeight: 500)
+        }
     }
 
     private static let weekFormatter: DateFormatter = {

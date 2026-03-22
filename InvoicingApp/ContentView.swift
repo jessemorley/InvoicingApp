@@ -1,7 +1,6 @@
 import SwiftUI
 
 enum SidebarItem: String, CaseIterable, Identifiable {
-    case logEntry = "Log Entry"
     case entries = "Entries"
     case generateInvoices = "Generate Invoices"
     case summary = "Invoices"
@@ -13,7 +12,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 
     var icon: String {
         switch self {
-        case .logEntry: "square.and.pencil"
         case .entries: "list.bullet"
         case .generateInvoices: "plus.circle"
         case .summary: "doc.text"
@@ -25,7 +23,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 }
 
 struct ContentView: View {
-    @State private var selection: SidebarItem? = .logEntry
+    @State private var selection: SidebarItem? = .entries
 
     var body: some View {
         NavigationSplitView {
@@ -36,8 +34,6 @@ struct ContentView: View {
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
         } detail: {
             switch selection {
-            case .logEntry:
-                LogEntryView()
             case .entries:
                 NavigationStack {
                     EntriesListView()
