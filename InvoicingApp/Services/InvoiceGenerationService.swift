@@ -62,12 +62,12 @@ final class InvoiceGenerationService {
             let nextNumber: Int
             do {
                 nextNumber = try await supabase.nextInvoiceNumber()
-                print("[InvoiceGen] Got invoice number: JM\(nextNumber)")
+                print("[InvoiceGen] Got invoice number: \(settings.invoicePrefix)\(nextNumber)")
             } catch {
                 print("[InvoiceGen] RPC FAILED: \(error)")
                 throw error
             }
-            let invoiceNumber = "JM\(nextNumber)"
+            let invoiceNumber = "\(settings.invoicePrefix)\(nextNumber)"
             let now = Date()
 
             let dueDate = Calendar.current.date(byAdding: .day, value: settings.dueDateOffsetDays, to: now) ?? now

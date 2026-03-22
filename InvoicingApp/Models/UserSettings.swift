@@ -13,6 +13,9 @@ struct UserSettings: Codable, Sendable {
     var superUsi: String
     var dueDateOffsetDays: Int
     var financialYearStartMonth: Int
+    var markIssuedOnExport: Bool = true
+    var invoicePrefix: String = "JM"
+    var invoiceCountFrom: Int = 1
 
     static let `default` = UserSettings(
         name: "Jesse Morley",
@@ -26,8 +29,46 @@ struct UserSettings: Codable, Sendable {
         superFundAbn: "68964712340",
         superUsi: "68964712340019",
         dueDateOffsetDays: 30,
-        financialYearStartMonth: 7
+        financialYearStartMonth: 7,
+        markIssuedOnExport: true,
+        invoicePrefix: "JM",
+        invoiceCountFrom: 1
     )
+
+    init(
+        name: String, businessName: String, abn: String, address: String,
+        bsb: String, accountNumber: String,
+        superFund: String, superMemberNumber: String, superFundAbn: String, superUsi: String,
+        dueDateOffsetDays: Int, financialYearStartMonth: Int,
+        markIssuedOnExport: Bool = true, invoicePrefix: String = "JM", invoiceCountFrom: Int = 1
+    ) {
+        self.name = name; self.businessName = businessName; self.abn = abn; self.address = address
+        self.bsb = bsb; self.accountNumber = accountNumber
+        self.superFund = superFund; self.superMemberNumber = superMemberNumber
+        self.superFundAbn = superFundAbn; self.superUsi = superUsi
+        self.dueDateOffsetDays = dueDateOffsetDays; self.financialYearStartMonth = financialYearStartMonth
+        self.markIssuedOnExport = markIssuedOnExport; self.invoicePrefix = invoicePrefix
+        self.invoiceCountFrom = invoiceCountFrom
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try container.decode(String.self, forKey: .name)
+        businessName = try container.decode(String.self, forKey: .businessName)
+        abn = try container.decode(String.self, forKey: .abn)
+        address = try container.decode(String.self, forKey: .address)
+        bsb = try container.decode(String.self, forKey: .bsb)
+        accountNumber = try container.decode(String.self, forKey: .accountNumber)
+        superFund = try container.decode(String.self, forKey: .superFund)
+        superMemberNumber = try container.decode(String.self, forKey: .superMemberNumber)
+        superFundAbn = try container.decode(String.self, forKey: .superFundAbn)
+        superUsi = try container.decode(String.self, forKey: .superUsi)
+        dueDateOffsetDays = try container.decode(Int.self, forKey: .dueDateOffsetDays)
+        financialYearStartMonth = try container.decode(Int.self, forKey: .financialYearStartMonth)
+        markIssuedOnExport = try container.decodeIfPresent(Bool.self, forKey: .markIssuedOnExport) ?? true
+        invoicePrefix = try container.decodeIfPresent(String.self, forKey: .invoicePrefix) ?? "JM"
+        invoiceCountFrom = try container.decodeIfPresent(Int.self, forKey: .invoiceCountFrom) ?? 1
+    }
 
     private static let storageKey = "userSettings"
 

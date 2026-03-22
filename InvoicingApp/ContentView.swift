@@ -5,7 +5,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     case summary = "Invoices"
     case stats = "Stats"
     case clients = "Clients"
-    case settings = "Settings"
 
     var id: String { rawValue }
 
@@ -15,7 +14,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .summary: "doc.text"
         case .stats: "chart.bar"
         case .clients: "person.2"
-        case .settings: "gear"
         }
     }
 }
@@ -46,8 +44,6 @@ struct ContentView: View {
                 NavigationStack {
                     ClientListView()
                 }
-            case .settings:
-                SettingsView()
             case nil:
                 Text("Select an item")
                     .foregroundStyle(.secondary)

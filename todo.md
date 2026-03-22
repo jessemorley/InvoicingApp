@@ -3,7 +3,8 @@ Entries View:
 - Add option to add new client from client selection dropdown in entries creation view
 - Remember last view instead of showing list view when returning from elsewhere
 
-Invoices View:
+Invoices Summary View:
+- Add column for super amount
 
 PDF Invoice:
 - Match styling to example PDF
@@ -17,7 +18,7 @@ Invoice Preview:
 - Information like start/finish/break times, full day/half day, etc. should be shown on the invoice line items
 
 Generate Invoices:
-- Remove this is a separate tab. Instead, move the bottom bar showing "1 invoice 4 entries uninvoiced, $1738, Generate. Clicking generate should show a popup with a summary of the invoices that will be created along with options to create invoices or cancel. Creating the invoices should switch the user to invoices view.
+
 
 Features
 - Build export feature

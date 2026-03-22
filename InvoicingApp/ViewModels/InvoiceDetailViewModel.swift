@@ -73,6 +73,15 @@ final class InvoiceDetailViewModel: ObservableObject {
                 entries: entries,
                 client: client
             )
+            let settings = UserSettings.load()
+            if settings.markIssuedOnExport && invoice.status == .draft {
+                try await supabase.update(
+                    in: "invoices",
+                    id: invoice.id,
+                    value: ["status": InvoiceStatus.issued.rawValue]
+                )
+                invoice.status = .issued
+            }
         } catch {
             errorMessage = error.localizedDescription
         }

@@ -1,9 +1,75 @@
 import SwiftUI
 
 struct SettingsView: View {
+    var body: some View {
+        TabView {
+            GeneralSettingsTab()
+                .tabItem {
+                    Label("General", systemImage: "gear")
+                }
+            PersonalInfoTab()
+                .tabItem {
+                    Label("Personal Info", systemImage: "person")
+                }
+            LoginTab()
+                .tabItem {
+                    Label("Login", systemImage: "key")
+                }
+            ImportTab()
+                .tabItem {
+                    Label("Import", systemImage: "square.and.arrow.down")
+                }
+        }
+        .frame(width: 500, height: 400)
+    }
+}
+
+// MARK: - General
+
+struct GeneralSettingsTab: View {
     @StateObject private var vm = SettingsViewModel()
-    @ObservedObject var supabaseService = SupabaseService.shared
-    @State private var showImport = false
+
+    var body: some View {
+        Form {
+            Section("Invoice Numbering") {
+                TextField("Prefix", text: $vm.settings.invoicePrefix)
+                Stepper("Count from: \(vm.settings.invoiceCountFrom)",
+                        value: $vm.settings.invoiceCountFrom, in: 1...99999)
+            }
+
+            Section("Preferences") {
+                Toggle("Mark invoice as issued when exported as PDF", isOn: $vm.settings.markIssuedOnExport)
+                Stepper("Due date offset: \(vm.settings.dueDateOffsetDays) days",
+                        value: $vm.settings.dueDateOffsetDays, in: 7...90)
+                Picker("Financial year starts", selection: $vm.settings.financialYearStartMonth) {
+                    ForEach(1...12, id: \.self) { month in
+                        Text(Calendar.current.monthSymbols[month - 1]).tag(month)
+                    }
+                }
+            }
+
+            Section {
+                Button("Save") { vm.saveSettings() }
+                    .buttonStyle(.borderedProminent)
+            }
+
+            if let success = vm.successMessage {
+                Label(success, systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            }
+            if let error = vm.errorMessage {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.red)
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
+// MARK: - Personal Info
+
+struct PersonalInfoTab: View {
+    @StateObject private var vm = SettingsViewModel()
 
     var body: some View {
         Form {
@@ -26,21 +92,32 @@ struct SettingsView: View {
                 TextField("USI", text: $vm.settings.superUsi)
             }
 
-            Section("Preferences") {
-                Stepper("Due date offset: \(vm.settings.dueDateOffsetDays) days",
-                        value: $vm.settings.dueDateOffsetDays, in: 7...90)
-                Picker("Financial year starts", selection: $vm.settings.financialYearStartMonth) {
-                    ForEach(1...12, id: \.self) { month in
-                        Text(Calendar.current.monthSymbols[month - 1]).tag(month)
-                    }
-                }
-            }
-
             Section {
-                Button("Save Settings") { vm.saveSettings() }
+                Button("Save") { vm.saveSettings() }
                     .buttonStyle(.borderedProminent)
             }
 
+            if let success = vm.successMessage {
+                Label(success, systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            }
+            if let error = vm.errorMessage {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.red)
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
+// MARK: - Login
+
+struct LoginTab: View {
+    @StateObject private var vm = SettingsViewModel()
+    @ObservedObject var supabaseService = SupabaseService.shared
+
+    var body: some View {
+        Form {
             Section("Supabase Connection") {
                 TextField("Supabase URL", text: $vm.supabaseURL)
                 SecureField("Anon Key", text: $vm.supabaseAnonKey)
@@ -60,26 +137,31 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Data Import") {
-                Button("Import Historical Data...") { showImport = true }
-            }
-
             if let success = vm.successMessage {
-                Section {
-                    Label(success, systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
+                Label(success, systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
             }
-
             if let error = vm.errorMessage {
-                Section {
-                    Label(error, systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
-                }
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.red)
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Settings")
+    }
+}
+
+// MARK: - Import
+
+struct ImportTab: View {
+    @State private var showImport = false
+
+    var body: some View {
+        Form {
+            Section("Data Import") {
+                Button("Import Historical Data...") { showImport = true }
+            }
+        }
+        .formStyle(.grouped)
         .sheet(isPresented: $showImport) {
             ImportView()
         }

@@ -12,5 +12,9 @@ struct InvoicingApp: App {
         }
         .windowStyle(.titleBar)
         .defaultSize(width: 1100, height: 700)
+
+        Settings {
+            SettingsView()
+        }
     }
 }
