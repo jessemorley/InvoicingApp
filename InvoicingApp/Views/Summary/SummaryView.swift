@@ -76,6 +76,18 @@ struct SummaryView: View {
                         }
                     }
                     Spacer()
+                    if vm.grossSuperTotal > 0 {
+                        VStack(alignment: .trailing) {
+                            HStack {
+                                Text("Super:")
+                                    .foregroundStyle(.secondary)
+                                CurrencyText(amount: vm.grossSuperTotal)
+                                    .font(.title3.monospacedDigit().bold())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    Spacer()
                     VStack(alignment: .trailing) {
                         HStack {
                             Text("Outstanding:")
@@ -183,6 +195,16 @@ struct SummaryView: View {
                 .foregroundStyle(clientChipColor(clientName))
                 .clipShape(Capsule())
                 .frame(maxWidth: .infinity, alignment: .leading)
+            if invoice.superAmount > 0 {
+                CurrencyText(amount: invoice.superAmount)
+                    .font(.body.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .frame(width: 100, alignment: .trailing)
+            } else {
+                Text("—")
+                    .foregroundStyle(.tertiary)
+                    .frame(width: 100, alignment: .trailing)
+            }
             CurrencyText(amount: invoice.total)
                 .font(.body.monospacedDigit())
                 .frame(width: 100, alignment: .trailing)

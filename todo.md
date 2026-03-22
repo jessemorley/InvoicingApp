@@ -25,7 +25,6 @@ Features
 - App seems to be relying on network connection to pull all data from supabase as needed without a local caching system, making the interface sluggish and unusable without a network connection. Plan a system to solve this.
 
 Fixes:
-- Try fix for ideal inspector width
 
 - Build the mobile PWA
     A simple web interface hosted on Cloudflare Pages, hitting the same Supabase backend.

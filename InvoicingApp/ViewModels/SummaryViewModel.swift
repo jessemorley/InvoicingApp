@@ -18,6 +18,7 @@ struct ClientBreakdown: Identifiable {
     let name: String
     var paid: Decimal
     var outstanding: Decimal
+    var super_: Decimal
 }
 
 struct ClientInvoiceGroup: Identifiable {
@@ -31,6 +32,10 @@ struct ClientInvoiceGroup: Identifiable {
 
     var outstanding: Decimal {
         invoices.filter { $0.status != .paid }.reduce(0) { $0 + $1.total }
+    }
+
+    var superTotal: Decimal {
+        invoices.reduce(0) { $0 + $1.superAmount }
     }
 }
 
@@ -80,6 +85,10 @@ final class SummaryViewModel: ObservableObject {
         filteredInvoices.reduce(0) { $0 + $1.total }
     }
 
+    var grossSuperTotal: Decimal {
+        filteredInvoices.reduce(0) { $0 + $1.superAmount }
+    }
+
     var outstandingTotal: Decimal {
         filteredInvoices.filter { $0.status != .paid }.reduce(0) { $0 + $1.total }
     }
@@ -90,13 +99,14 @@ final class SummaryViewModel: ObservableObject {
         for invoice in filteredInvoices {
             let name = clientMap[invoice.clientId]?.name ?? "Unknown"
             if breakdowns[invoice.clientId] == nil {
-                breakdowns[invoice.clientId] = ClientBreakdown(id: invoice.clientId, name: name, paid: 0, outstanding: 0)
+                breakdowns[invoice.clientId] = ClientBreakdown(id: invoice.clientId, name: name, paid: 0, outstanding: 0, super_: 0)
             }
             if invoice.status == .paid {
                 breakdowns[invoice.clientId]?.paid += invoice.total
             } else if invoice.status == .issued {
                 breakdowns[invoice.clientId]?.outstanding += invoice.total
             }
+            breakdowns[invoice.clientId]?.super_ += invoice.superAmount
         }
         return Array(breakdowns.values).sorted { ($0.paid + $0.outstanding) > ($1.paid + $1.outstanding) }
     }
@@ -110,13 +120,18 @@ final class SummaryViewModel: ObservableObject {
             id: UUID(),
             name: "Other",
             paid: rest.reduce(0) { $0 + $1.paid },
-            outstanding: rest.reduce(0) { $0 + $1.outstanding }
+            outstanding: rest.reduce(0) { $0 + $1.outstanding },
+            super_: rest.reduce(0) { $0 + $1.super_ }
         )
         return top3 + [other]
     }
 
     var totalPaid: Decimal {
         filteredInvoices.filter { $0.status == .paid }.reduce(0) { $0 + $1.total }
+    }
+
+    var totalSuperAmount: Decimal {
+        filteredInvoices.reduce(0) { $0 + $1.superAmount }
     }
 
     init() {

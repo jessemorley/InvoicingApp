@@ -55,6 +55,8 @@ struct StatsView: View {
                                         .frame(width: 120, alignment: .trailing)
                                     Text("Outstanding")
                                         .frame(width: 120, alignment: .trailing)
+                                    Text("Super")
+                                        .frame(width: 120, alignment: .trailing)
                                 }
                                 .font(.subheadline.bold())
                                 .foregroundStyle(.secondary)
@@ -73,6 +75,16 @@ struct StatsView: View {
                                             .font(.body.monospacedDigit())
                                             .frame(width: 120, alignment: .trailing)
                                             .foregroundStyle(breakdown.outstanding > 0 ? .red : .secondary)
+                                        if breakdown.super_ > 0 {
+                                            CurrencyText(amount: breakdown.super_)
+                                                .font(.body.monospacedDigit())
+                                                .frame(width: 120, alignment: .trailing)
+                                                .foregroundStyle(.secondary)
+                                        } else {
+                                            Text("—")
+                                                .foregroundStyle(.tertiary)
+                                                .frame(width: 120, alignment: .trailing)
+                                        }
                                     }
                                 }
 
@@ -90,6 +102,10 @@ struct StatsView: View {
                                         .font(.body.monospacedDigit().bold())
                                         .frame(width: 120, alignment: .trailing)
                                         .foregroundStyle(vm.outstandingTotal > 0 ? .red : .secondary)
+                                    CurrencyText(amount: vm.totalSuperAmount)
+                                        .font(.body.monospacedDigit().bold())
+                                        .frame(width: 120, alignment: .trailing)
+                                        .foregroundStyle(.secondary)
                                 }
                             }
                         }
