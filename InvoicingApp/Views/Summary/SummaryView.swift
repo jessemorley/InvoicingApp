@@ -116,7 +116,7 @@ struct SummaryView: View {
                     }
 
                     Toggle(isOn: $vm.groupByClient) {
-                        Text("Group By")
+                        Label("Group by Client", systemImage: "calendar.day.timeline.leading")
                     }
                     .toggleStyle(.button)
                 }

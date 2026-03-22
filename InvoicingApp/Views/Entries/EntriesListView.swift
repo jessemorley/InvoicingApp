@@ -66,14 +66,6 @@ struct EntriesListView: View {
                 .pickerStyle(.segmented)
                 .fixedSize()
             }
-            ToolbarItem(placement: .automatic) {
-                Picker("Client", selection: $vm.selectedClientId) {
-                    Text("All Clients").tag(nil as UUID?)
-                    ForEach(vm.activeClients) { client in
-                        Text(client.name).tag(client.id as UUID?)
-                    }
-                }
-            }
             if vm.viewMode == .list {
                 ToolbarItem(placement: .automatic) {
                     Toggle(isOn: $vm.groupByWeek) {

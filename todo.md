@@ -1,13 +1,8 @@
 Entries View:
-- Instead of a separate log entries tab, add a + button to the top left of the menubar in entries view (Replace "Entries" title)
 - Add start finish and break times to list view where applicable
 - Add option to add new client from client selection dropdown in entries creation view
 
-
 Invoices View:
-- Move Breakdown by Client to a new Stats tab
-- Change right-pane to inspector styling, move filter options to menu bar and center them. In this inspector panel, display the selected invoice details (so clicking an invoice from the summary should open it in the inspector. Add a button to the inspector to view which takes you to the full single invoice view)
-- Group by: Client, Week, None
 
 Settings:
 - Add option to mark invoice as issued when exported as pdf (on by default)
