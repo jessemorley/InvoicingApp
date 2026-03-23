@@ -195,7 +195,7 @@
             font-weight: 700;
             letter-spacing: 0.04em;
             padding: 3px 8px;
-            border-radius: 6px;
+            border-radius: 20px;
             white-space: nowrap;
         }
         .invoice-chip {
@@ -203,8 +203,7 @@
             font-weight: 700;
             letter-spacing: 0.04em;
             padding: 2px 7px;
-            border-radius: 6px;
-            border: 1px solid;
+            border-radius: 20px;
             white-space: nowrap;
         }
 
@@ -1220,7 +1219,7 @@ async function loadRecentEntries() {
 
         const chipHtml = inv ? (() => {
             const chipColor = invoiceChipColors[inv.status] || 'bg-slate-100 text-slate-500 border-slate-200';
-            return `<span class="invoice-chip ${chipColor}">#${String(inv.invoice_number).padStart(3, '0')}</span>`;
+            return `<span class="invoice-chip ${chipColor}">${String(inv.invoice_number).padStart(3, '0')}</span>`;
         })() : '';
 
         const el = document.createElement('div');
@@ -1234,8 +1233,8 @@ async function loadRecentEntries() {
                 <p class="text-[14px] font-semibold text-slate-700 truncate">${description}</p>
             </div>
             <div class="flex flex-col items-end gap-1 shrink-0">
-                <span class="text-[16px] font-bold text-slate-900">${total}</span>
                 ${chipHtml}
+                <span class="text-[16px] font-bold text-slate-900">${total}</span>
             </div>`;
 
         if (!isInvoiced) {
@@ -1259,9 +1258,9 @@ const badgeColors = {
 };
 
 const invoiceChipColors = {
-    'draft':  'bg-orange-50 text-orange-600 border-orange-200',
-    'issued': 'bg-blue-50 text-blue-600 border-blue-200',
-    'paid':   'bg-green-50 text-green-600 border-green-200',
+    'draft':  'bg-gray-100 text-gray-500',
+    'issued': 'bg-orange-100 text-orange-600',
+    'paid':   'bg-green-100 text-green-600',
 };
 
 function entryDescription(entry) {
