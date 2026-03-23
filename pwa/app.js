@@ -925,7 +925,7 @@ function showNewEntryFields(client) {
     newEntryRecalculate();
 
     setTimeout(() => {
-        const tabRecent = document.getElementById('tabRecent');
+        const tabRecent = document.getElementById('entriesScroll');
         tabRecent.scrollTo({ top: tabRecent.scrollHeight, behavior: 'smooth' });
     }, 150);
 }
@@ -1089,7 +1089,7 @@ async function saveNewEntry() {
     const MAX_PULL  = 90;   // px cap on drag
     let startY = 0, pulling = false, triggered = false;
 
-    const scroller   = document.getElementById('tabRecent');
+    const scroller   = document.getElementById('entriesScroll');
     const indicator  = document.getElementById('pullIndicator');
 
     scroller.addEventListener('touchstart', e => {
@@ -1538,8 +1538,8 @@ function openEntryCard(wrap, entry, readOnly = false) {
     // Expand the card
     wrap.classList.add('expanded');
 
-    // Scroll to near top of tabRecent
-    const tabRecent = document.getElementById('tabRecent');
+    // Scroll to near top of entriesScroll
+    const tabRecent = document.getElementById('entriesScroll');
     const wrapTop = wrap.getBoundingClientRect().top + tabRecent.scrollTop - 100;
     tabRecent.scrollTo({ top: wrapTop, behavior: 'smooth' });
 }

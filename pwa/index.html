@@ -220,21 +220,33 @@
     </div>
 
     <!-- ── Recent Entries Tab ── -->
-    <div id="tabRecent" class="flex-1 overflow-y-auto pb-10" style="padding-top: env(safe-area-inset-top)">
-        <div id="pullIndicator" class="pull-indicator"><div class="spinner" id="pullSpinner"></div></div>
-        <div class="max-w-md mx-auto px-5 pt-10">
-            <div class="flex items-end justify-between mb-7 px-1">
-                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Entries</h1>
-                <button id="signOutBtn" class="p-2 -mr-1 text-gray-400 active:text-gray-600 transition-colors bg-transparent border-none cursor-pointer">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                </button>
+    <div id="tabRecent" style="display:flex; flex-direction:column; height:100dvh; overflow:hidden; padding-top:env(safe-area-inset-top);">
+
+        <!-- Sticky header with gradient fade -->
+        <div id="entriesHeader">
+            <div class="max-w-md mx-auto px-5 pt-8 pb-5">
+                <div class="flex items-end justify-between px-1">
+                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Entries</h1>
+                    <button id="signOutBtn" class="p-2 -mr-1 text-gray-400 active:text-gray-600 transition-colors bg-transparent border-none cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <div id="recentList" class="space-y-3">
-                <p class="text-gray-400 text-sm py-8 text-center">Loading entries...</p>
+            <div id="headerFade"></div>
+        </div>
+
+        <!-- Scrollable list — content pinned to bottom -->
+        <div id="entriesScroll">
+            <div id="pullIndicator" class="pull-indicator"><div class="spinner" id="pullSpinner"></div></div>
+            <div class="max-w-md mx-auto px-5">
+                <div id="recentList" class="space-y-3 pb-6">
+                    <p class="text-gray-400 text-sm py-8 text-center">Loading entries...</p>
+                </div>
             </div>
         </div>
+
     </div>
 
 </div>

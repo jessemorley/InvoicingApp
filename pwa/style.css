@@ -326,6 +326,26 @@
             overflow: visible;
         }
 
+        /* Entries tab layout */
+        #entriesHeader {
+            position: relative;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        #headerFade {
+            height: 2rem;
+            background: linear-gradient(to bottom, #F2F3F5, transparent);
+            pointer-events: none;
+        }
+        #entriesScroll {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 0;
+        }
+
         /* Login */
         #loginScreen {
             background: #fff;
