@@ -613,6 +613,47 @@ async function loadRecentEntries() {
     });
 }
 
+// ─────────────────────────────────────────────
+// PULL TO REFRESH
+// ─────────────────────────────────────────────
+(function() {
+    const THRESHOLD = 72;   // px of pull needed to trigger
+    const MAX_PULL  = 90;   // px cap on drag
+    let startY = 0, pulling = false, triggered = false;
+
+    const scroller   = document.getElementById('tabRecent');
+    const indicator  = document.getElementById('pullIndicator');
+
+    scroller.addEventListener('touchstart', e => {
+        if (scroller.scrollTop > 0) return;
+        startY   = e.touches[0].clientY;
+        pulling  = true;
+        triggered = false;
+    }, { passive: true });
+
+    scroller.addEventListener('touchmove', e => {
+        if (!pulling) return;
+        const dy = Math.min(e.touches[0].clientY - startY, MAX_PULL);
+        if (dy <= 0) return;
+        indicator.classList.add('visible');
+        // Slightly rotate the spinner based on pull distance as a progress cue
+        const progress = Math.min(dy / THRESHOLD, 1);
+        document.getElementById('pullSpinner').style.transform = `rotate(${progress * 270}deg)`;
+        if (dy >= THRESHOLD) triggered = true;
+    }, { passive: true });
+
+    scroller.addEventListener('touchend', async () => {
+        if (!pulling) return;
+        pulling = false;
+        if (triggered) {
+            // Keep spinner spinning while refreshing
+            document.getElementById('pullSpinner').style.transform = '';
+            await loadRecentEntries();
+        }
+        indicator.classList.remove('visible');
+    });
+})();
+
 function clientBadgeColor(name) {
     if (name.includes('ICONIC'))  return 'bg-purple-50 text-purple-500';
     if (name.includes('Images'))  return 'bg-blue-50 text-blue-500';

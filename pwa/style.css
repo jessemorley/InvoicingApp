@@ -261,6 +261,26 @@
             white-space: nowrap;
         }
 
+        /* Pull to refresh */
+        .pull-indicator {
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.2s ease;
+        }
+        .pull-indicator.visible {
+            max-height: 56px;
+        }
+        .pull-indicator .spinner {
+            margin: 0.75rem auto;
+            transition: opacity 0.15s;
+            opacity: 0;
+        }
+        .pull-indicator.visible .spinner {
+            opacity: 1;
+        }
+
         /* Loading spinner */
         .spinner {
             width: 28px;
