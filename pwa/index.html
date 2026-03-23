@@ -186,6 +186,15 @@
             height: auto; left: 0; position: absolute; right: 0; top: 0; width: auto;
         }
 
+        /* Client section — centered when idle, top-aligned when fields open */
+        #clientSection {
+            padding-top: max(16px, calc(38dvh));
+            transition: padding-top 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #clientSection.fields-open {
+            padding-top: 16px;
+        }
+
         /* Workflow picker buttons */
         .workflow-btn {
             flex: 1;
@@ -234,12 +243,14 @@
 
     <!-- ── Log Entry Tab ── -->
     <div id="tabLog" class="flex-1 overflow-y-auto pb-32" style="padding-top: env(safe-area-inset-top)">
-        <div class="max-w-md mx-auto px-5 pt-10 space-y-6">
+        <div class="max-w-md mx-auto px-5 pt-4">
 
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between mb-6">
                 <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">New Entry</p>
                 <button id="signOutBtn" class="text-[13px] text-slate-400 font-medium">Sign Out</button>
             </div>
+
+            <div id="clientSection">
 
             <!-- Client selector -->
             <div id="clientContainer" class="relative">
@@ -256,7 +267,7 @@
             </div>
 
             <!-- Dependent fields (revealed after client select) -->
-            <div id="entryFields" class="reveal space-y-4">
+            <div id="entryFields" class="reveal space-y-4 mt-6">
 
                 <!-- Date -->
                 <div class="bg-white rounded-2xl px-5 py-3">
@@ -412,6 +423,8 @@
                 </div>
 
             </div>
+
+            </div><!-- /clientSection -->
         </div>
     </div>
 
@@ -585,19 +598,13 @@ clientInput.addEventListener('input', () => {
         const el = document.createElement('div');
         el.className = 'px-5 py-4 cursor-pointer active:bg-slate-50 border-b border-slate-100 last:border-0';
         el.innerHTML = `
-            <div class="font-bold text-slate-800">${client.name}</div>
-            <div class="text-[11px] text-slate-400 font-bold uppercase tracking-tight">${rateLabel(client)}</div>`;
+            <div class="font-bold text-slate-800">${client.name}</div>`;
         el.addEventListener('click', () => selectClient(client));
         autocompleteList.appendChild(el);
     });
     autocompleteList.style.display = 'block';
 });
 
-function rateLabel(c) {
-    if (c.billing_type === 'day_rate') return `$${c.rate_full_day}/full · $${c.rate_half_day}/half`;
-    if (c.billing_type === 'hourly')   return `$${c.rate_hourly}/hr`;
-    return 'Manual billing';
-}
 
 function selectClient(client) {
     selectedClient = client;
@@ -605,6 +612,7 @@ function selectClient(client) {
     clientInput.disabled = true;
     clientContainer.classList.add('has-client');
     autocompleteList.style.display = 'none';
+    document.getElementById('clientSection').classList.add('fields-open');
     showEntryFields(client);
 }
 
@@ -614,7 +622,7 @@ document.getElementById('clearClient').addEventListener('click', () => {
     clientContainer.classList.remove('has-client');
     selectedClient = null;
     document.getElementById('entryFields').classList.remove('open');
-    setTimeout(() => clientInput.focus(), 50);
+    document.getElementById('clientSection').classList.remove('fields-open');
 });
 
 // Close autocomplete on outside click
@@ -939,6 +947,7 @@ function resetForm() {
     currentRole        = 'Photographer';
 
     document.getElementById('entryFields').classList.remove('open');
+    document.getElementById('clientSection').classList.remove('fields-open');
     document.getElementById('saveBtn').disabled = true;
     document.getElementById('saveBtn').textContent = 'Save Entry';
 
