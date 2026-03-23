@@ -589,7 +589,7 @@ async function loadRecentEntries() {
 }
 
 function clientBadgeColor(name) {
-    if (name.includes('ICONIC'))  return 'bg-rose-50 text-rose-500';
+    if (name.includes('ICONIC'))  return 'bg-purple-50 text-purple-500';
     if (name.includes('Images'))  return 'bg-blue-50 text-blue-500';
     if (name.includes('JD'))      return 'bg-orange-50 text-orange-500';
     return 'bg-gray-100 text-gray-500';
