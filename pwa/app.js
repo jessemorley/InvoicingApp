@@ -650,6 +650,7 @@ function appendNewEntryCard(_list, _cardIndex) {
     const slot = document.getElementById('newEntrySlot');
     const newWrap = document.createElement('div');
     newWrap.className = 'entry-card-wrap';
+    newWrap.style.marginTop = '24px';
     newWrap.style.marginBottom = '1rem';
     newWrap.style.display = 'none';
     newWrap.innerHTML = buildNewEntryFormHTML();
