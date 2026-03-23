@@ -540,6 +540,8 @@ async function loadRecentEntries() {
         // Week header
         const header = document.createElement('div');
         header.className = 'week-header';
+        header.style.animation = `cardIn 0.3s ease both`;
+        header.style.animationDelay = `${cardIndex * 40}ms`;
         const weekTotal = entries.reduce((sum, e) => sum + (e.total_amount || 0), 0);
         header.innerHTML = `<span>${formatWeekLabel(weekStart)}</span><span>${fmt(weekTotal)}</span>`;
         list.appendChild(header);
@@ -577,10 +579,7 @@ async function loadRecentEntries() {
                 </div>
                 <div class="flex flex-col items-end gap-1 shrink-0">
                     ${chipHtml || '<span class="h-[18px]"></span>'}
-                    <div class="flex items-center gap-1">
-                        <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
-                        <svg class="w-3.5 h-3.5 text-gray-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </div>
+                    <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
                 </div>`;
 
             const wrap = document.createElement('div');

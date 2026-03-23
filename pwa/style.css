@@ -209,10 +209,9 @@
         }
         .entry-row-invoiced {
             cursor: pointer;
-            opacity: 0.75;
         }
         .entry-row-invoiced:active {
-            opacity: 0.6;
+            background: #f9fafb;
         }
         /* Date column inside entry card */
         .entry-date-col {
