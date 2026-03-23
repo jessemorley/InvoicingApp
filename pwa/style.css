@@ -340,12 +340,11 @@
         #entriesHeader::after {
             content: '';
             position: absolute;
-            bottom: 0; left: 0; right: 0;
-            height: 50%;
+            inset: 0;
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
-            mask-image: linear-gradient(to bottom, transparent, black);
-            -webkit-mask-image: linear-gradient(to bottom, transparent, black);
+            mask-image: linear-gradient(to bottom, transparent 40%, black 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 40%, black 100%);
             pointer-events: none;
         }
         #entriesHeader * {
