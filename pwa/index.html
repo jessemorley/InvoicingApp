@@ -195,6 +195,13 @@
         .entry-row-tappable:active {
             background: #f5f5f7;
         }
+        .entry-row-invoiced {
+            background: #f7f7fb;
+            cursor: pointer;
+        }
+        .entry-row-invoiced:active {
+            background: #ebebf0;
+        }
         .client-badge {
             font-size: 10px;
             font-weight: 700;
@@ -1234,18 +1241,18 @@ async function loadRecentEntries() {
         })() : '';
 
         const el = document.createElement('div');
-        el.className = 'entry-row' + (isInvoiced ? '' : ' entry-row-tappable');
+        el.className = 'entry-row' + (isInvoiced ? ' entry-row-invoiced' : ' entry-row-tappable');
         el.innerHTML = `
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-1">
                     <span class="client-badge ${badgeColor}">${clientName}</span>
                     <span class="text-[12px] text-slate-400">${dateStr}</span>
                 </div>
-                <p class="text-[14px] font-semibold text-slate-700 truncate">${description}</p>
+                <p class="text-[14px] font-semibold text-slate-500 truncate">${description}</p>
             </div>
             <div class="flex flex-col items-end gap-1 shrink-0">
                 ${chipHtml}
-                <span class="text-[16px] font-bold text-slate-900">${total}</span>
+                <span class="text-[16px] font-bold text-slate-600">${total}</span>
             </div>`;
 
         if (!isInvoiced) {
@@ -1257,6 +1264,7 @@ async function loadRecentEntries() {
             addSwipeToDelete(wrapper, el, entry);
             list.appendChild(wrapper);
         } else {
+            el.addEventListener('click', () => openEditModal(entry, true));
             list.appendChild(el);
         }
     });
@@ -1393,10 +1401,18 @@ let editWorkflow    = 'Apparel';
 let editRole        = 'Photographer';
 let editSuperOverride = false;
 
-function openEditModal(entry) {
+function openEditModal(entry, readOnly = false) {
     editingEntry  = entry;
-    // Find the client from allClients so we have rate data
     editingClient = allClients.find(c => c.id === entry.client_id) || null;
+
+    // Read-only mode for invoiced entries
+    const footer = document.querySelector('#editModal .edit-modal-inner > div:last-child');
+    const header = document.querySelector('#editModal h2');
+    header.textContent = readOnly ? 'Entry Details' : 'Edit Entry';
+    footer.style.display = readOnly ? 'none' : '';
+    document.getElementById('editModal').querySelectorAll('input, textarea, button[data-editday], button[data-editwf], button[data-editrole]').forEach(el => {
+        el.disabled = readOnly;
+    });
 
     const billing = entry.billing_type_snapshot;
 
