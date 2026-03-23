@@ -501,7 +501,7 @@ function resetForm() {
 // ─────────────────────────────────────────────
 async function loadRecentEntries() {
     const list = document.getElementById('recentList');
-    list.innerHTML = '<p class="text-slate-400 text-sm py-8 text-center">Loading…</p>';
+    list.innerHTML = '<div class="spinner"></div>';
 
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 14);
@@ -535,6 +535,7 @@ async function loadRecentEntries() {
     });
 
     list.innerHTML = '';
+    let cardIndex = 0;
     weeks.forEach(({ weekStart, entries }) => {
         // Week header
         const header = document.createElement('div');
@@ -584,6 +585,8 @@ async function loadRecentEntries() {
 
             const wrap = document.createElement('div');
             wrap.className = 'entry-card-wrap';
+            wrap.style.animationDelay = `${cardIndex * 40}ms`;
+            cardIndex++;
 
             const detailPanel = document.createElement('div');
             detailPanel.className = 'entry-detail-panel';
