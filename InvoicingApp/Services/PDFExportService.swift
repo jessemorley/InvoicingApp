@@ -20,10 +20,9 @@ final class PDFExportService {
     }
 
     private func renderHTMLToPDF(html: String, outputURL: URL) async throws {
-        // A4 at 72 DPI = 595 × 842 points
-        let pageWidth: CGFloat = 595
-        let pageHeight: CGFloat = 842
-        let margin: CGFloat = 36
+        // A4 at 96 DPI = 794 × 1123 points; HTML padding handles margins
+        let pageWidth: CGFloat = 794
+        let pageHeight: CGFloat = 1123
 
         let webView = WKWebView(frame: NSRect(x: 0, y: 0, width: pageWidth, height: pageHeight))
         webView.loadHTMLString(html, baseURL: nil)
@@ -44,11 +43,7 @@ final class PDFExportService {
         try await Task.sleep(nanoseconds: 200_000_000)
 
         let pdfConfig = WKPDFConfiguration()
-        pdfConfig.rect = CGRect(
-            x: margin, y: margin,
-            width: pageWidth - margin * 2,
-            height: pageHeight - margin * 2
-        )
+        pdfConfig.rect = CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight)
 
         let pdfData: Data = try await withCheckedThrowingContinuation { continuation in
             webView.createPDF(configuration: pdfConfig) { result in
@@ -67,10 +62,22 @@ final class PDFExportService {
 
     private func buildHTML(invoice: Invoice, entries: [Entry], client: Client, settings: UserSettings) -> String {
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "d MMMM yyyy"
+        dateFormatter.dateFormat = "MMM d, yyyy"
+
+        let issuedStr = dateFormatter.string(from: invoice.issuedDateValue)
+        let dueStr = dateFormatter.string(from: invoice.dueDateValue)
 
         let lineItems = buildLineItems(entries: entries, client: client)
-        let showSuperFooter = client.paysSuper
+
+        let superRatePct = NSDecimalNumber(decimal: client.superRate * 100).intValue
+        let superRow = client.paysSuper
+            ? "<div class=\"totals-row\"><span class=\"label\">Super (\(superRatePct)%)</span><span class=\"value\">\(formatCurrency(invoice.superAmount))</span></div>"
+            : ""
+
+        let superMetaLines = client.paysSuper ? """
+            <p>\(settings.superFund), Member \(settings.superMemberNumber), ABN \(settings.superFundAbn)</p>
+            <p>USI \(settings.superUsi)</p>
+            """ : ""
 
         return """
         <!DOCTYPE html>
@@ -78,79 +85,84 @@ final class PDFExportService {
         <head>
         <meta charset="utf-8">
         <style>
-            body { font-family: -apple-system, Helvetica, Arial, sans-serif; font-size: 11px; color: #333; margin: 0; padding: 40px; }
-            .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
-            .header-left h1 { font-size: 16px; margin: 0 0 4px 0; }
-            .header-left p { margin: 2px 0; color: #666; }
-            .header-right { text-align: right; }
-            .header-right h2 { font-size: 14px; margin: 0 0 4px 0; }
-            .header-right p { margin: 2px 0; color: #666; }
-            .dates { margin-bottom: 24px; }
-            .dates p { margin: 2px 0; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            thead th { text-align: left; border-top: 1px solid #999; border-bottom: 1px solid #999; padding: 8px 4px; font-weight: 600; }
-            thead th.right { text-align: right; }
-            tbody td { padding: 4px; border-bottom: 1px solid #eee; }
-            tbody td.right { text-align: right; }
-            tbody td.bonus-line { padding-left: 20px; color: #666; font-size: 10px; }
-            .totals { margin-left: auto; width: 250px; }
-            .totals table { margin-bottom: 0; }
-            .totals td { border-bottom: none; padding: 4px 8px; }
-            .totals td.right { font-weight: 500; }
-            .totals tr.total td { border-top: 2px solid #333; font-weight: 700; font-size: 13px; }
-            .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #ccc; font-size: 10px; color: #666; }
+            body { margin: 0; padding: 28px 42px; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; color: #000; line-height: 1.2; }
+            .page { width: 100%; background: white; }
+            .top-header { display: flex; justify-content: space-between; margin-bottom: 80px; }
+            .address-block { font-size: 13.5px; }
+            .address-block p { margin: 0 0 3px 0; }
+            .invoice-title { font-size: 52px; font-weight: 500; margin: 0 0 70px 0; letter-spacing: -1px; }
+            .meta-container { display: flex; margin-bottom: 120px; font-size: 13.5px; }
+            .dates-block { width: 28%; }
+            .dates-block p { margin: 0 0 4px 0; }
+            .bank-block { flex-grow: 1; }
+            .bank-block p { margin: 0 0 4px 0; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 100px; }
+            th { text-align: left; padding: 10px 0; font-size: 13.5px; font-weight: normal; }
+            td { padding: 6px 0; vertical-align: top; font-size: 13.5px; }
+            .col-date { width: 28%; }
+            .col-item { width: 39%; }
+            .col-qty { width: 11%; text-align: right; }
+            .col-rate { width: 11%; text-align: right; }
+            .col-amount { width: 11%; text-align: right; }
+            .totals-section { display: flex; flex-direction: column; align-items: flex-end; font-size: 13.5px; }
+            .totals-row { display: flex; justify-content: space-between; width: 100%; padding: 4px 0; }
+            .totals-row.grand-total { margin-top: 40px; }
+            .label { text-align: left; }
+            .value { text-align: right; width: 100px; }
         </style>
         </head>
         <body>
-        <div class="header">
-            <div class="header-left">
-                <h1>\(settings.businessName)</h1>
-                <p>ABN \(settings.abn)</p>
-                <p>\(settings.address)</p>
+        <div class="page">
+            <div class="top-header">
+                <div class="address-block">
+                    <p>\(settings.businessName)</p>
+                    <p>ABN \(settings.abn)</p>
+                    <p>\(settings.address)</p>
+                </div>
+                <div class="address-block">
+                    <p>\(client.name)</p>
+                    <p>\(client.email)</p>
+                    <p>\(client.address)</p>
+                    <p>\(client.suburb)</p>
+                </div>
             </div>
-            <div class="header-right">
-                <h2>Invoice \(invoice.invoiceNumber)</h2>
-                <p>\(client.name)</p>
-                <p>\(client.email)</p>
-                <p>\(client.address)</p>
-                <p>\(client.suburb)</p>
+            <h1 class="invoice-title">Invoice \(invoice.invoiceNumber)</h1>
+            <div class="meta-container">
+                <div class="dates-block">
+                    <p>Issued \(issuedStr)</p>
+                    <p>Due \(dueStr)</p>
+                </div>
+                <div class="bank-block">
+                    <p>BSB \(settings.bsb) Account Number \(settings.accountNumber)</p>
+                    \(superMetaLines)
+                </div>
             </div>
-        </div>
-        <div class="dates">
-            <p>Issued \(dateFormatter.string(from: invoice.issuedDateValue))</p>
-            <p>Due \(dateFormatter.string(from: invoice.dueDateValue))</p>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th class="right">Qty</th>
-                    <th class="right">Rate</th>
-                    <th class="right">Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                \(lineItems)
-            </tbody>
-        </table>
-        <div class="totals">
             <table>
-                <tr><td>Subtotal</td><td class="right">\(formatCurrency(invoice.subtotal))</td></tr>
-                \(client.paysSuper ? "<tr><td>Super (\(NSDecimalNumber(decimal: client.superRate * 100).intValue)%)</td><td class=\"right\">\(formatCurrency(invoice.superAmount))</td></tr>" : "")
-                <tr class="total"><td>Total</td><td class="right">\(formatCurrency(invoice.total))</td></tr>
+                <thead>
+                    <tr>
+                        <th class="col-date">Item</th>
+                        <th class="col-item"></th>
+                        <th class="col-qty">Qty</th>
+                        <th class="col-rate">Rate</th>
+                        <th class="col-amount">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    \(lineItems)
+                </tbody>
             </table>
+            <div class="totals-section">
+                <div class="totals-row">
+                    <span class="label">Subtotal</span>
+                    <span class="value">\(formatCurrency(invoice.subtotal))</span>
+                </div>
+                \(superRow)
+                <div class="totals-row grand-total">
+                    <span class="label">Total</span>
+                    <span class="value">\(formatCurrency(invoice.total))</span>
+                </div>
+            </div>
         </div>
-        \(showSuperFooter ? """
-        <div class="footer">
-            <p>BSB \(settings.bsb) &nbsp; Account Number \(settings.accountNumber)</p>
-            <p>\(settings.superFund), Member \(settings.superMemberNumber), ABN \(settings.superFundAbn)</p>
-            <p>USI \(settings.superUsi)</p>
-        </div>
-        """ : """
-        <div class="footer">
-            <p>BSB \(settings.bsb) &nbsp; Account Number \(settings.accountNumber)</p>
-        </div>
-        """)
         </body>
         </html>
         """
@@ -168,15 +180,17 @@ final class PDFExportService {
             let rate: String
             let amount: String
 
+            let qty: String
             switch entry.billingTypeSnapshot {
             case .dayRate:
                 if entry.workflowType == "Own Brand" {
-                    description = "\(dateStr) \(entry.brand ?? "Own Brand")"
+                    description = entry.brand ?? "Own Brand"
                 } else if let workflow = entry.workflowType {
-                    description = "\(dateStr) \(workflow)"
+                    description = workflow
                 } else {
-                    description = "\(dateStr) Creative Assist"
+                    description = "Creative Assist"
                 }
+                qty = "1"
                 rate = formatCurrency(entry.baseAmount)
                 amount = formatCurrency(entry.baseAmount)
 
@@ -184,24 +198,26 @@ final class PDFExportService {
                 let hoursStr = entry.hoursWorked.map { "\(NSDecimalNumber(decimal: $0))h" } ?? ""
                 if let shootClient = entry.shootClient {
                     let role = entry.role ?? "Photographer"
-                    description = "\(dateStr) \(shootClient) (\(role)) \(hoursStr)"
+                    description = "\(shootClient) (\(role)) \(hoursStr)"
                 } else {
-                    description = "\(dateStr) \(entry.description ?? "") \(hoursStr)"
+                    description = "\(entry.description ?? "") \(hoursStr)"
                 }
+                qty = "1"
                 rate = formatCurrency(client.rateHourly ?? 0) + "/hr"
                 amount = formatCurrency(entry.baseAmount)
 
             case .manual:
-                description = "\(dateStr) \(entry.description ?? "")"
+                description = entry.description ?? ""
+                qty = "1"
                 rate = ""
                 amount = formatCurrency(entry.baseAmount)
             }
 
-            html += "<tr><td>\(description)</td><td class=\"right\">1</td><td class=\"right\">\(rate)</td><td class=\"right\">\(amount)</td></tr>\n"
+            html += "<tr><td class=\"col-date\">\(dateStr)</td><td class=\"col-item\">\(description)</td><td class=\"col-qty\">\(qty)</td><td class=\"col-rate\">\(rate)</td><td class=\"col-amount\">\(amount)</td></tr>\n"
 
             // SKU bonus sub-line
             if entry.bonusAmount > 0, let skus = entry.skus {
-                html += "<tr><td class=\"bonus-line\">&nbsp;&nbsp;+ SKU bonus (\(skus) SKUs)</td><td class=\"right\"></td><td class=\"right\"></td><td class=\"right\">\(formatCurrency(entry.bonusAmount))</td></tr>\n"
+                html += "<tr><td class=\"col-date\"></td><td class=\"col-item\">&nbsp;&nbsp;+ SKU bonus (\(skus) SKUs)</td><td class=\"col-qty\"></td><td class=\"col-rate\"></td><td class=\"col-amount\">\(formatCurrency(entry.bonusAmount))</td></tr>\n"
             }
         }
 
