@@ -73,11 +73,46 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('newEntryFab').addEventListener('click', () => {
-    if (!newEntryWrap) return;
-    newEntryWrap.style.display = '';
-    document.getElementById('newClientInput')?.focus();
-    document.getElementById('tabRecent').scrollTo({ top: 0, behavior: 'smooth' });
+    openClientPicker();
 });
+
+function openClientPicker() {
+    const overlay = document.getElementById('clientPickerOverlay');
+    const input   = document.getElementById('overlayClientInput');
+    overlay.style.display = 'flex';
+    renderOverlayClients('');
+    input.value = '';
+    input.focus();
+}
+
+function closeClientPicker() {
+    document.getElementById('clientPickerOverlay').style.display = 'none';
+    document.getElementById('overlayClientInput').value = '';
+}
+
+function renderOverlayClients(query) {
+    const list = document.getElementById('overlayClientList');
+    const matches = query
+        ? allClients.filter(c => c.name.toLowerCase().includes(query.toLowerCase()))
+        : allClients;
+    list.innerHTML = '';
+    matches.forEach(client => {
+        const el = document.createElement('button');
+        el.textContent = client.name;
+        el.style.cssText = 'display:block; width:100%; text-align:left; background:#fff; border:none; border-radius:14px; padding:18px 20px; font-size:17px; font-weight:600; color:#111827; margin-bottom:8px; cursor:pointer; font-family:inherit;';
+        el.addEventListener('click', () => {
+            closeClientPicker();
+            openNewEntryCardForClient(client);
+        });
+        list.appendChild(el);
+    });
+}
+
+document.getElementById('overlayClientInput').addEventListener('input', e => {
+    renderOverlayClients(e.target.value.trim());
+});
+
+document.getElementById('overlayCancel').addEventListener('click', closeClientPicker);
 
 document.getElementById('signOutBtn').addEventListener('click', async () => {
     await sb.auth.signOut();
@@ -806,40 +841,10 @@ function wireNewEntryForm() {
     const dd    = String(today.getDate()).padStart(2, '0');
     document.getElementById('newEntryDate').value = `${yyyy}-${mm}-${dd}`;
 
-    // Client autocomplete
-    const clientInput = document.getElementById('newClientInput');
-    const autocomplete = document.getElementById('newAutocompleteList');
-    const positionAutocomplete = () => {
-        const rect = clientInput.getBoundingClientRect();
-        autocomplete.style.left  = rect.left + 'px';
-        autocomplete.style.top   = (rect.bottom + 6) + 'px';
-        autocomplete.style.width = rect.width + 'px';
-    };
-
-    clientInput.addEventListener('input', () => {
-        const val = clientInput.value.trim();
-        autocomplete.innerHTML = '';
-        if (!val) { autocomplete.style.display = 'none'; return; }
-        const matches = allClients.filter(c => c.name.toLowerCase().includes(val.toLowerCase()));
-        if (!matches.length) { autocomplete.style.display = 'none'; return; }
-        matches.forEach(client => {
-            const el = document.createElement('div');
-            el.className = 'px-4 py-3 cursor-pointer active:bg-slate-50 border-b border-slate-100 last:border-0 font-bold text-slate-800 text-[15px]';
-            el.textContent = client.name;
-            el.addEventListener('click', () => selectNewEntryClient(client));
-            autocomplete.appendChild(el);
-        });
-        positionAutocomplete();
-        autocomplete.style.display = 'block';
-    });
-
-    // Clear client
+    // Clear client — reopens the picker
     document.getElementById('newClearClient').addEventListener('click', () => {
-        clientInput.value    = '';
-        clientInput.disabled = false;
-        document.getElementById('newClientContainer').classList.remove('has-client');
-        newEntrySelectedClient = null;
-        document.getElementById('newEntryFields').classList.remove('open');
+        closeNewEntryCard();
+        openClientPicker();
     });
 
     // Day type buttons
@@ -885,6 +890,13 @@ function wireNewEntryForm() {
 
     // Save
     document.getElementById('newSaveBtn').addEventListener('click', saveNewEntry);
+}
+
+function openNewEntryCardForClient(client) {
+    if (!newEntryWrap) return;
+    newEntryWrap.style.display = '';
+    document.getElementById('tabRecent').scrollTo({ top: 0, behavior: 'smooth' });
+    selectNewEntryClient(client);
 }
 
 function selectNewEntryClient(client) {
