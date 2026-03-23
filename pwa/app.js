@@ -1089,15 +1089,15 @@ async function saveNewEntry() {
 // PULL TO REFRESH
 // ─────────────────────────────────────────────
 (function() {
-    const THRESHOLD = 72;   // px of pull needed to trigger
-    const MAX_PULL  = 90;   // px cap on drag
+    const THRESHOLD = 110;  // px of pull needed to trigger
+    const MAX_PULL  = 130;  // px cap on drag
     let startY = 0, pulling = false, triggered = false;
 
-    const scroller   = document.getElementById('entriesScroll');
+    const scroller   = document.getElementById('tabRecent');
     const indicator  = document.getElementById('pullIndicator');
 
     scroller.addEventListener('touchstart', e => {
-        if (scroller.scrollTop > 0) return;
+        if (scroller.scrollTop > 5) return;
         startY   = e.touches[0].clientY;
         pulling  = true;
         triggered = false;
@@ -1106,7 +1106,7 @@ async function saveNewEntry() {
     scroller.addEventListener('touchmove', e => {
         if (!pulling) return;
         const dy = Math.min(e.touches[0].clientY - startY, MAX_PULL);
-        if (dy <= 0) return;
+        if (dy <= 10) return;
         indicator.classList.add('visible');
         // Slightly rotate the spinner based on pull distance as a progress cue
         const progress = Math.min(dy / THRESHOLD, 1);
