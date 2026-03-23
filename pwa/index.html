@@ -103,7 +103,6 @@
         /* Summary card */
         .summary-card {
             border-radius: 2rem;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.05);
         }
 
         /* Primary button */
@@ -206,7 +205,6 @@
         .entry-row {
             background: #fff;
             border-radius: 2rem;
-            border: 1px solid #f3f4f6;
             padding: 0.875rem 1.1rem;
             display: flex;
             align-items: center;
@@ -214,14 +212,13 @@
             position: relative;
             touch-action: pan-y;
             will-change: transform;
-            transition: transform 0.2s cubic-bezier(0.4,0,0.2,1), box-shadow 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
         }
         .entry-row-tappable {
             cursor: pointer;
         }
         .entry-row-tappable:active {
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            background: #f9fafb;
         }
         .entry-row-invoiced {
             cursor: pointer;
@@ -284,18 +281,13 @@
         }
         .entry-card-wrap.expanded .entry-row {
             border-radius: 2rem 2rem 0 0;
-            border-bottom: none;
-            box-shadow: none;
         }
         .entry-detail-panel {
             background: #fff;
             border-radius: 0 0 2rem 2rem;
-            border: 1px solid #f3f4f6;
-            border-top: none;
             overflow: hidden;
             max-height: 0;
             transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
         .entry-card-wrap.expanded .entry-detail-panel {
             max-height: 900px;
@@ -1395,9 +1387,6 @@ function openEntryCard(wrap, entry, readOnly = false) {
 
     // --- Date field ---
     let html = `
-        <div class="flex justify-end mb-2">
-            <button onclick="closeEntryCard(expandedWrap)" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 text-lg leading-none border-none cursor-pointer">&times;</button>
-        </div>
         <div class="space-y-4">
         <div class="bg-slate-50 rounded-2xl px-5 py-3">
             <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Date</span>
