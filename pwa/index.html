@@ -15,7 +15,7 @@
 
         body {
             font-family: -apple-system, 'SF Pro Display', 'Inter', sans-serif;
-            background: #f2f2f7;
+            background: #FBFBFC;
             -webkit-tap-highlight-color: transparent;
             color: #1c1c1e;
             overflow-x: hidden;
@@ -25,23 +25,28 @@
         .screen { display: none; }
         .screen.active { display: flex; flex-direction: column; }
 
-        /* Tab bar */
+        /* Tab bar — floating pill */
         #tabBar {
             position: fixed;
             bottom: 0;
             left: 0; right: 0;
-            background: rgba(255,255,255,0.9);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(0,0,0,0.1);
-            padding-bottom: env(safe-area-inset-bottom);
             z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom);
         }
         #tabBar-inner {
             display: flex;
-            width: 100%;
-            max-width: 448px;
-            margin: 0 auto;
+            width: calc(100% - 2.5rem);
+            max-width: calc(448px - 2.5rem);
+            margin: 0 auto 1.5rem;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 2.5rem;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+            padding: 1rem 2.5rem;
+            justify-content: space-between;
+            align-items: center;
         }
 
         /* Inputs */
@@ -98,26 +103,47 @@
         /* Summary card */
         .summary-card {
             border-radius: 2rem;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+            box-shadow: 0 1px 6px rgba(0,0,0,0.05);
         }
 
         /* Primary button */
         .btn-primary {
-            background: var(--accent);
+            background: #111827;
             color: #fff;
             font-weight: 700;
             font-size: 17px;
-            border-radius: 14px;
+            border-radius: 1.25rem;
             padding: 18px;
             width: 100%;
             border: none;
             cursor: pointer;
             transition: transform 0.1s, background 0.2s;
-            box-shadow: 0 4px 16px rgba(0,122,255,0.25);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
         }
         .btn-primary:active { transform: scale(0.98); }
         .btn-primary.success { background: #34c759; box-shadow: 0 4px 16px rgba(52,199,89,0.3); }
-        .btn-primary:disabled { background: #aeaeb2; box-shadow: none; cursor: default; }
+        .btn-primary:disabled { background: #d1d5db; box-shadow: none; cursor: default; }
+
+        /* FAB */
+        .fab {
+            position: fixed;
+            bottom: 6rem;
+            right: 1.25rem;
+            width: 3.5rem;
+            height: 3.5rem;
+            background: #111827;
+            color: #fff;
+            border: none;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            cursor: pointer;
+            z-index: 99;
+            transition: transform 0.15s;
+        }
+        .fab:active { transform: scale(0.95); }
 
         /* Autocomplete */
         #autocompleteList {
@@ -126,9 +152,9 @@
             top: calc(100% + 8px);
             background: rgba(255,255,255,0.98);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(0,0,0,0.08);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 1.25rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
             z-index: 200;
             overflow: hidden;
             display: none;
@@ -160,18 +186,18 @@
         /* Recent entries list */
         .swipe-container {
             position: relative;
-            border-radius: 14px;
+            border-radius: 2rem;
             overflow: hidden;
         }
         .swipe-delete-bg {
             position: absolute;
             inset: 0;
             background: #ff3b30;
-            border-radius: 14px;
+            border-radius: 2rem;
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            padding-right: 20px;
+            padding-right: 24px;
             color: #fff;
             font-size: 13px;
             font-weight: 700;
@@ -179,35 +205,68 @@
         }
         .entry-row {
             background: #fff;
-            border-radius: 14px;
-            padding: 14px 16px;
+            border-radius: 2rem;
+            border: 1px solid #f3f4f6;
+            padding: 0.875rem 1.1rem;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 1rem;
             position: relative;
             touch-action: pan-y;
             will-change: transform;
-            transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+            transition: transform 0.2s cubic-bezier(0.4,0,0.2,1), box-shadow 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
         .entry-row-tappable {
             cursor: pointer;
         }
         .entry-row-tappable:active {
-            background: #f5f5f7;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
         }
         .entry-row-invoiced {
-            background: #f7f7fb;
             cursor: pointer;
+            opacity: 0.75;
         }
         .entry-row-invoiced:active {
-            background: #ebebf0;
+            opacity: 0.6;
+        }
+        /* Date column inside entry card */
+        .entry-date-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 48px;
+            padding: 0.35rem 0.4rem;
+            background: rgba(249,250,251,0.8);
+            border-radius: 0.875rem;
+            flex-shrink: 0;
+        }
+        .entry-date-col .dow {
+            font-size: 9px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+        .entry-date-col .day-num {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #111827;
+            line-height: 1.15;
+        }
+        .entry-date-col .mon {
+            font-size: 9px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
         }
         .client-badge {
             font-size: 10px;
             font-weight: 700;
             letter-spacing: 0.04em;
-            padding: 3px 8px;
-            border-radius: 20px;
+            padding: 3px 9px;
+            border-radius: 0.5rem;
             white-space: nowrap;
         }
         .invoice-chip {
@@ -224,14 +283,14 @@
             position: fixed;
             inset: 0;
             z-index: 300;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.35);
             display: flex;
             align-items: flex-end;
         }
         .edit-modal.hidden { display: none; }
         .edit-modal-inner {
-            background: #f2f2f7;
-            border-radius: 20px 20px 0 0;
+            background: #FBFBFC;
+            border-radius: 1.5rem 1.5rem 0 0;
             width: 100%;
             max-width: 448px;
             margin: 0 auto;
@@ -243,7 +302,7 @@
         }
         @media (min-width: 640px) {
             .edit-modal { align-items: center; }
-            .edit-modal-inner { border-radius: 20px; }
+            .edit-modal-inner { border-radius: 1.5rem; }
         }
         @keyframes slideUp {
             from { transform: translateY(100%); opacity: 0; }
@@ -321,13 +380,8 @@
 <div id="appShell" class="screen" style="min-height: 100dvh;">
 
     <!-- ── Log Entry Tab ── -->
-    <div id="tabLog" class="flex-1 overflow-y-auto pb-32" style="padding-top: env(safe-area-inset-top)">
+    <div id="tabLog" class="flex-1 overflow-y-auto pb-36" style="padding-top: env(safe-area-inset-top)">
         <div class="max-w-md mx-auto px-5 pt-4">
-
-            <div class="flex items-center justify-between mb-6">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">New Entry</p>
-                <button id="signOutBtn" class="text-[13px] text-slate-400 font-medium">Sign Out</button>
-            </div>
 
             <div id="clientSection">
 
@@ -508,11 +562,15 @@
     </div>
 
     <!-- ── Recent Entries Tab ── -->
-    <div id="tabRecent" class="flex-1 overflow-y-auto pb-32 hidden" style="padding-top: env(safe-area-inset-top)">
-        <div class="max-w-md mx-auto px-5 pt-10 space-y-4">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Last 14 Days</p>
-            <div id="recentList" class="space-y-2">
-                <p class="text-slate-400 text-sm py-8 text-center">Loading entries...</p>
+    <div id="tabRecent" class="flex-1 overflow-y-auto pb-36 hidden" style="padding-top: env(safe-area-inset-top)">
+        <div class="max-w-md mx-auto px-5 pt-10">
+            <div class="flex items-end justify-between mb-7 px-1">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Activity</h1>
+                </div>
+            </div>
+            <div id="recentList" class="space-y-3">
+                <p class="text-gray-400 text-sm py-8 text-center">Loading entries...</p>
             </div>
         </div>
     </div>
@@ -675,25 +733,45 @@
         </div>
     </div>
 
-    <!-- ── Tab Bar ── -->
+    <!-- ── Settings Tab ── -->
+    <div id="tabSettings" class="flex-1 overflow-y-auto pb-36 hidden" style="padding-top: env(safe-area-inset-top)">
+        <div class="max-w-md mx-auto px-5 pt-10">
+            <div class="mb-7 px-1">
+                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Settings</h1>
+            </div>
+            <button id="signOutBtn" class="w-full py-4 rounded-2xl text-[15px] font-semibold text-red-500 bg-white border border-gray-100 shadow-sm active:bg-red-50 transition-colors cursor-pointer">
+                Sign Out
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Tab Bar — floating pill ── -->
     <nav id="tabBar">
         <div id="tabBar-inner">
-        <button onclick="switchTab('log')" id="tabBtnLog"
-            class="flex-1 flex flex-col items-center py-3 gap-1 text-[#007AFF]">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 4v16m8-8H4"/>
-            </svg>
-            <span class="text-[10px] font-semibold">New Entry</span>
-        </button>
-        <button onclick="switchTab('recent')" id="tabBtnRecent"
-            class="flex-1 flex flex-col items-center py-3 gap-1 text-slate-400">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-            </svg>
-            <span class="text-[10px] font-semibold">Recent</span>
-        </button>
+            <!-- New Entry -->
+            <button onclick="switchTab('log')" id="tabBtnLog" class="flex flex-col items-center gap-1.5 bg-transparent border-none cursor-pointer p-0">
+                <svg id="tabIconLog" class="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                </svg>
+            </button>
+            <!-- Entries -->
+            <button onclick="switchTab('recent')" id="tabBtnRecent" class="flex flex-col items-center gap-1.5 bg-transparent border-none cursor-pointer p-0">
+                <svg id="tabIconRecent" class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+            </button>
+            <!-- Invoices -->
+            <button class="flex flex-col items-center gap-1.5 bg-transparent border-none cursor-pointer p-0" disabled>
+                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </button>
+            <!-- Settings -->
+            <button onclick="switchTab('settings')" id="tabBtnSettings" class="flex flex-col items-center gap-1.5 bg-transparent border-none cursor-pointer p-0">
+                <svg id="tabIconSettings" class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+            </button>
         </div>
     </nav>
 </div>
@@ -770,6 +848,7 @@ document.getElementById('signOutBtn').addEventListener('click', async () => {
     resetForm();
     switchTab('log');
     showLogin();
+    document.getElementById('tabSettings').classList.add('hidden');
 });
 
 // ─────────────────────────────────────────────
@@ -799,19 +878,15 @@ function setDefaultDate() {
 // TAB SWITCHING
 // ─────────────────────────────────────────────
 function switchTab(tab) {
-    const isLog    = tab === 'log';
-    document.getElementById('tabLog').classList.toggle('hidden', !isLog);
-    document.getElementById('tabRecent').classList.toggle('hidden', isLog);
+    document.getElementById('tabLog').classList.toggle('hidden', tab !== 'log');
+    document.getElementById('tabRecent').classList.toggle('hidden', tab !== 'recent');
+    document.getElementById('tabSettings').classList.toggle('hidden', tab !== 'settings');
 
-    const blue  = 'text-[#007AFF]';
-    const grey  = 'text-slate-400';
-    const logBtn    = document.getElementById('tabBtnLog');
-    const recentBtn = document.getElementById('tabBtnRecent');
+    document.getElementById('tabIconLog').className      = `w-5 h-5 ${tab === 'log'      ? 'text-gray-900' : 'text-gray-300'}`;
+    document.getElementById('tabIconRecent').className   = `w-5 h-5 ${tab === 'recent'   ? 'text-gray-900' : 'text-gray-300'}`;
+    document.getElementById('tabIconSettings').className = `w-5 h-5 ${tab === 'settings' ? 'text-gray-900' : 'text-gray-300'}`;
 
-    logBtn.className    = `flex-1 flex flex-col items-center py-3 gap-1 ${isLog ? blue : grey}`;
-    recentBtn.className = `flex-1 flex flex-col items-center py-3 gap-1 ${!isLog ? blue : grey}`;
-
-    if (!isLog) loadRecentEntries();
+    if (tab === 'recent') loadRecentEntries();
 }
 
 // ─────────────────────────────────────────────
@@ -1230,7 +1305,6 @@ async function loadRecentEntries() {
         const clientName  = entry.clients?.name || 'Unknown';
         const badgeColor  = clientBadgeColor(clientName);
         const description = entryDescription(entry);
-        const dateStr     = formatEntryDate(entry.date);
         const total       = fmt(entry.total_amount);
         const inv         = entry.invoices;
         const isInvoiced  = !!entry.invoice_id;
@@ -1242,24 +1316,26 @@ async function loadRecentEntries() {
 
         const el = document.createElement('div');
         el.className = 'entry-row' + (isInvoiced ? ' entry-row-invoiced' : ' entry-row-tappable');
-        const [weekday, dayMonth] = dateStr.split(' ').reduce((acc, part, i) => {
-            if (i === 0) acc[0] = part; else acc[1] = (acc[1] ? acc[1] + ' ' : '') + part; return acc;
-        }, ['', '']);
+        // Parse date parts for the new card design
+        const dateParts = formatEntryDateParts(entry.date);
         el.innerHTML = `
-            <div class="flex flex-col items-center justify-center shrink-0 w-10 text-center">
-                <span class="text-[10px] font-semibold text-slate-400 uppercase">${weekday}</span>
-                <span class="text-[13px] font-bold text-slate-600 leading-tight">${dayMonth}</span>
+            <div class="entry-date-col">
+                <span class="dow">${dateParts.dow}</span>
+                <span class="day-num">${dateParts.day}</span>
+                <span class="mon">${dateParts.mon}</span>
             </div>
-            <div class="w-px self-stretch bg-slate-100 shrink-0"></div>
             <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
+                <div class="flex items-center gap-1.5 mb-1.5">
                     <span class="client-badge ${badgeColor}">${clientName}</span>
                 </div>
-                <p class="text-[14px] font-semibold text-slate-700 truncate">${description}</p>
+                <p class="text-[15px] font-semibold text-gray-800 truncate">${description}</p>
             </div>
             <div class="flex flex-col items-end gap-1 shrink-0">
-                ${chipHtml}
-                <span class="text-[16px] font-bold text-slate-600">${total}</span>
+                ${chipHtml || '<span class="h-[18px]"></span>'}
+                <div class="flex items-center gap-1">
+                    <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
+                    <svg class="w-3.5 h-3.5 text-gray-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </div>
             </div>`;
 
         if (!isInvoiced) {
@@ -1278,9 +1354,9 @@ async function loadRecentEntries() {
 }
 
 function clientBadgeColor(name) {
-    if (name.includes('ICONIC'))  return 'bg-purple-100 text-purple-700';
-    if (name.includes('Images'))  return 'bg-blue-100 text-blue-700';
-    if (name.includes('JD'))      return 'bg-orange-100 text-orange-600';
+    if (name.includes('ICONIC'))  return 'bg-rose-50 text-rose-500';
+    if (name.includes('Images'))  return 'bg-blue-50 text-blue-500';
+    if (name.includes('JD'))      return 'bg-orange-50 text-orange-500';
     return 'bg-gray-100 text-gray-500';
 }
 
@@ -1304,6 +1380,17 @@ function formatEntryDate(dateStr) {
     const [y, m, d] = dateStr.split('-');
     const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
     return date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function formatEntryDateParts(dateStr) {
+    if (!dateStr) return { dow: '', day: '', mon: '' };
+    const [y, m, d] = dateStr.split('-');
+    const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+    return {
+        dow: date.toLocaleDateString('en-AU', { weekday: 'short' }),
+        day: date.getDate(),
+        mon: date.toLocaleDateString('en-AU', { month: 'short' }),
+    };
 }
 
 // ─────────────────────────────────────────────
