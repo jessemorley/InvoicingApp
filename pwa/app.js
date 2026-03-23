@@ -653,13 +653,12 @@ function closeNewEntryCard() {
 
 function buildNewEntryFormHTML() {
     return `
-    <div class="entry-row" style="flex-direction:column; align-items:stretch; padding:0; gap:0;">
+    <div style="background:#fff; border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:0;">
         <!-- Client selector -->
-        <div id="newClientContainer" class="relative" style="display:flex; align-items:stretch;">
-            <div style="position:relative; display:flex; align-items:center; flex:1;">
+        <div id="newClientContainer" class="relative">
+            <div class="relative flex items-center">
                 <input type="text" id="newClientInput" placeholder="Client" autocomplete="off"
-                    style="background:transparent; border:none; outline:none; width:100%; padding:14px 40px 14px 16px; font-size:15px; font-weight:500; color:#1c1c1e;"
-                    class="placeholder-slate-400">
+                    class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 pr-10 font-medium">
                 <button id="newClearClient" class="clear-btn absolute right-3 p-1 rounded-full bg-slate-200 text-slate-500">
                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
@@ -670,7 +669,7 @@ function buildNewEntryFormHTML() {
         </div>
 
         <!-- Billing fields (revealed after client select) -->
-        <div id="newEntryFields" class="reveal space-y-3" style="padding:0 16px 14px;">
+        <div id="newEntryFields" class="reveal space-y-3 mt-3">
 
             <!-- Date -->
             <div class="bg-slate-50 rounded-xl px-4 py-2.5">
