@@ -13,7 +13,6 @@ Invoices Summary View:
 - Add column for super amount
 
 PDF Invoice:
-- Match styling to example PDF [text](invoicemockup.html)
 
 Settings:
 - Resize window to fit tab contents
@@ -22,9 +21,7 @@ Invoice Preview:
 - Information like start/finish/break times, full day/half day, etc. should be shown on the invoice line items
 
 PWA:
-- add ability to edit entries from recent list (unless already invoiced)
-- aadd bility to delete entrties from recent list (unless already invoiced)
-- add invoice chips (invoice number and colour) to entries in recent list
+- lazy load entries on scroll
 
 
 Features
@@ -36,3 +33,9 @@ Features
     - More than one entry per date
 
 - Add line items to invoice (e.g. gear hire)
+
+- Client Settings
+Currently per-client invoicing rules such as day rate vs hours, role, super, etc. are set in the app code, but ideally these variables would be set from within the client view in the app. That way it’s consistent and transparent, and easier to manage moving forward.
+Write a a plan summarising all the current differences between existing client invoicing rules and how these could be set with a consistent client options interface.
+Outline the changes that would need to happen to the database to make this possible.
+Let me know whether a database backup in some form would be advisable before beginning implementation.
