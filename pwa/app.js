@@ -10,8 +10,9 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ─────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────
-let allClients       = [];
-let workflowRates    = [];
+let allClients              = [];
+let clientLatestInvoiceMap  = {};
+let workflowRates           = [];
 let selectedClient   = null;
 let currentDayType   = 'full';
 let currentWorkflow  = 'Apparel';
@@ -80,8 +81,9 @@ function openClientPicker() {
     const overlay = document.getElementById('clientPickerOverlay');
     const input   = document.getElementById('overlayClientInput');
     overlay.style.display = 'flex';
-    renderOverlayClients('');
     input.value = '';
+    document.getElementById('overlayInputClear').style.display = 'none';
+    renderOverlayClients('');
     input.focus();
 }
 
@@ -95,21 +97,54 @@ function renderOverlayClients(query) {
     const matches = query
         ? allClients.filter(c => c.name.toLowerCase().includes(query.toLowerCase()))
         : allClients;
+
     list.innerHTML = '';
+
+    const label = document.createElement('div');
+    label.style.cssText = 'padding:20px 24px 10px; font-size:13px; font-weight:700; color:#8e8e93; text-transform:uppercase; letter-spacing:0.06em;';
+    label.textContent = query ? `${matches.length} ${matches.length === 1 ? 'Result' : 'Results'}` : 'Clients';
+    list.appendChild(label);
+
+    if (!matches.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'padding:60px 24px; text-align:center; color:#8e8e93; font-size:15px;';
+        empty.textContent = 'No clients found';
+        list.appendChild(empty);
+        return;
+    }
+
     matches.forEach(client => {
-        const el = document.createElement('button');
-        el.textContent = client.name;
-        el.style.cssText = 'display:block; width:100%; text-align:left; background:#fff; border:none; border-radius:14px; padding:18px 20px; font-size:17px; font-weight:600; color:#111827; margin-bottom:8px; cursor:pointer; font-family:inherit;';
-        el.addEventListener('click', () => {
+        const invNum = clientLatestInvoiceMap[client.name] || null;
+        const row = document.createElement('button');
+        row.style.cssText = 'display:flex; width:100%; box-sizing:border-box; align-items:center; text-align:left; background:none; border:none; border-bottom:1px solid #f3f4f6; padding:14px 24px; cursor:pointer; font-family:inherit;';
+        row.innerHTML = `
+            <div style="flex:1; min-width:0;">
+                <div style="font-size:17px; font-weight:600; color:#111827;">${client.name}</div>
+                ${invNum ? `<div style="font-size:13px; color:#8e8e93; margin-top:2px;">${invNum}</div>` : ''}
+            </div>
+            <svg width="18" height="18" fill="none" stroke="#c7c7cc" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/>
+            </svg>`;
+        row.addEventListener('click', () => {
             closeClientPicker();
             openNewEntryCardForClient(client);
         });
-        list.appendChild(el);
+        list.appendChild(row);
     });
 }
 
 document.getElementById('overlayClientInput').addEventListener('input', e => {
-    renderOverlayClients(e.target.value.trim());
+    const val = e.target.value.trim();
+    renderOverlayClients(val);
+    document.getElementById('overlayInputClear').style.display = val ? 'flex' : 'none';
+});
+
+document.getElementById('overlayInputClear').addEventListener('click', () => {
+    const input = document.getElementById('overlayClientInput');
+    input.value = '';
+    input.focus();
+    document.getElementById('overlayInputClear').style.display = 'none';
+    renderOverlayClients('');
 });
 
 document.getElementById('overlayCancel').addEventListener('click', closeClientPicker);
@@ -544,6 +579,16 @@ async function loadRecentEntries() {
         .limit(25);
 
     const data = rawData;
+
+    // Build latest invoice map for client picker
+    clientLatestInvoiceMap = {};
+    (rawData || []).forEach(entry => {
+        const name = entry.clients?.name;
+        const inv  = entry.invoices?.invoice_number;
+        if (name && inv && !clientLatestInvoiceMap[name]) {
+            clientLatestInvoiceMap[name] = inv;
+        }
+    });
 
     if (error || !data?.length) {
         list.innerHTML = '';
