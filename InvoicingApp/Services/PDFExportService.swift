@@ -60,7 +60,7 @@ final class PDFExportService {
 
     // MARK: - HTML Generation
 
-    private func buildHTML(invoice: Invoice, entries: [Entry], client: Client, settings: UserSettings) -> String {
+    func buildHTML(invoice: Invoice, entries: [Entry], client: Client, settings: UserSettings) -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMM d, yyyy"
 
