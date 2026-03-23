@@ -47,7 +47,6 @@ function showLogin() {
 function showApp() {
     document.getElementById('loginScreen').classList.remove('active');
     document.getElementById('appShell').classList.add('active');
-    switchTab('recent', true); // skip load — loadData() will call loadRecentEntries()
 }
 
 document.getElementById('loginBtn').addEventListener('click', async () => {
@@ -76,9 +75,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 document.getElementById('signOutBtn').addEventListener('click', async () => {
     await sb.auth.signOut();
     resetForm();
-    switchTab('recent');
     showLogin();
-    document.getElementById('tabSettings').classList.add('hidden');
 });
 
 // ─────────────────────────────────────────────
@@ -104,18 +101,6 @@ function setDefaultDate() {
     document.getElementById('entryDate').value = `${yyyy}-${mm}-${dd}`;
 }
 
-// ─────────────────────────────────────────────
-// TAB SWITCHING
-// ─────────────────────────────────────────────
-function switchTab(tab, skipLoad = false) {
-    document.getElementById('tabRecent').classList.toggle('hidden', tab !== 'recent');
-    document.getElementById('tabSettings').classList.toggle('hidden', tab !== 'settings');
-
-    document.getElementById('tabIconRecent').className   = `w-5 h-5 ${tab === 'recent'   ? 'text-gray-900' : 'text-gray-300'}`;
-    document.getElementById('tabIconSettings').className = `w-5 h-5 ${tab === 'settings' ? 'text-gray-900' : 'text-gray-300'}`;
-
-    if (tab === 'recent' && !skipLoad) loadRecentEntries();
-}
 
 // ─────────────────────────────────────────────
 // CLIENT AUTOCOMPLETE

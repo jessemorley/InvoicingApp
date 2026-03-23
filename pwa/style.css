@@ -12,29 +12,6 @@
         .screen { display: none; }
         .screen.active { display: flex; flex-direction: column; }
 
-        /* Tab bar — floating pill */
-        #tabBar {
-            position: fixed;
-            bottom: 0;
-            left: 0; right: 0;
-            z-index: 100;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-        #tabBar-inner {
-            display: flex;
-            width: calc(100% - 2.5rem);
-            max-width: calc(448px - 2.5rem);
-            margin: 0 auto 1.5rem;
-            background: rgba(255,255,255,0.8);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 2.5rem;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
-            padding: 1rem 2.5rem;
-            justify-content: space-between;
-            align-items: center;
-        }
 
         /* Inputs */
         .input-field {
