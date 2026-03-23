@@ -37,17 +37,22 @@
             padding-bottom: env(safe-area-inset-bottom);
             z-index: 100;
         }
+        #tabBar-inner {
+            display: flex;
+            width: 100%;
+            max-width: 448px;
+            margin: 0 auto;
+        }
 
         /* Inputs */
         .input-field {
             background: #fff;
             border: 1.5px solid transparent;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            transition: border-color 0.2s;
             outline: none;
         }
         .input-field:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 4px rgba(0,122,255,0.1);
         }
 
         /* Segmented control */
@@ -92,8 +97,8 @@
 
         /* Summary card */
         .summary-card {
-            border: 2px solid #e5e5ea;
             border-radius: 2rem;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.07);
         }
 
         /* Primary button */
@@ -221,11 +226,17 @@
             background: #f2f2f7;
             border-radius: 20px 20px 0 0;
             width: 100%;
+            max-width: 448px;
+            margin: 0 auto;
             max-height: 92dvh;
             display: flex;
             flex-direction: column;
             padding-bottom: env(safe-area-inset-bottom);
             animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        @media (min-width: 640px) {
+            .edit-modal { align-items: center; }
+            .edit-modal-inner { border-radius: 20px; }
         }
         @keyframes slideUp {
             from { transform: translateY(100%); opacity: 0; }
@@ -264,17 +275,16 @@
             font-size: 14px;
             font-weight: 600;
             border-radius: 10px;
-            border: 1.5px solid #e5e5ea;
-            background: #fff;
+            border: none;
+            background: transparent;
             color: #3c3c43;
             cursor: pointer;
             transition: all 0.15s;
             text-align: center;
         }
         .workflow-btn.active {
-            border-color: var(--accent);
             color: var(--accent);
-            background: rgba(0,122,255,0.06);
+            background: rgba(0,122,255,0.08);
         }
     </style>
 </head>
@@ -285,7 +295,7 @@
 ═══════════════════════════════════════════════ -->
 <div id="loginScreen" class="screen active">
     <div class="w-full max-w-sm">
-        <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-8">Jesse Morley Photography</p>
+        <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-8">Jesse Morley Photography</p>
         <h1 class="text-3xl font-bold text-slate-900 mb-8">Sign In</h1>
         <div class="space-y-3">
             <input id="loginEmail" type="email" placeholder="Email" autocomplete="email"
@@ -308,7 +318,7 @@
         <div class="max-w-md mx-auto px-5 pt-4">
 
             <div class="flex items-center justify-between mb-6">
-                <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">New Entry</p>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">New Entry</p>
                 <button id="signOutBtn" class="text-[13px] text-slate-400 font-medium">Sign Out</button>
             </div>
 
@@ -333,7 +343,7 @@
 
                 <!-- Date -->
                 <div class="bg-white rounded-2xl px-5 py-3">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Date</span>
+                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Date</span>
                     <input type="date" id="entryDate" class="bg-transparent w-full text-[17px] font-medium outline-none">
                 </div>
 
@@ -342,7 +352,7 @@
 
                     <!-- Day type segmented -->
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">Day Type</span>
+                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Day Type</span>
                         <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                             <button class="seg-btn active" data-day="full" onclick="setDayType('full')">Full Day</button>
                             <button class="seg-btn" data-day="half" onclick="setDayType('half')">Half Day</button>
@@ -352,7 +362,7 @@
                     <!-- Workflow (full day only) -->
                     <div id="workflowSection" class="reveal open space-y-4">
                         <div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">Workflow</span>
+                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Workflow</span>
                             <div class="flex gap-2" id="workflowBtns">
                                 <button class="workflow-btn active" data-wf="Apparel" onclick="setWorkflow('Apparel')">Apparel</button>
                                 <button class="workflow-btn" data-wf="Product" onclick="setWorkflow('Product')">Product</button>
@@ -369,7 +379,7 @@
                         <!-- Apparel/Product: SKUs -->
                         <div id="skuField" class="hidden">
                             <div class="bg-white rounded-2xl px-5 py-3">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">SKUs Shot</span>
+                                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">SKUs Shot</span>
                                 <input type="number" id="skuInput" placeholder="0" min="0"
                                     class="bg-transparent w-full text-[17px] font-medium outline-none">
                             </div>
@@ -386,7 +396,7 @@
                         <input type="text" id="shootClientInput" placeholder="Shoot Client"
                             class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium">
                         <div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">Role</span>
+                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Role</span>
                             <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                                 <button class="seg-btn active" data-role="Photographer" onclick="setRole('Photographer')">Photographer</button>
                                 <button class="seg-btn" data-role="Operator" onclick="setRole('Operator')">Operator</button>
@@ -403,11 +413,11 @@
                     <!-- Times -->
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-white rounded-2xl px-5 py-3">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Start</span>
+                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Start</span>
                             <input type="time" id="startTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
                         </div>
                         <div class="bg-white rounded-2xl px-5 py-3">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">End</span>
+                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">End</span>
                             <input type="time" id="finishTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
                         </div>
                     </div>
@@ -415,7 +425,7 @@
                     <!-- Break -->
                     <div class="bg-white p-5 rounded-2xl flex items-center justify-between">
                         <div>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Break</span>
+                            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Break</span>
                             <div class="flex items-baseline gap-1">
                                 <input type="number" id="breakMinutes" value="0" min="0" step="5"
                                     class="bg-transparent border-none p-0 w-12 text-[17px] font-bold focus:ring-0 text-slate-800 outline-none">
@@ -434,7 +444,7 @@
                     <textarea id="manualDesc" rows="2" placeholder="Description"
                         class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"></textarea>
                     <div class="bg-white rounded-2xl px-5 py-3">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Amount ($)</span>
+                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Amount ($)</span>
                         <input type="number" id="manualAmount" placeholder="0.00" step="0.01" min="0"
                             class="bg-transparent w-full text-[17px] font-medium outline-none">
                     </div>
@@ -455,11 +465,11 @@
                 <div class="summary-card p-6 bg-white">
                     <div class="flex justify-between items-start mb-4">
                         <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total</p>
+                            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Total</p>
                             <h2 id="displayTotal" class="text-4xl font-bold tracking-tight text-slate-900">$0.00</h2>
                         </div>
                         <div class="text-right" id="durationBlock">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Duration</p>
+                            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Duration</p>
                             <p id="displayDuration" class="text-xl font-bold text-slate-700">0h 0m</p>
                         </div>
                     </div>
@@ -493,7 +503,7 @@
     <!-- ── Recent Entries Tab ── -->
     <div id="tabRecent" class="flex-1 overflow-y-auto pb-32 hidden" style="padding-top: env(safe-area-inset-top)">
         <div class="max-w-md mx-auto px-5 pt-10 space-y-4">
-            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Last 14 Days</p>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Last 14 Days</p>
             <div id="recentList" class="space-y-2">
                 <p class="text-slate-400 text-sm py-8 text-center">Loading entries...</p>
             </div>
@@ -519,14 +529,14 @@
 
                 <!-- Date -->
                 <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Date</span>
+                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Date</span>
                     <input type="date" id="editDate" class="bg-transparent w-full text-[17px] font-medium outline-none">
                 </div>
 
                 <!-- ── DAY RATE EDIT FIELDS ── -->
                 <div id="editDayRateFields" class="hidden space-y-4">
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">Day Type</span>
+                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Day Type</span>
                         <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                             <button class="seg-btn" data-editday="full" onclick="setEditDayType('full')">Full Day</button>
                             <button class="seg-btn" data-editday="half" onclick="setEditDayType('half')">Half Day</button>
@@ -534,7 +544,7 @@
                     </div>
                     <div id="editWorkflowSection" class="space-y-4">
                         <div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">Workflow</span>
+                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Workflow</span>
                             <div class="flex gap-2" id="editWorkflowBtns">
                                 <button class="workflow-btn" data-editwf="Apparel" onclick="setEditWorkflow('Apparel')">Apparel</button>
                                 <button class="workflow-btn" data-editwf="Product" onclick="setEditWorkflow('Product')">Product</button>
@@ -547,7 +557,7 @@
                         </div>
                         <div id="editSkuField" class="hidden">
                             <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">SKUs Shot</span>
+                                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">SKUs Shot</span>
                                 <input type="number" id="editSkuInput" placeholder="0" min="0"
                                     class="bg-transparent w-full text-[17px] font-medium outline-none">
                             </div>
@@ -561,7 +571,7 @@
                         <input type="text" id="editShootClientInput" placeholder="Shoot Client"
                             class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium">
                         <div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">Role</span>
+                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Role</span>
                             <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                                 <button class="seg-btn" data-editrole="Photographer" onclick="setEditRole('Photographer')">Photographer</button>
                                 <button class="seg-btn" data-editrole="Operator" onclick="setEditRole('Operator')">Operator</button>
@@ -574,17 +584,17 @@
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Start</span>
+                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Start</span>
                             <input type="time" id="editStartTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
                         </div>
                         <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">End</span>
+                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">End</span>
                             <input type="time" id="editFinishTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
                         </div>
                     </div>
                     <div class="bg-white p-5 rounded-2xl flex items-center justify-between">
                         <div>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Break</span>
+                            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Break</span>
                             <div class="flex items-baseline gap-1">
                                 <input type="number" id="editBreakMinutes" value="0" min="0" step="5"
                                     class="bg-transparent border-none p-0 w-12 text-[17px] font-bold focus:ring-0 text-slate-800 outline-none">
@@ -603,7 +613,7 @@
                     <textarea id="editManualDesc" rows="2" placeholder="Description"
                         class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"></textarea>
                     <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Amount ($)</span>
+                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Amount ($)</span>
                         <input type="number" id="editManualAmount" placeholder="0.00" step="0.01" min="0"
                             class="bg-transparent w-full text-[17px] font-medium outline-none">
                     </div>
@@ -623,11 +633,11 @@
                 <div class="summary-card p-6 bg-white">
                     <div class="flex justify-between items-start mb-4">
                         <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total</p>
+                            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Total</p>
                             <h2 id="editDisplayTotal" class="text-4xl font-bold tracking-tight text-slate-900">$0.00</h2>
                         </div>
                         <div class="text-right" id="editDurationBlock">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Duration</p>
+                            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Duration</p>
                             <p id="editDisplayDuration" class="text-xl font-bold text-slate-700">0h 0m</p>
                         </div>
                     </div>
@@ -659,7 +669,8 @@
     </div>
 
     <!-- ── Tab Bar ── -->
-    <nav id="tabBar" class="flex">
+    <nav id="tabBar">
+        <div id="tabBar-inner">
         <button onclick="switchTab('log')" id="tabBtnLog"
             class="flex-1 flex flex-col items-center py-3 gap-1 text-[#007AFF]">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -676,6 +687,7 @@
             </svg>
             <span class="text-[10px] font-semibold">Recent</span>
         </button>
+        </div>
     </nav>
 </div>
 
@@ -1209,8 +1221,7 @@ async function loadRecentEntries() {
     list.innerHTML = '';
     data.forEach(entry => {
         const clientName  = entry.clients?.name || 'Unknown';
-        const billingType = entry.clients?.billing_type || '';
-        const badgeColor  = badgeColors[billingType] || 'bg-slate-100 text-slate-500';
+        const badgeColor  = clientBadgeColor(clientName);
         const description = entryDescription(entry);
         const dateStr     = formatEntryDate(entry.date);
         const total       = fmt(entry.total_amount);
@@ -1219,7 +1230,7 @@ async function loadRecentEntries() {
 
         const chipHtml = inv ? (() => {
             const chipColor = invoiceChipColors[inv.status] || 'bg-slate-100 text-slate-500 border-slate-200';
-            return `<span class="invoice-chip ${chipColor}">${String(inv.invoice_number).padStart(3, '0')}</span>`;
+            return `<span class="invoice-chip ${chipColor}">${inv.invoice_number}</span>`;
         })() : '';
 
         const el = document.createElement('div');
@@ -1251,11 +1262,12 @@ async function loadRecentEntries() {
     });
 }
 
-const badgeColors = {
-    'day_rate': 'bg-purple-100 text-purple-700',
-    'hourly':   'bg-blue-100 text-blue-700',
-    'manual':   'bg-amber-100 text-amber-700',
-};
+function clientBadgeColor(name) {
+    if (name.includes('ICONIC'))  return 'bg-purple-100 text-purple-700';
+    if (name.includes('Images'))  return 'bg-blue-100 text-blue-700';
+    if (name.includes('JD'))      return 'bg-orange-100 text-orange-600';
+    return 'bg-gray-100 text-gray-500';
+}
 
 const invoiceChipColors = {
     'draft':  'bg-gray-100 text-gray-500',
