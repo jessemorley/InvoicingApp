@@ -10,7 +10,7 @@
 
         /* Screens */
         .screen { display: none; }
-        .screen.active { display: flex; flex-direction: column; }
+        .screen.active { display: flex; flex-direction: column; width: 100%; }
 
 
         /* Inputs */
