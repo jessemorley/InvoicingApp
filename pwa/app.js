@@ -553,21 +553,22 @@ async function loadRecentEntries() {
             const el = document.createElement('div');
             el.className = 'entry-row' + (isInvoiced ? ' entry-row-invoiced' : ' entry-row-tappable');
             const dateParts = formatEntryDateParts(entry.date);
+            const dowColor = clientDowColor(clientName);
             el.innerHTML = `
                 <div class="entry-date-col">
-                    <span class="dow">${dateParts.dow}</span>
+                    <span class="dow ${dowColor}">${dateParts.dow}</span>
                     <span class="day-num">${dateParts.day}</span>
                     <span class="mon">${dateParts.mon}</span>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-1.5 mb-1.5">
+                    <div class="flex justify-between items-start mb-1">
                         <span class="client-badge ${badgeColor}">${clientName}</span>
+                        ${chipHtml}
                     </div>
-                    <p class="text-[15px] font-semibold text-gray-800 truncate">${description}</p>
-                </div>
-                <div class="flex flex-col items-end gap-1 shrink-0">
-                    ${chipHtml || '<span class="h-[18px]"></span>'}
-                    <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
+                    <div class="flex justify-between items-baseline gap-2">
+                        <p class="text-[14px] font-bold text-gray-800 truncate">${description}</p>
+                        <span class="text-[17px] font-black text-gray-900 tracking-tight shrink-0">${total}</span>
+                    </div>
                 </div>`;
 
             const wrap = document.createElement('div');
@@ -1124,6 +1125,13 @@ function clientBadgeColor(name) {
     return 'bg-gray-100 text-gray-500';
 }
 
+function clientDowColor(name) {
+    if (name.includes('ICONIC'))  return 'text-purple-500';
+    if (name.includes('Images'))  return 'text-blue-500';
+    if (name.includes('JD'))      return 'text-orange-500';
+    return 'text-gray-400';
+}
+
 const invoiceChipColors = {
     'draft':  'bg-gray-100 text-gray-500',
     'issued': 'bg-orange-100 text-orange-600',
@@ -1288,7 +1296,7 @@ let expandedWrap    = null;
 function closeEntryCard(wrap) {
     // Hold the squared-off bottom corners on the row during collapse
     const row = wrap.querySelector('.entry-row');
-    if (row) row.style.borderRadius = '14px 14px 0 0';
+    if (row) row.style.borderRadius = '16px 16px 0 0';
 
     wrap.classList.remove('expanded');
 
