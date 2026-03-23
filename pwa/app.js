@@ -646,13 +646,15 @@ async function loadRecentEntries() {
     appendNewEntryCard(list, cardIndex);
 }
 
-function appendNewEntryCard(list, _cardIndex) {
+function appendNewEntryCard(_list, _cardIndex) {
+    const slot = document.getElementById('newEntrySlot');
     const newWrap = document.createElement('div');
     newWrap.className = 'entry-card-wrap';
     newWrap.style.marginBottom = '1rem';
     newWrap.style.display = 'none';
     newWrap.innerHTML = buildNewEntryFormHTML();
-    list.prepend(newWrap);
+    slot.innerHTML = '';
+    slot.appendChild(newWrap);
     newEntryWrap = newWrap;
     wireNewEntryForm();
 }
