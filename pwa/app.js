@@ -675,16 +675,10 @@ async function loadRecentEntries() {
 
             if (!isInvoiced) {
                 el.addEventListener('click', () => openEntryCard(wrap, entry, false));
-                const swipeContainer = document.createElement('div');
-                swipeContainer.className = 'swipe-container';
-                swipeContainer.innerHTML = '<div class="swipe-delete-bg"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>Delete</div>';
-                swipeContainer.appendChild(el);
-                addSwipeToDelete(swipeContainer, el, entry);
-                wrap.appendChild(swipeContainer);
             } else {
                 el.addEventListener('click', () => openEntryCard(wrap, entry, true));
-                wrap.appendChild(el);
             }
+            wrap.appendChild(el);
 
             wrap.appendChild(detailPanel);
             group.appendChild(wrap);
@@ -1283,100 +1277,6 @@ function formatWeekLabel(weekStart) {
     return `${weekStart.toLocaleDateString('en-AU', opts)} – ${end.toLocaleDateString('en-AU', opts)}`;
 }
 
-// ─────────────────────────────────────────────
-// SWIPE TO DELETE
-// ─────────────────────────────────────────────
-function addSwipeToDelete(wrapper, el, entry) {
-    let startX = 0, startY = 0, dx = 0;
-    let swiping = false, decided = false;
-    let activeSnapBack = null;
-    const threshold = 80; // px to reveal delete
-    const commitAt  = 0.5; // fraction of row width to auto-confirm
-
-    el.addEventListener('touchstart', e => {
-        // Remove any pending snap-back listener so dragging this row again works
-        if (activeSnapBack) {
-            document.removeEventListener('touchstart', activeSnapBack);
-            activeSnapBack = null;
-        }
-        startX  = e.touches[0].clientX;
-        startY  = e.touches[0].clientY;
-        dx      = 0;
-        swiping = false;
-        decided = false;
-        el.style.transition = 'none';
-    }, { passive: true });
-
-    el.addEventListener('touchmove', e => {
-        const curX = e.touches[0].clientX;
-        const curY = e.touches[0].clientY;
-        if (!decided) {
-            // Determine axis on first move
-            decided = true;
-            swiping = Math.abs(curX - startX) > Math.abs(curY - startY);
-        }
-        if (!swiping) return;
-        dx = Math.min(0, curX - startX); // only left swipe
-        el.style.transform = `translateX(${dx}px)`;
-    }, { passive: true });
-
-    el.addEventListener('touchend', async () => {
-        if (!swiping) return;
-        el.style.transition = '';
-        const rowWidth = el.offsetWidth;
-        if (dx < -(rowWidth * commitAt)) {
-            // Full swipe — delete
-            el.style.transform = `translateX(-${rowWidth}px)`;
-            try {
-                const { error } = await sb.from('entries').delete().eq('id', entry.id);
-                if (error) throw error;
-                const cardWrap = wrapper.parentElement;
-                const collapseTarget = cardWrap || wrapper;
-                collapseTarget.style.transition = 'max-height 0.3s, opacity 0.3s';
-                collapseTarget.style.maxHeight  = collapseTarget.offsetHeight + 'px';
-                requestAnimationFrame(() => {
-                    collapseTarget.style.maxHeight = '0';
-                    collapseTarget.style.opacity   = '0';
-                    collapseTarget.style.overflow  = 'hidden';
-                });
-                setTimeout(() => collapseTarget.remove(), 350);
-            } catch (err) {
-                alert('Error deleting entry: ' + err.message);
-                el.style.transform = '';
-            }
-        } else if (dx < -threshold) {
-            // Partial — snap to threshold to keep delete visible
-            el.style.transform = `translateX(-${threshold}px)`;
-            // Tap on the revealed delete bg to confirm
-            wrapper.querySelector('.swipe-delete-bg').addEventListener('click', async () => {
-                el.style.transition = 'none';
-                el.style.transform  = `translateX(-${el.offsetWidth}px)`;
-                try {
-                    const { error } = await sb.from('entries').delete().eq('id', entry.id);
-                    if (error) throw error;
-                    const cardWrap = wrapper.parentElement;
-                    (cardWrap || wrapper).remove();
-                } catch (err) {
-                    alert('Error deleting entry: ' + err.message);
-                    el.style.transition = '';
-                    el.style.transform  = '';
-                }
-            }, { once: true });
-            // Tap/drag elsewhere snaps back
-            activeSnapBack = (e) => {
-                if (wrapper.contains(e.target)) return; // ignore touches on this row
-                document.removeEventListener('touchstart', activeSnapBack);
-                activeSnapBack = null;
-                el.style.transform = '';
-            };
-            document.addEventListener('touchstart', activeSnapBack, { passive: true });
-        } else {
-            // Snap back
-            el.style.transform = '';
-        }
-        dx = 0;
-    });
-}
 
 // ─────────────────────────────────────────────
 // ENTRY CARD EXPAND / COLLAPSE

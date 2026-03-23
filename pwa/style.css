@@ -158,25 +158,6 @@
         .toggle-wrap input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
 
         /* Recent entries list */
-        .swipe-container {
-            position: relative;
-            border-radius: 0;
-            overflow: hidden;
-        }
-        .swipe-delete-bg {
-            position: absolute;
-            inset: 0;
-            background: #ff3b30;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding-right: 24px;
-            color: #fff;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 0.02em;
-        }
         .entry-row {
             background: #fff;
             border-radius: 14px;
@@ -185,9 +166,6 @@
             align-items: center;
             gap: 12px;
             position: relative;
-            touch-action: pan-y;
-            will-change: transform;
-            transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .entry-row-tappable {
@@ -335,10 +313,6 @@
         .entry-detail-inner {
             padding: 0.75rem 1rem 1rem;
         }
-        .entry-card-wrap.expanded .swipe-container {
-            overflow: visible;
-        }
-
         /* Entries tab layout */
         #tabRecent {
             width: 100%;
