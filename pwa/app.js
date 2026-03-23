@@ -521,70 +521,93 @@ async function loadRecentEntries() {
         return;
     }
 
-    list.innerHTML = '';
+    // Group entries by ISO week
+    const weeks = [];
+    const weekIndex = {};
     data.forEach(entry => {
-        const clientName  = entry.clients?.name || 'Unknown';
-        const badgeColor  = clientBadgeColor(clientName);
-        const description = entryDescription(entry);
-        const total       = fmt(entry.total_amount);
-        const inv         = entry.invoices;
-        const isInvoiced  = !!entry.invoice_id;
-
-        const chipHtml = inv ? (() => {
-            const chipColor = invoiceChipColors[inv.status] || 'bg-slate-100 text-slate-500 border-slate-200';
-            return `<span class="invoice-chip ${chipColor}">${inv.invoice_number}</span>`;
-        })() : '';
-
-        const el = document.createElement('div');
-        el.className = 'entry-row' + (isInvoiced ? ' entry-row-invoiced' : ' entry-row-tappable');
-        // Parse date parts for the new card design
-        const dateParts = formatEntryDateParts(entry.date);
-        el.innerHTML = `
-            <div class="entry-date-col">
-                <span class="dow">${dateParts.dow}</span>
-                <span class="day-num">${dateParts.day}</span>
-                <span class="mon">${dateParts.mon}</span>
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-1.5 mb-1.5">
-                    <span class="client-badge ${badgeColor}">${clientName}</span>
-                </div>
-                <p class="text-[15px] font-semibold text-gray-800 truncate">${description}</p>
-            </div>
-            <div class="flex flex-col items-end gap-1 shrink-0">
-                ${chipHtml || '<span class="h-[18px]"></span>'}
-                <div class="flex items-center gap-1">
-                    <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
-                    <svg class="w-3.5 h-3.5 text-gray-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </div>
-            </div>`;
-
-        // Outer wrap
-        const wrap = document.createElement('div');
-        wrap.className = 'entry-card-wrap';
-
-        // Detail panel
-        const detailPanel = document.createElement('div');
-        detailPanel.className = 'entry-detail-panel';
-        const detailInner = document.createElement('div');
-        detailInner.className = 'entry-detail-inner';
-        detailPanel.appendChild(detailInner);
-
-        if (!isInvoiced) {
-            el.addEventListener('click', () => openEntryCard(wrap, entry, false));
-            const swipeContainer = document.createElement('div');
-            swipeContainer.className = 'swipe-container';
-            swipeContainer.innerHTML = '<div class="swipe-delete-bg"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>Delete</div>';
-            swipeContainer.appendChild(el);
-            addSwipeToDelete(swipeContainer, el, entry);
-            wrap.appendChild(swipeContainer);
-        } else {
-            el.addEventListener('click', () => openEntryCard(wrap, entry, true));
-            wrap.appendChild(el);
+        const key = isoWeekKey(entry.date);
+        if (!weekIndex[key]) {
+            const group = { key, weekStart: isoWeekStart(entry.date), entries: [] };
+            weeks.push(group);
+            weekIndex[key] = group;
         }
+        weekIndex[key].entries.push(entry);
+    });
 
-        wrap.appendChild(detailPanel);
-        list.appendChild(wrap);
+    list.innerHTML = '';
+    weeks.forEach(({ weekStart, entries }) => {
+        // Week header
+        const header = document.createElement('div');
+        header.className = 'week-header';
+        const weekTotal = entries.reduce((sum, e) => sum + (e.total_amount || 0), 0);
+        header.innerHTML = `<span>${formatWeekLabel(weekStart)}</span><span>${fmt(weekTotal)}</span>`;
+        list.appendChild(header);
+
+        // Cards
+        const group = document.createElement('div');
+        group.className = 'week-group';
+        entries.forEach(entry => {
+            const clientName  = entry.clients?.name || 'Unknown';
+            const badgeColor  = clientBadgeColor(clientName);
+            const description = entryDescription(entry);
+            const total       = fmt(entry.total_amount);
+            const inv         = entry.invoices;
+            const isInvoiced  = !!entry.invoice_id;
+
+            const chipHtml = inv ? (() => {
+                const chipColor = invoiceChipColors[inv.status] || 'bg-slate-100 text-slate-500';
+                return `<span class="invoice-chip ${chipColor}">${inv.invoice_number}</span>`;
+            })() : '';
+
+            const el = document.createElement('div');
+            el.className = 'entry-row' + (isInvoiced ? ' entry-row-invoiced' : ' entry-row-tappable');
+            const dateParts = formatEntryDateParts(entry.date);
+            el.innerHTML = `
+                <div class="entry-date-col">
+                    <span class="dow">${dateParts.dow}</span>
+                    <span class="day-num">${dateParts.day}</span>
+                    <span class="mon">${dateParts.mon}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="client-badge ${badgeColor}">${clientName}</span>
+                    </div>
+                    <p class="text-[15px] font-semibold text-gray-800 truncate">${description}</p>
+                </div>
+                <div class="flex flex-col items-end gap-1 shrink-0">
+                    ${chipHtml || '<span class="h-[18px]"></span>'}
+                    <div class="flex items-center gap-1">
+                        <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
+                        <svg class="w-3.5 h-3.5 text-gray-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </div>
+                </div>`;
+
+            const wrap = document.createElement('div');
+            wrap.className = 'entry-card-wrap';
+
+            const detailPanel = document.createElement('div');
+            detailPanel.className = 'entry-detail-panel';
+            const detailInner = document.createElement('div');
+            detailInner.className = 'entry-detail-inner';
+            detailPanel.appendChild(detailInner);
+
+            if (!isInvoiced) {
+                el.addEventListener('click', () => openEntryCard(wrap, entry, false));
+                const swipeContainer = document.createElement('div');
+                swipeContainer.className = 'swipe-container';
+                swipeContainer.innerHTML = '<div class="swipe-delete-bg"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>Delete</div>';
+                swipeContainer.appendChild(el);
+                addSwipeToDelete(swipeContainer, el, entry);
+                wrap.appendChild(swipeContainer);
+            } else {
+                el.addEventListener('click', () => openEntryCard(wrap, entry, true));
+                wrap.appendChild(el);
+            }
+
+            wrap.appendChild(detailPanel);
+            group.appendChild(wrap);
+        });
+        list.appendChild(group);
     });
 }
 
@@ -626,6 +649,28 @@ function formatEntryDateParts(dateStr) {
         day: date.getDate(),
         mon: date.toLocaleDateString('en-AU', { month: 'short' }),
     };
+}
+
+function isoWeekStart(dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+    const day = date.getDay(); // 0=Sun
+    const diff = (day === 0 ? -6 : 1 - day); // Monday-based
+    const mon = new Date(date);
+    mon.setDate(date.getDate() + diff);
+    return mon;
+}
+
+function isoWeekKey(dateStr) {
+    const mon = isoWeekStart(dateStr);
+    return `${mon.getFullYear()}-${mon.getMonth()}-${mon.getDate()}`;
+}
+
+function formatWeekLabel(weekStart) {
+    const end = new Date(weekStart);
+    end.setDate(weekStart.getDate() + 6);
+    const opts = { day: 'numeric', month: 'short' };
+    return `${weekStart.toLocaleDateString('en-AU', opts)} – ${end.toLocaleDateString('en-AU', opts)}`;
 }
 
 // ─────────────────────────────────────────────
