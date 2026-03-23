@@ -5,20 +5,16 @@ struct HourlyEntryForm: View {
     let client: Client
 
     var body: some View {
-        // Images That Sell specific fields
-        if client.name.contains("Images That Sell") {
-            TextField("Shoot Client", text: $vm.shootClient)
+        if let label = client.entryLabel {
+            TextField(label, text: $vm.entryDescription)
+        }
 
+        if client.showRole {
             Picker("Role", selection: $vm.role) {
                 Text("Photographer").tag("Photographer")
                 Text("Operator").tag("Operator")
             }
             .pickerStyle(.segmented)
-        }
-
-        // JD Sports specific fields
-        if client.name.contains("JD Sports") {
-            TextField("Description", text: $vm.entryDescription)
         }
 
         // Common hourly fields

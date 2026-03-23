@@ -10,6 +10,8 @@ struct ClientEditView: View {
     @State private var rateFullDay: String
     @State private var rateHalfDay: String
     @State private var rateHourly: String
+    @State private var rateHourlyPhotographer: String
+    @State private var rateHourlyOperator: String
     @State private var paysSuper: Bool
     @State private var superRate: String
     @State private var invoiceFrequency: InvoiceFrequency
@@ -19,6 +21,10 @@ struct ClientEditView: View {
     @State private var abn: String
     @State private var notes: String
     @State private var isActive: Bool
+    @State private var entryLabel: String
+    @State private var showRole: Bool
+    @State private var defaultStartTime: Date
+    @State private var defaultFinishTime: Date
 
     private let clientId: UUID
 
@@ -32,6 +38,8 @@ struct ClientEditView: View {
         self._rateFullDay = State(initialValue: c?.rateFullDay.map { "\($0)" } ?? "")
         self._rateHalfDay = State(initialValue: c?.rateHalfDay.map { "\($0)" } ?? "")
         self._rateHourly = State(initialValue: c?.rateHourly.map { "\($0)" } ?? "")
+        self._rateHourlyPhotographer = State(initialValue: c?.rateHourlyPhotographer.map { "\($0)" } ?? "")
+        self._rateHourlyOperator = State(initialValue: c?.rateHourlyOperator.map { "\($0)" } ?? "")
         self._paysSuper = State(initialValue: c?.paysSuper ?? false)
         self._superRate = State(initialValue: c.map { "\($0.superRate)" } ?? "0.12")
         self._invoiceFrequency = State(initialValue: c?.invoiceFrequency ?? .perJob)
@@ -41,6 +49,26 @@ struct ClientEditView: View {
         self._abn = State(initialValue: c?.abn ?? "")
         self._notes = State(initialValue: c?.notes ?? "")
         self._isActive = State(initialValue: c?.isActive ?? true)
+        self._entryLabel = State(initialValue: c?.entryLabel ?? "")
+        self._showRole = State(initialValue: c?.showRole ?? false)
+
+        let parseTime: (String?, Int) -> Date = { str, defaultHour in
+            guard let str else {
+                return Calendar.current.date(bySettingHour: defaultHour, minute: 0, second: 0, of: Date()) ?? Date()
+            }
+            let fmt = DateFormatter()
+            fmt.dateFormat = "HH:mm:ss"
+            guard let parsed = fmt.date(from: str) else {
+                return Calendar.current.date(bySettingHour: defaultHour, minute: 0, second: 0, of: Date()) ?? Date()
+            }
+            let cal = Calendar.current
+            return cal.date(bySettingHour: cal.component(.hour, from: parsed),
+                            minute: cal.component(.minute, from: parsed),
+                            second: 0, of: Date()) ?? parsed
+        }
+
+        self._defaultStartTime = State(initialValue: parseTime(c?.defaultStartTime, 9))
+        self._defaultFinishTime = State(initialValue: parseTime(c?.defaultFinishTime, 17))
     }
 
     var body: some View {
@@ -70,8 +98,24 @@ struct ClientEditView: View {
                     TextField("Full Day Rate ($)", text: $rateFullDay)
                     TextField("Half Day Rate ($)", text: $rateHalfDay)
                 }
+
                 if billingType == .hourly {
-                    TextField("Hourly Rate ($)", text: $rateHourly)
+                    if showRole {
+                        TextField("Photographer Rate ($)", text: $rateHourlyPhotographer)
+                        TextField("Operator Rate ($)", text: $rateHourlyOperator)
+                    } else {
+                        TextField("Hourly Rate ($)", text: $rateHourly)
+                    }
+                    DatePicker("Default Start", selection: $defaultStartTime, displayedComponents: .hourAndMinute)
+                    DatePicker("Default Finish", selection: $defaultFinishTime, displayedComponents: .hourAndMinute)
+                }
+            }
+
+            if billingType == .hourly {
+                Section("Fields") {
+                    TextField("Description label (leave blank to hide)", text: $entryLabel)
+                        .help("If set, a text field with this label will appear when logging entries. E.g. \"Job\".")
+                    Toggle("Show Role (Photographer/Operator)", isOn: $showRole)
                 }
             }
 
@@ -94,12 +138,19 @@ struct ClientEditView: View {
                 }
                 .buttonStyle(.borderedProminent)
             }
+
+            if billingType == .dayRate && !isNew {
+                WorkflowRateTableView(vm: vm, clientId: clientId)
+            }
         }
         .formStyle(.grouped)
         .navigationTitle(isNew ? "New Client" : name)
     }
 
     private func save() {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "HH:mm:ss"
+
         let client = Client(
             id: clientId,
             name: name,
@@ -116,7 +167,13 @@ struct ClientEditView: View {
             abn: abn.isEmpty ? nil : abn,
             notes: notes.isEmpty ? nil : notes,
             isActive: isActive,
-            createdAt: ISO8601DateFormatter().string(from: Date())
+            createdAt: ISO8601DateFormatter().string(from: Date()),
+            entryLabel: entryLabel.isEmpty ? nil : entryLabel,
+            showRole: showRole,
+            defaultStartTime: billingType == .hourly ? fmt.string(from: defaultStartTime) : nil,
+            defaultFinishTime: billingType == .hourly ? fmt.string(from: defaultFinishTime) : nil,
+            rateHourlyPhotographer: Decimal(string: rateHourlyPhotographer),
+            rateHourlyOperator: Decimal(string: rateHourlyOperator)
         )
         Task {
             await vm.saveClient(client, isNew: isNew)

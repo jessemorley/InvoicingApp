@@ -28,7 +28,6 @@ struct CalculationService {
             base = client.rateFullDay ?? 0
             bonus = calculateBonus(
                 workflowType: workflowType,
-                brand: brand,
                 skus: skus,
                 workflowRates: workflowRates
             )
@@ -50,23 +49,22 @@ struct CalculationService {
 
     private static func calculateBonus(
         workflowType: String?,
-        brand: String?,
         skus: Int?,
         workflowRates: [ClientWorkflowRate]
     ) -> Decimal {
         guard let workflowType else { return 0 }
 
-        // Own Brand always gets $40 bonus, no SKU threshold
-        if workflowType == "Own Brand" {
-            return 40
-        }
-
-        // Apparel/Product: SKU-based bonus
-        guard let skus, skus > 0 else { return 0 }
-
         guard let rate = workflowRates.first(where: { $0.workflow == workflowType }) else {
             return 0
         }
+
+        // Flat bonus (e.g. Own Brand): apply max_bonus directly, no SKU threshold
+        if rate.isFlatBonus {
+            return rate.maxBonus
+        }
+
+        // SKU-based bonus
+        guard let skus, skus > 0 else { return 0 }
 
         if skus >= rate.upperLimitSkus {
             return rate.maxBonus
@@ -85,14 +83,22 @@ struct CalculationService {
         client: Client,
         startTime: Date,
         finishTime: Date,
-        breakMinutes: Int
+        breakMinutes: Int,
+        role: String? = nil
     ) -> CalculationResult {
         let totalMinutes = finishTime.timeIntervalSince(startTime) / 60
         let workedMinutes = totalMinutes - Double(breakMinutes)
         let hours = Decimal(workedMinutes / 60)
         let roundedHours = roundToQuarterHour(hours)
 
-        let rate = client.rateHourly ?? 0
+        let rate: Decimal
+        if client.showRole, let role {
+            rate = role == "Operator"
+                ? (client.rateHourlyOperator ?? client.rateHourly ?? 0)
+                : (client.rateHourlyPhotographer ?? client.rateHourly ?? 0)
+        } else {
+            rate = client.rateHourly ?? 0
+        }
         let base = roundedHours * rate
         let superAmount = client.paysSuper ? base * client.superRate : 0
 
@@ -109,10 +115,9 @@ struct CalculationService {
 
     static func calculateManual(
         amount: Decimal,
-        paysSuper: Bool,
-        superRate: Decimal
+        client: Client
     ) -> CalculationResult {
-        let superAmount = paysSuper ? amount * superRate : 0
+        let superAmount = client.paysSuper ? amount * client.superRate : 0
         return CalculationResult(
             baseAmount: amount,
             bonusAmount: 0,

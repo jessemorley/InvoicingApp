@@ -8,6 +8,7 @@ struct ClientWorkflowRate: Codable, Identifiable, Sendable {
     var incentiveRatePerSku: Decimal
     var upperLimitSkus: Int
     var maxBonus: Decimal
+    var isFlatBonus: Bool
 
     enum CodingKeys: String, CodingKey {
         case id, workflow, kpi
@@ -15,5 +16,6 @@ struct ClientWorkflowRate: Codable, Identifiable, Sendable {
         case incentiveRatePerSku = "incentive_rate_per_sku"
         case upperLimitSkus = "upper_limit_skus"
         case maxBonus = "max_bonus"
+        case isFlatBonus = "is_flat_bonus"
     }
 }

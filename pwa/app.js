@@ -17,7 +17,6 @@ let selectedClient   = null;
 let currentDayType   = 'full';
 let currentWorkflow  = 'Apparel';
 let currentRole      = 'Photographer';
-let superOverride    = false;   // for manual clients
 
 // New entry card state
 let newEntryWrap           = null;
@@ -25,7 +24,6 @@ let newEntrySelectedClient = null;
 let newEntryDayType        = 'full';
 let newEntryWorkflow       = 'Apparel';
 let newEntryRole           = 'Photographer';
-let newEntrySuperOverride  = false;
 
 // ─────────────────────────────────────────────
 // AUTH
@@ -263,23 +261,28 @@ function showEntryFields(client) {
         document.getElementById('durationBlock').classList.remove('hidden');
         if (client.pays_super) document.getElementById('superLine').classList.remove('hidden');
 
-        // ITS-specific fields
-        const isITS = client.name.toLowerCase().includes('images that sell');
-        document.getElementById('itsFields').classList.toggle('hidden', !isITS);
-        document.getElementById('hourlyDescField').classList.toggle('hidden', isITS);
+        // Show entry label field if configured
+        const hasLabel = !!client.entry_label;
+        document.getElementById('itsFields').classList.toggle('hidden', !hasLabel);
+        document.getElementById('hourlyDescField').classList.toggle('hidden', hasLabel);
+        if (hasLabel) {
+            const labelEl = document.getElementById('itsFieldLabel');
+            if (labelEl) labelEl.textContent = client.entry_label;
+        }
 
-        // Default times
-        document.getElementById('startTime').value  = '09:00';
-        document.getElementById('finishTime').value = '17:00';
+        // Show role picker if configured
+        const roleSection = document.getElementById('roleSection');
+        if (roleSection) roleSection.classList.toggle('hidden', !client.show_role);
+
+        // Apply default times from client settings, fall back to 09:00/17:00
+        const startDefault  = client.default_start_time  ? client.default_start_time.substring(0, 5)  : '09:00';
+        const finishDefault = client.default_finish_time ? client.default_finish_time.substring(0, 5) : '17:00';
+        document.getElementById('startTime').value  = startDefault;
+        document.getElementById('finishTime').value = finishDefault;
         document.getElementById('breakMinutes').value = '0';
 
     } else { // manual
         document.getElementById('manualFields').classList.remove('hidden');
-        // Pre-set super toggle from client setting
-        superOverride = client.pays_super;
-        const toggle  = document.getElementById('superToggle');
-        toggle.checked = superOverride;
-        updateSuperToggleLabel();
         if (client.pays_super) document.getElementById('superLine').classList.remove('hidden');
     }
 
@@ -341,20 +344,6 @@ window.adjustBreak = (val) => {
 };
 
 // ─────────────────────────────────────────────
-// SUPER TOGGLE (manual clients)
-// ─────────────────────────────────────────────
-document.getElementById('superToggle').addEventListener('change', (e) => {
-    superOverride = e.target.checked;
-    document.getElementById('superLine').classList.toggle('hidden', !superOverride);
-    updateSuperToggleLabel();
-    recalculate();
-});
-
-function updateSuperToggleLabel() {
-    document.getElementById('superToggleLabel').textContent = superOverride ? 'Super will be added' : 'Off';
-}
-
-// ─────────────────────────────────────────────
 // CALCULATION
 // ─────────────────────────────────────────────
 function toMins(timeStr) {
@@ -373,12 +362,12 @@ function calcDayRate(client, dayType, workflow, skus) {
 
     let bonus = 0;
     if (dayType === 'full') {
-        if (workflow === 'Own Brand') {
-            bonus = 40;
-        } else {
-            const clientRates = workflowRates.filter(r => r.client_id === client.id);
-            const rate = clientRates.find(r => r.workflow === workflow);
-            if (rate && skus != null) {
+        const clientRates = workflowRates.filter(r => r.client_id === client.id);
+        const rate = clientRates.find(r => r.workflow === workflow);
+        if (rate) {
+            if (rate.is_flat_bonus) {
+                bonus = parseFloat(rate.max_bonus);
+            } else if (skus != null) {
                 const s = parseInt(skus) || 0;
                 if (s >= rate.upper_limit_skus) {
                     bonus = parseFloat(rate.max_bonus);
@@ -394,20 +383,26 @@ function calcDayRate(client, dayType, workflow, skus) {
     return { base, bonus, superAmt, total: subtotal + superAmt, hoursWorked: null };
 }
 
-function calcHourly(client, startStr, finishStr, breakMins) {
+function calcHourly(client, startStr, finishStr, breakMins, role) {
     if (!startStr || !finishStr) return null;
     let diffMins = (toMins(finishStr) - toMins(startStr) + 1440) % 1440;
     diffMins = Math.max(0, diffMins - (parseInt(breakMins) || 0));
     // Round to nearest quarter hour
     const roundedHours = Math.round(diffMins / 60 / 0.25) * 0.25;
-    const base     = roundedHours * parseFloat(client.rate_hourly);
+    let hourlyRate = parseFloat(client.rate_hourly) || 0;
+    if (client.show_role && role) {
+        hourlyRate = role === 'Operator'
+            ? parseFloat(client.rate_hourly_operator || client.rate_hourly) || 0
+            : parseFloat(client.rate_hourly_photographer || client.rate_hourly) || 0;
+    }
+    const base     = roundedHours * hourlyRate;
     const superAmt = client.pays_super ? base * parseFloat(client.super_rate || 0.12) : 0;
     return { base, bonus: 0, superAmt, total: base + superAmt, hoursWorked: roundedHours, rawMins: diffMins };
 }
 
-function calcManual(amountStr, paysSuper, superRate) {
+function calcManual(amountStr, client) {
     const base     = parseFloat(amountStr) || 0;
-    const superAmt = paysSuper ? base * parseFloat(superRate || 0.12) : 0;
+    const superAmt = client.pays_super ? base * parseFloat(client.super_rate || 0.12) : 0;
     return { base, bonus: 0, superAmt, total: base + superAmt, hoursWorked: null };
 }
 
@@ -424,7 +419,7 @@ function recalculate() {
         const start  = document.getElementById('startTime').value;
         const finish = document.getElementById('finishTime').value;
         const brk    = document.getElementById('breakMinutes').value;
-        result = calcHourly(selectedClient, start, finish, brk);
+        result = calcHourly(selectedClient, start, finish, brk, currentRole);
 
         if (result) {
             const h = Math.floor(result.rawMins / 60);
@@ -434,7 +429,7 @@ function recalculate() {
 
     } else { // manual
         const amount = document.getElementById('manualAmount').value;
-        result = calcManual(amount, superOverride, selectedClient.super_rate);
+        result = calcManual(amount, selectedClient);
     }
 
     if (!result) return;
@@ -508,12 +503,11 @@ function buildPayload() {
         const start  = document.getElementById('startTime').value;
         const finish = document.getElementById('finishTime').value;
         const brk    = parseInt(document.getElementById('breakMinutes').value) || 0;
-        const result = calcHourly(selectedClient, start, finish, brk);
+        const result = calcHourly(selectedClient, start, finish, brk, currentRole);
 
-        const isITS = selectedClient.name.toLowerCase().includes('images that sell');
-        const shootClient = isITS ? document.getElementById('jobInput').value.trim() || null : null;
-        const role        = isITS ? currentRole : null;
-        const description = !isITS ? document.getElementById('hourlyDesc').value.trim() || null : null;
+        const hasLabel    = !!selectedClient.entry_label;
+        const description = hasLabel ? document.getElementById('jobInput').value.trim() || null : document.getElementById('hourlyDesc').value.trim() || null;
+        const role        = selectedClient.show_role ? currentRole : null;
 
         return {
             ...base,
@@ -521,7 +515,7 @@ function buildPayload() {
             finish_time:   finish,
             break_minutes: brk,
             hours_worked:  result.hoursWorked,
-            shoot_client:  shootClient,
+            shoot_client:  null,
             role,
             description,
             base_amount:   result.base,
@@ -533,7 +527,7 @@ function buildPayload() {
     } else { // manual
         const amount = parseFloat(document.getElementById('manualAmount').value) || 0;
         const desc   = document.getElementById('manualDesc').value.trim() || null;
-        const result = calcManual(amount, superOverride, selectedClient.super_rate);
+        const result = calcManual(amount, selectedClient);
         return {
             ...base,
             description:  desc,
@@ -713,7 +707,6 @@ function closeNewEntryCard() {
     newEntryDayType        = 'full';
     newEntryWorkflow       = 'Apparel';
     newEntryRole           = 'Photographer';
-    newEntrySuperOverride  = false;
 
     // Hide and re-render the card fresh
     newEntryWrap.style.display = 'none';
@@ -937,17 +930,6 @@ function wireNewEntryForm() {
         if (el) el.addEventListener('input', newEntryRecalculate);
     });
 
-    // Super toggle
-    const superToggle = document.getElementById('newSuperToggle');
-    if (superToggle) {
-        superToggle.addEventListener('change', function() {
-            newEntrySuperOverride = this.checked;
-            document.getElementById('newSuperLine').classList.toggle('hidden', !newEntrySuperOverride);
-            document.getElementById('newSuperToggleLabel').textContent = newEntrySuperOverride ? 'Super will be added' : 'Off';
-            newEntryRecalculate();
-        });
-    }
-
     // Save
     document.getElementById('newSaveBtn').addEventListener('click', saveNewEntry);
 }
@@ -988,22 +970,27 @@ function showNewEntryFields(client) {
         document.getElementById('newDurationBlock').classList.remove('hidden');
         if (client.pays_super) document.getElementById('newSuperLine').classList.remove('hidden');
 
-        const isITS = client.name.toLowerCase().includes('images that sell');
-        document.getElementById('newItsFields').classList.toggle('hidden', !isITS);
-        document.getElementById('newHourlyDescField').classList.toggle('hidden', isITS);
+        const hasLabel = !!client.entry_label;
+        document.getElementById('newItsFields').classList.toggle('hidden', !hasLabel);
+        document.getElementById('newHourlyDescField').classList.toggle('hidden', hasLabel);
+        if (hasLabel) {
+            const labelEl = document.getElementById('newItsFieldLabel');
+            if (labelEl) labelEl.textContent = client.entry_label;
+        }
 
-        document.getElementById('newStartTime').value    = '09:00';
-        document.getElementById('newFinishTime').value   = '17:00';
+        const newRoleSection = document.getElementById('newRoleSection');
+        if (newRoleSection) newRoleSection.classList.toggle('hidden', !client.show_role);
+
+        const startDefault  = client.default_start_time  ? client.default_start_time.substring(0, 5)  : '09:00';
+        const finishDefault = client.default_finish_time ? client.default_finish_time.substring(0, 5) : '17:00';
+        document.getElementById('newStartTime').value    = startDefault;
+        document.getElementById('newFinishTime').value   = finishDefault;
         document.getElementById('newBreakMinutes').value = '0';
         const newBreakDisp = document.getElementById('newBreakDisplay');
         if (newBreakDisp) newBreakDisp.textContent = '0';
 
     } else { // manual
         document.getElementById('newManualFields').classList.remove('hidden');
-        newEntrySuperOverride = client.pays_super;
-        const toggle = document.getElementById('newSuperToggle');
-        toggle.checked = newEntrySuperOverride;
-        document.getElementById('newSuperToggleLabel').textContent = newEntrySuperOverride ? 'Super will be added' : 'Off';
         if (client.pays_super) document.getElementById('newSuperLine').classList.remove('hidden');
     }
 
@@ -1066,7 +1053,7 @@ function newEntryRecalculate() {
         const start  = document.getElementById('newStartTime').value;
         const finish = document.getElementById('newFinishTime').value;
         const brk    = document.getElementById('newBreakMinutes').value;
-        result = calcHourly(client, start, finish, brk);
+        result = calcHourly(client, start, finish, brk, newEntryRole);
         if (result) {
             const h = Math.floor(result.rawMins / 60);
             const m = result.rawMins % 60;
@@ -1075,7 +1062,7 @@ function newEntryRecalculate() {
 
     } else { // manual
         const amount = document.getElementById('newManualAmount').value;
-        result = calcManual(amount, newEntrySuperOverride, client.super_rate);
+        result = calcManual(amount, client);
     }
 
     if (!result) return;
@@ -1114,17 +1101,19 @@ function buildNewEntryPayload() {
         const start  = document.getElementById('newStartTime').value;
         const finish = document.getElementById('newFinishTime').value;
         const brk    = parseInt(document.getElementById('newBreakMinutes').value) || 0;
-        const result = calcHourly(client, start, finish, brk);
-        const isITS  = client.name.toLowerCase().includes('images that sell');
+        const result   = calcHourly(client, start, finish, brk, newEntryRole);
+        const hasLabel = !!client.entry_label;
+        const description = hasLabel ? document.getElementById('newShootClientInput').value.trim() || null : document.getElementById('newHourlyDesc').value.trim() || null;
+        const role        = client.show_role ? newEntryRole : null;
         return {
             ...base,
             start_time:    start,
             finish_time:   finish,
             break_minutes: brk,
             hours_worked:  result.hoursWorked,
-            shoot_client:  isITS ? document.getElementById('newShootClientInput').value.trim() || null : null,
-            role:          isITS ? newEntryRole : null,
-            description:   !isITS ? document.getElementById('newHourlyDesc').value.trim() || null : null,
+            shoot_client:  null,
+            role,
+            description,
             base_amount:   result.base,
             bonus_amount:  0,
             super_amount:  result.superAmt,
@@ -1133,7 +1122,7 @@ function buildNewEntryPayload() {
 
     } else { // manual
         const amount = parseFloat(document.getElementById('newManualAmount').value) || 0;
-        const result = calcManual(amount, newEntrySuperOverride, client.super_rate);
+        const result = calcManual(amount, client);
         return {
             ...base,
             description:  document.getElementById('newManualDesc').value.trim() || null,
@@ -1286,7 +1275,6 @@ let editingClient   = null;
 let editDayType     = 'full';
 let editWorkflow    = 'Apparel';
 let editRole        = 'Photographer';
-let editSuperOverride = false;
 let expandedWrap    = null;
 
 function closeEntryCard(wrap) {
@@ -1325,13 +1313,13 @@ function openEntryCard(wrap, entry, readOnly = false) {
     editingClient = allClients.find(c => c.id === entry.client_id) || null;
     expandedWrap  = wrap;
 
-    const billing = entry.billing_type_snapshot;
-    const isITS   = editingClient?.name?.toLowerCase().includes('images that sell');
+    const billing  = entry.billing_type_snapshot;
+    const hasLabel = !!editingClient?.entry_label;
+    const showRole = !!editingClient?.show_role;
 
-    editDayType        = entry.day_type || 'full';
-    editWorkflow       = entry.workflow_type || 'Apparel';
-    editRole           = entry.role || 'Photographer';
-    editSuperOverride  = (entry.super_amount > 0);
+    editDayType   = entry.day_type || 'full';
+    editWorkflow  = entry.workflow_type || 'Apparel';
+    editRole      = entry.role || 'Photographer';
 
     // Build detail panel HTML
     const inner = wrap.querySelector('.entry-detail-inner');
@@ -1385,14 +1373,17 @@ function openEntryCard(wrap, entry, readOnly = false) {
             </div>
         </div>`;
     } else if (billing === 'hourly') {
+        const entryFieldLabel = editingClient?.entry_label || 'Description';
         html += `
         <div id="editHourlyFields" class="space-y-3">
-            <div id="editItsFields" class="${isITS ? '' : 'hidden'} space-y-3">
+            <div id="editItsFields" class="${hasLabel ? '' : 'hidden'} space-y-3">
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Shoot Client</span>
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">${entryFieldLabel}</span>
                     <input type="text" id="editShootClientInput"
                         class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400"${readOnly ? ' disabled' : ''}>
                 </div>
+            </div>
+            <div id="editRoleSection" class="${showRole ? '' : 'hidden'}">
                 <div>
                     <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Role</span>
                     <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
@@ -1401,7 +1392,7 @@ function openEntryCard(wrap, entry, readOnly = false) {
                     </div>
                 </div>
             </div>
-            <div id="editHourlyDescField" class="${isITS ? 'hidden' : ''}">
+            <div id="editHourlyDescField" class="${hasLabel ? 'hidden' : ''}">
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
                     <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
                     <input type="text" id="editHourlyDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
@@ -1443,16 +1434,6 @@ function openEntryCard(wrap, entry, readOnly = false) {
                 <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Amount ($)</span>
                 <input type="number" id="editManualAmount" placeholder="0.00" step="0.01" min="0"
                     class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
-            </div>
-            <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
-                <div>
-                    <p class="text-[13px] font-semibold text-slate-800">Include Super (12%)</p>
-                    <p id="editSuperToggleLabel" class="text-[11px] text-slate-400 mt-0.5">${editSuperOverride ? 'On' : 'Off'}</p>
-                </div>
-                <label class="toggle-wrap">
-                    <input type="checkbox" id="editSuperToggle"${editSuperOverride ? ' checked' : ''}${readOnly ? ' disabled' : ''}>
-                    <div class="toggle-track"><div class="toggle-thumb"></div></div>
-                </label>
             </div>
         </div>`;
     }
@@ -1515,8 +1496,8 @@ function openEntryCard(wrap, entry, readOnly = false) {
             }
         }
     } else if (billing === 'hourly') {
-        if (isITS) {
-            document.getElementById('editShootClientInput').value = entry.shoot_client || '';
+        if (hasLabel) {
+            document.getElementById('editShootClientInput').value = entry.shoot_client || entry.description || '';
         } else {
             document.getElementById('editHourlyDesc').value = entry.description || '';
         }
@@ -1536,16 +1517,6 @@ function openEntryCard(wrap, entry, readOnly = false) {
             const el = document.getElementById(id);
             if (el) el.addEventListener('input', editRecalculate);
         });
-    const superToggleEl = document.getElementById('editSuperToggle');
-    if (superToggleEl) {
-        superToggleEl.addEventListener('change', function() {
-            editSuperOverride = this.checked;
-            const lbl = document.getElementById('editSuperToggleLabel');
-            if (lbl) lbl.textContent = editSuperOverride ? 'On' : 'Off';
-            editRecalculate();
-        });
-    }
-
     editRecalculate();
 
     // Expand the card
@@ -1631,7 +1602,7 @@ function editRecalculate() {
         const start  = startEl.value;
         const finish = finishEl.value;
         const brk    = parseInt(brkEl?.value) || 0;
-        result = calcHourly(client, start, finish, brk);
+        result = calcHourly(client, start, finish, brk, editRole);
         if (result) {
             const totalMins = Math.round(result.hoursWorked * 60);
             const durEl = document.getElementById('editDisplayDuration');
@@ -1641,8 +1612,7 @@ function editRecalculate() {
     } else if (billing === 'manual') {
         const amountEl = document.getElementById('editManualAmount');
         const amount = parseFloat(amountEl?.value) || 0;
-        const superRate = client?.super_rate ?? 0.12;
-        result = calcManual(amount, editSuperOverride, superRate);
+        result = calcManual(amount, client);
 
     } else {
         return;
@@ -1689,17 +1659,19 @@ function buildEditPayload() {
         const start  = document.getElementById('editStartTime').value;
         const finish = document.getElementById('editFinishTime').value;
         const brk    = parseInt(document.getElementById('editBreakMinutes').value) || 0;
-        const result = calcHourly(client, start, finish, brk);
-        const isITS  = client?.name?.toLowerCase().includes('images that sell');
+        const result      = calcHourly(client, start, finish, brk, editRole);
+        const hasLbl      = !!client?.entry_label;
+        const description = hasLbl ? document.getElementById('editShootClientInput').value.trim() || null : document.getElementById('editHourlyDesc').value.trim() || null;
+        const role        = client?.show_role ? editRole : null;
         return {
             ...base,
             start_time:    start,
             finish_time:   finish,
             break_minutes: brk,
             hours_worked:  result.hoursWorked,
-            shoot_client:  isITS ? document.getElementById('editShootClientInput').value.trim() || null : null,
-            role:          isITS ? editRole : null,
-            description:   !isITS ? document.getElementById('editHourlyDesc').value.trim() || null : null,
+            shoot_client:  null,
+            role,
+            description,
             base_amount:   result.base,
             bonus_amount:  0,
             super_amount:  result.superAmt,
@@ -1708,8 +1680,7 @@ function buildEditPayload() {
 
     } else { // manual
         const amount = parseFloat(document.getElementById('editManualAmount').value) || 0;
-        const superRate = client?.super_rate ?? 0.12;
-        const result = calcManual(amount, editSuperOverride, superRate);
+        const result = calcManual(amount, client);
         return {
             ...base,
             description:  document.getElementById('editManualDesc').value.trim() || null,

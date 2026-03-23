@@ -28,6 +28,12 @@ struct Client: Codable, Identifiable, Hashable, Sendable {
     var notes: String?
     var isActive: Bool
     var createdAt: String
+    var entryLabel: String?
+    var showRole: Bool
+    var defaultStartTime: String?
+    var defaultFinishTime: String?
+    var rateHourlyPhotographer: Decimal?
+    var rateHourlyOperator: Decimal?
 
     enum CodingKeys: String, CodingKey {
         case id, name, address, suburb, email, abn, notes
@@ -40,5 +46,11 @@ struct Client: Codable, Identifiable, Hashable, Sendable {
         case invoiceFrequency = "invoice_frequency"
         case isActive = "is_active"
         case createdAt = "created_at"
+        case entryLabel = "entry_label"
+        case showRole = "show_role"
+        case defaultStartTime = "default_start_time"
+        case defaultFinishTime = "default_finish_time"
+        case rateHourlyPhotographer = "rate_hourly_photographer"
+        case rateHourlyOperator = "rate_hourly_operator"
     }
 }

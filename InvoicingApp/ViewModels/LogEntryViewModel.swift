@@ -23,12 +23,10 @@ final class LogEntryViewModel: ObservableObject {
     @Published var finishTime = Calendar.current.date(bySettingHour: 17, minute: 0, second: 0, of: Date()) ?? Date()
     @Published var breakMinutes: Int = 0
     @Published var role: String = "Photographer"
-    @Published var shootClient: String = ""
     @Published var entryDescription: String = ""
 
     // Manual fields
     @Published var manualAmount: String = ""
-    @Published var paysSuper: Bool = true
 
     // Edit mode
     var editingEntry: Entry?
@@ -57,15 +55,12 @@ final class LogEntryViewModel: ObservableObject {
                 client: client,
                 startTime: startTime,
                 finishTime: finishTime,
-                breakMinutes: breakMinutes
+                breakMinutes: breakMinutes,
+                role: client.showRole ? role : nil
             )
         case .manual:
             guard let amount = Decimal(string: manualAmount) else { return nil }
-            return CalculationService.calculateManual(
-                amount: amount,
-                paysSuper: paysSuper,
-                superRate: client.superRate
-            )
+            return CalculationService.calculateManual(amount: amount, client: client)
         }
     }
 
@@ -90,31 +85,15 @@ final class LogEntryViewModel: ObservableObject {
         brand = entry.brand ?? ""
         skus = entry.skus.map { "\($0)" } ?? ""
         role = entry.role ?? "Photographer"
-        shootClient = entry.shootClient ?? ""
-        entryDescription = entry.description ?? ""
+        entryDescription = entry.shootClient ?? entry.description ?? ""
         manualAmount = "\(NSDecimalNumber(decimal: entry.baseAmount))"
         breakMinutes = entry.breakMinutes ?? 0
-        paysSuper = client.paysSuper
 
         if let start = entry.startTime {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "HH:mm:ss"
-            if let parsed = formatter.date(from: start) {
-                let cal = Calendar.current
-                startTime = cal.date(bySettingHour: cal.component(.hour, from: parsed),
-                                     minute: cal.component(.minute, from: parsed),
-                                     second: 0, of: Date()) ?? startTime
-            }
+            startTime = parseTime(start) ?? startTime
         }
         if let finish = entry.finishTime {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "HH:mm:ss"
-            if let parsed = formatter.date(from: finish) {
-                let cal = Calendar.current
-                finishTime = cal.date(bySettingHour: cal.component(.hour, from: parsed),
-                                      minute: cal.component(.minute, from: parsed),
-                                      second: 0, of: Date()) ?? finishTime
-            }
+            finishTime = parseTime(finish) ?? finishTime
         }
 
         if client.billingType == .dayRate {
@@ -124,8 +103,19 @@ final class LogEntryViewModel: ObservableObject {
 
     func onClientSelected(_ client: Client) {
         selectedClient = client
-        paysSuper = client.paysSuper
         resetFields()
+        if client.billingType == .hourly {
+            if let start = client.defaultStartTime {
+                startTime = parseTime(start) ?? defaultTime(hour: 9)
+            } else {
+                startTime = defaultTime(hour: 9)
+            }
+            if let finish = client.defaultFinishTime {
+                finishTime = parseTime(finish) ?? defaultTime(hour: 17)
+            } else {
+                finishTime = defaultTime(hour: 17)
+            }
+        }
         if client.billingType == .dayRate {
             Task { await loadWorkflowRates(for: client) }
         }
@@ -163,8 +153,8 @@ final class LogEntryViewModel: ObservableObject {
             workflowType: client.billingType == .dayRate && dayType == .full ? workflowType : nil,
             brand: workflowType == "Own Brand" ? brand : nil,
             skus: Int(skus),
-            role: client.billingType == .hourly ? role : nil,
-            shootClient: client.billingType == .hourly ? shootClient : nil,
+            role: client.billingType == .hourly && client.showRole ? role : nil,
+            shootClient: nil,
             description: entryDescription.isEmpty ? nil : entryDescription,
             startTime: client.billingType == .hourly ? timeString(from: startTime) : nil,
             finishTime: client.billingType == .hourly ? timeString(from: finishTime) : nil,
@@ -203,13 +193,26 @@ final class LogEntryViewModel: ObservableObject {
         workflowType = "Apparel"
         brand = ""
         skus = ""
-        startTime = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date()) ?? Date()
-        finishTime = Calendar.current.date(bySettingHour: 17, minute: 0, second: 0, of: Date()) ?? Date()
+        startTime = defaultTime(hour: 9)
+        finishTime = defaultTime(hour: 17)
         breakMinutes = 0
         role = "Photographer"
-        shootClient = ""
         entryDescription = ""
         manualAmount = ""
+    }
+
+    private func defaultTime(hour: Int) -> Date {
+        Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: Date()) ?? Date()
+    }
+
+    private func parseTime(_ str: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        guard let parsed = formatter.date(from: str) else { return nil }
+        let cal = Calendar.current
+        return cal.date(bySettingHour: cal.component(.hour, from: parsed),
+                        minute: cal.component(.minute, from: parsed),
+                        second: 0, of: Date())
     }
 
     private func timeString(from date: Date) -> String {

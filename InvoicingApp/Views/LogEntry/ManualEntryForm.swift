@@ -6,6 +6,5 @@ struct ManualEntryForm: View {
     var body: some View {
         TextField("Description", text: $vm.entryDescription)
         TextField("Amount ($)", text: $vm.manualAmount)
-        Toggle("Pays Super", isOn: $vm.paysSuper)
     }
 }
