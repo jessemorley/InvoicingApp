@@ -110,10 +110,12 @@
                 <!-- ── HOURLY FIELDS ── -->
                 <div id="hourlyFields" class="hidden space-y-4">
 
-                    <!-- ITS: Shoot client + Role -->
+                    <!-- ITS: Job + Role -->
                     <div id="itsFields" class="hidden space-y-4">
-                        <input type="text" id="shootClientInput" placeholder="Shoot Client"
-                            class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium">
+                        <div class="bg-white rounded-2xl px-5 py-3">
+                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Job</span>
+                            <input type="text" id="jobInput" class="bg-transparent w-full text-[17px] font-medium outline-none">
+                        </div>
                         <div>
                             <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Role</span>
                             <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
@@ -125,8 +127,10 @@
 
                     <!-- Generic hourly: description -->
                     <div id="hourlyDescField" class="hidden">
-                        <textarea id="hourlyDesc" rows="2" placeholder="Description"
-                            class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"></textarea>
+                        <div class="bg-white rounded-2xl px-5 py-3">
+                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Description</span>
+                            <input type="text" id="hourlyDesc" class="bg-transparent w-full text-[17px] font-medium outline-none">
+                        </div>
                     </div>
 
                     <!-- Times -->
@@ -152,8 +156,8 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="adjustBreak(15)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all">+15</button>
-                            <button onclick="adjustBreak(30)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all">+30</button>
+                            <button onclick="adjustBreak(-15)" class="h-10 px-4 bg-white border border-gray-100 shadow-sm rounded-xl text-[13px] font-bold active:bg-gray-100 transition-all">-15</button>
+                            <button onclick="adjustBreak(15)" class="h-10 px-4 bg-white border border-gray-100 shadow-sm rounded-xl text-[13px] font-bold active:bg-gray-100 transition-all">+15</button>
                         </div>
                     </div>
                 </div>

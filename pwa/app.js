@@ -511,7 +511,7 @@ function buildPayload() {
         const result = calcHourly(selectedClient, start, finish, brk);
 
         const isITS = selectedClient.name.toLowerCase().includes('images that sell');
-        const shootClient = isITS ? document.getElementById('shootClientInput').value.trim() || null : null;
+        const shootClient = isITS ? document.getElementById('jobInput').value.trim() || null : null;
         const role        = isITS ? currentRole : null;
         const description = !isITS ? document.getElementById('hourlyDesc').value.trim() || null : null;
 
@@ -621,7 +621,7 @@ async function loadRecentEntries() {
         header.className = 'week-header';
         header.style.animation = `cardIn 0.3s ease both`;
         header.style.animationDelay = `${cardIndex * 40}ms`;
-        const weekTotal = entries.reduce((sum, e) => sum + (e.total_amount || 0), 0);
+        const weekTotal = entries.reduce((sum, e) => sum + ((e.total_amount || 0) - (e.super_amount || 0)), 0);
         header.innerHTML = `<span>${formatWeekLabel(weekStart)}</span><span>${fmt(weekTotal)}</span>`;
         list.appendChild(header);
 
@@ -632,7 +632,7 @@ async function loadRecentEntries() {
             const clientName  = entry.clients?.name || 'Unknown';
             const badgeColor  = clientBadgeColor(clientName);
             const description = entryDescription(entry);
-            const total       = fmt(entry.total_amount);
+            const total       = fmt((entry.total_amount || 0) - (entry.super_amount || 0));
             const inv         = entry.invoices;
             const isInvoiced  = !!entry.invoice_id;
 
@@ -729,7 +729,7 @@ function closeNewEntryCard() {
 
 function buildNewEntryFormHTML() {
     return `
-    <div style="background:#fff; border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:0;">
+    <div style="background:#fff; border-radius:1.75rem; padding:20px 24px; display:flex; flex-direction:column; gap:0;">
         <!-- Client selector -->
         <div id="newClientContainer" class="relative">
             <div class="relative flex items-center">
@@ -748,15 +748,15 @@ function buildNewEntryFormHTML() {
         <div id="newEntryFields" class="reveal space-y-3 mt-3">
 
             <!-- Date -->
-            <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-                <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Date</span>
-                <input type="date" id="newEntryDate" class="bg-transparent w-full text-[15px] font-medium outline-none">
+            <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Date</span>
+                <input type="date" id="newEntryDate" class="bg-transparent w-full text-[15px] font-semibold outline-none">
             </div>
 
             <!-- DAY RATE -->
             <div id="newDayRateFields" class="hidden space-y-3">
                 <div>
-                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Day Type</span>
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Day Type</span>
                     <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                         <button class="seg-btn active" data-newday="full">Full Day</button>
                         <button class="seg-btn" data-newday="half">Half Day</button>
@@ -764,7 +764,7 @@ function buildNewEntryFormHTML() {
                 </div>
                 <div id="newWorkflowSection" class="reveal open space-y-3">
                     <div>
-                        <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Workflow</span>
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Workflow</span>
                         <div class="flex gap-1.5" id="newWorkflowBtns">
                             <button class="workflow-btn active" data-newwf="Apparel">Apparel</button>
                             <button class="workflow-btn" data-newwf="Product">Product</button>
@@ -772,14 +772,17 @@ function buildNewEntryFormHTML() {
                         </div>
                     </div>
                     <div id="newBrandField" class="hidden">
-                        <input type="text" id="newBrandInput" placeholder="Brand name"
-                            class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 font-medium">
+                        <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Brand</span>
+                            <input type="text" id="newBrandInput"
+                                class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400">
+                        </div>
                     </div>
                     <div id="newSkuField" class="hidden">
-                        <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-                            <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">SKUs Shot</span>
+                        <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">SKUs Shot</span>
                             <input type="number" id="newSkuInput" placeholder="0" min="0"
-                                class="bg-transparent w-full text-[15px] font-medium outline-none">
+                                class="bg-transparent w-full text-[15px] font-semibold outline-none">
                         </div>
                     </div>
                 </div>
@@ -788,10 +791,13 @@ function buildNewEntryFormHTML() {
             <!-- HOURLY -->
             <div id="newHourlyFields" class="hidden space-y-3">
                 <div id="newItsFields" class="hidden space-y-3">
-                    <input type="text" id="newShootClientInput" placeholder="Shoot Client"
-                        class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 font-medium">
+                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Shoot Client</span>
+                        <input type="text" id="newShootClientInput"
+                            class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400" placeholder="">
+                    </div>
                     <div>
-                        <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Role</span>
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Role</span>
                         <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                             <button class="seg-btn active" data-newrole="Photographer">Photographer</button>
                             <button class="seg-btn" data-newrole="Operator">Operator</button>
@@ -799,45 +805,49 @@ function buildNewEntryFormHTML() {
                     </div>
                 </div>
                 <div id="newHourlyDescField" class="hidden">
-                    <textarea id="newHourlyDesc" rows="2" placeholder="Description"
-                        class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 resize-none font-medium"></textarea>
+                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
+                        <input type="text" id="newHourlyDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none">
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-                        <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Start</span>
-                        <input type="time" id="newStartTime" class="bg-transparent w-full text-[15px] font-medium outline-none relative">
+                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Start</span>
+                        <input type="time" id="newStartTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative">
                     </div>
-                    <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-                        <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">End</span>
-                        <input type="time" id="newFinishTime" class="bg-transparent w-full text-[15px] font-medium outline-none relative">
+                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">End</span>
+                        <input type="time" id="newFinishTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative">
                     </div>
                 </div>
-                <div class="bg-white px-4 py-2.5 rounded-xl flex items-center justify-between">
+                <div class="bg-slate-50 px-5 py-4 rounded-2xl flex items-center justify-between">
                     <div>
-                        <span class="text-[9px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">Break</span>
-                        <div class="flex items-baseline gap-1">
-                            <input type="number" id="newBreakMinutes" value="0" min="0" step="5"
-                                class="bg-transparent border-none p-0 w-10 text-[15px] font-bold focus:ring-0 text-slate-800 outline-none">
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Break</span>
+                        <div class="flex items-baseline gap-2">
+                            <span id="newBreakDisplay" class="text-2xl font-black text-gray-900">0</span>
                             <span class="text-slate-400 text-[11px] font-bold uppercase">min</span>
                         </div>
+                        <input type="hidden" id="newBreakMinutes" value="0">
                     </div>
-                    <div class="flex gap-1.5">
-                        <button data-newbreakadj="15" class="h-8 px-3 bg-slate-100 rounded-lg text-[12px] font-bold active:bg-slate-200 transition-all">+15</button>
-                        <button data-newbreakadj="30" class="h-8 px-3 bg-slate-100 rounded-lg text-[12px] font-bold active:bg-slate-200 transition-all">+30</button>
+                    <div class="flex gap-2">
+                        <button data-newbreakadj="-15" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all">-15</button>
+                        <button data-newbreakadj="15" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all">+15</button>
                     </div>
                 </div>
             </div>
 
             <!-- MANUAL -->
             <div id="newManualFields" class="hidden space-y-3">
-                <textarea id="newManualDesc" rows="2" placeholder="Description"
-                    class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 resize-none font-medium"></textarea>
-                <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Amount ($)</span>
-                    <input type="number" id="newManualAmount" placeholder="0.00" step="0.01" min="0"
-                        class="bg-transparent w-full text-[15px] font-medium outline-none">
+                <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
+                    <input type="text" id="newManualDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none">
                 </div>
-                <div class="bg-white rounded-xl px-4 py-2.5 flex items-center justify-between">
+                <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Amount ($)</span>
+                    <input type="number" id="newManualAmount" placeholder="0.00" step="0.01" min="0"
+                        class="bg-transparent w-full text-[15px] font-semibold outline-none">
+                </div>
+                <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
                     <div>
                         <p class="text-[13px] font-semibold text-slate-800">Include Super (12%)</p>
                         <p id="newSuperToggleLabel" class="text-[11px] text-slate-400 mt-0.5">Off</p>
@@ -850,15 +860,17 @@ function buildNewEntryFormHTML() {
             </div>
 
             <!-- SUMMARY -->
-            <div class="summary-card px-4 py-3 bg-white">
-                <div class="flex justify-between items-baseline mb-2">
+            <div class="summary-card bg-white">
+                <div class="flex justify-between items-end mb-2">
                     <div>
-                        <p class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Total</p>
-                        <h2 id="newDisplayTotal" class="text-3xl font-bold tracking-tight text-slate-900">$0.00</h2>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Duration</p>
+                        <div id="newDurationBlock" class="hidden">
+                            <span id="newDisplayDuration" class="text-4xl font-black text-slate-900 leading-none">0h 0m</span>
+                        </div>
                     </div>
-                    <div class="text-right hidden" id="newDurationBlock">
-                        <p class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Duration</p>
-                        <p id="newDisplayDuration" class="text-base font-bold text-slate-700">0h 0m</p>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Subtotal</p>
+                        <h2 id="newDisplayTotal" class="text-2xl font-bold text-slate-800">$0.00</h2>
                     </div>
                 </div>
                 <div class="space-y-1 pt-2 border-t border-slate-100">
@@ -919,6 +931,8 @@ function wireNewEntryForm() {
         btn.addEventListener('click', () => {
             const el = document.getElementById('newBreakMinutes');
             el.value = Math.max(0, (parseInt(el.value) || 0) + parseInt(btn.dataset.newbreakadj));
+            const disp = document.getElementById('newBreakDisplay');
+            if (disp) disp.textContent = el.value;
             newEntryRecalculate();
         });
     });
@@ -987,6 +1001,8 @@ function showNewEntryFields(client) {
         document.getElementById('newStartTime').value    = '09:00';
         document.getElementById('newFinishTime').value   = '17:00';
         document.getElementById('newBreakMinutes').value = '0';
+        const newBreakDisp = document.getElementById('newBreakDisplay');
+        if (newBreakDisp) newBreakDisp.textContent = '0';
 
     } else { // manual
         document.getElementById('newManualFields').classList.remove('hidden');
@@ -1423,9 +1439,9 @@ function openEntryCard(wrap, entry, readOnly = false) {
     // --- Date field ---
     let html = `
         <div class="space-y-3">
-        <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-            <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Date</span>
-            <input type="date" id="editDate" class="bg-transparent w-full text-[15px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
+        <div class="bg-slate-50 rounded-2xl px-5 py-4">
+            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Date</span>
+            <input type="date" id="editDate" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
         </div>`;
 
     // --- Billing-specific fields ---
@@ -1437,7 +1453,7 @@ function openEntryCard(wrap, entry, readOnly = false) {
         html += `
         <div id="editDayRateFields" class="space-y-3">
             <div>
-                <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Day Type</span>
+                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Day Type</span>
                 <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                     <button class="seg-btn${editDayType === 'full' ? ' active' : ''}" data-editday="full" onclick="setEditDayType('full')"${readOnly ? ' disabled' : ''}>Full Day</button>
                     <button class="seg-btn${editDayType === 'half' ? ' active' : ''}" data-editday="half" onclick="setEditDayType('half')"${readOnly ? ' disabled' : ''}>Half Day</button>
@@ -1445,7 +1461,7 @@ function openEntryCard(wrap, entry, readOnly = false) {
             </div>
             <div id="editWorkflowSection" class="${wfHidden} space-y-3">
                 <div>
-                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Workflow</span>
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Workflow</span>
                     <div class="flex gap-1.5" id="editWorkflowBtns">
                         <button class="workflow-btn${editWorkflow === 'Apparel' ? ' active' : ''}" data-editwf="Apparel" onclick="setEditWorkflow('Apparel')"${readOnly ? ' disabled' : ''}>Apparel</button>
                         <button class="workflow-btn${editWorkflow === 'Product' ? ' active' : ''}" data-editwf="Product" onclick="setEditWorkflow('Product')"${readOnly ? ' disabled' : ''}>Product</button>
@@ -1453,14 +1469,17 @@ function openEntryCard(wrap, entry, readOnly = false) {
                     </div>
                 </div>
                 <div id="editBrandField" class="${brandHidden}">
-                    <input type="text" id="editBrandInput" placeholder="Brand name"
-                        class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 font-medium"${readOnly ? ' disabled' : ''}>
+                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Brand</span>
+                        <input type="text" id="editBrandInput"
+                            class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400"${readOnly ? ' disabled' : ''}>
+                    </div>
                 </div>
                 <div id="editSkuField" class="${skuHidden}">
-                    <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-                        <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">SKUs Shot</span>
+                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">SKUs Shot</span>
                         <input type="number" id="editSkuInput" placeholder="0" min="0"
-                            class="bg-transparent w-full text-[15px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
+                            class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
                     </div>
                 </div>
             </div>
@@ -1469,10 +1488,13 @@ function openEntryCard(wrap, entry, readOnly = false) {
         html += `
         <div id="editHourlyFields" class="space-y-3">
             <div id="editItsFields" class="${isITS ? '' : 'hidden'} space-y-3">
-                <input type="text" id="editShootClientInput" placeholder="Shoot Client"
-                    class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 font-medium"${readOnly ? ' disabled' : ''}>
+                <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Shoot Client</span>
+                    <input type="text" id="editShootClientInput"
+                        class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400"${readOnly ? ' disabled' : ''}>
+                </div>
                 <div>
-                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Role</span>
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Role</span>
                     <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                         <button class="seg-btn${editRole === 'Photographer' ? ' active' : ''}" data-editrole="Photographer" onclick="setEditRole('Photographer')"${readOnly ? ' disabled' : ''}>Photographer</button>
                         <button class="seg-btn${editRole === 'Operator' ? ' active' : ''}" data-editrole="Operator" onclick="setEditRole('Operator')"${readOnly ? ' disabled' : ''}>Operator</button>
@@ -1480,45 +1502,49 @@ function openEntryCard(wrap, entry, readOnly = false) {
                 </div>
             </div>
             <div id="editHourlyDescField" class="${isITS ? 'hidden' : ''}">
-                <textarea id="editHourlyDesc" rows="2" placeholder="Description"
-                    class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 resize-none font-medium"${readOnly ? ' disabled' : ''}></textarea>
+                <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
+                    <input type="text" id="editHourlyDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
+                </div>
             </div>
             <div class="grid grid-cols-2 gap-2">
-                <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Start</span>
-                    <input type="time" id="editStartTime" class="bg-transparent w-full text-[15px] font-medium outline-none relative"${readOnly ? ' disabled' : ''}>
+                <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Start</span>
+                    <input type="time" id="editStartTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative"${readOnly ? ' disabled' : ''}>
                 </div>
-                <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">End</span>
-                    <input type="time" id="editFinishTime" class="bg-transparent w-full text-[15px] font-medium outline-none relative"${readOnly ? ' disabled' : ''}>
+                <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">End</span>
+                    <input type="time" id="editFinishTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative"${readOnly ? ' disabled' : ''}>
                 </div>
             </div>
-            <div class="bg-white px-4 py-2.5 rounded-xl flex items-center justify-between">
+            <div class="bg-slate-50 px-5 py-4 rounded-2xl flex items-center justify-between">
                 <div>
-                    <span class="text-[9px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">Break</span>
-                    <div class="flex items-baseline gap-1">
-                        <input type="number" id="editBreakMinutes" value="0" min="0" step="5"
-                            class="bg-transparent border-none p-0 w-10 text-[15px] font-bold focus:ring-0 text-slate-800 outline-none"${readOnly ? ' disabled' : ''}>
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Break</span>
+                    <div class="flex items-baseline gap-2">
+                        <span id="editBreakDisplay" class="text-2xl font-black text-gray-900">0</span>
                         <span class="text-slate-400 text-[11px] font-bold uppercase">min</span>
                     </div>
+                    <input type="hidden" id="editBreakMinutes" value="0">
                 </div>
-                <div class="flex gap-1.5">
-                    <button onclick="adjustEditBreak(15)" class="h-8 px-3 bg-slate-100 rounded-lg text-[12px] font-bold active:bg-slate-200 transition-all"${readOnly ? ' disabled' : ''}>+15</button>
-                    <button onclick="adjustEditBreak(30)" class="h-8 px-3 bg-slate-100 rounded-lg text-[12px] font-bold active:bg-slate-200 transition-all"${readOnly ? ' disabled' : ''}>+30</button>
+                <div class="flex gap-2">
+                    <button onclick="adjustEditBreak(-15)" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all"${readOnly ? ' disabled' : ''}>-15</button>
+                    <button onclick="adjustEditBreak(15)" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all"${readOnly ? ' disabled' : ''}>+15</button>
                 </div>
             </div>
         </div>`;
     } else { // manual
         html += `
         <div id="editManualFields" class="space-y-3">
-            <textarea id="editManualDesc" rows="2" placeholder="Description"
-                class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 resize-none font-medium"${readOnly ? ' disabled' : ''}></textarea>
-            <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-                <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Amount ($)</span>
-                <input type="number" id="editManualAmount" placeholder="0.00" step="0.01" min="0"
-                    class="bg-transparent w-full text-[15px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
+            <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
+                <input type="text" id="editManualDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
             </div>
-            <div class="bg-white rounded-xl px-4 py-2.5 flex items-center justify-between">
+            <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Amount ($)</span>
+                <input type="number" id="editManualAmount" placeholder="0.00" step="0.01" min="0"
+                    class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
+            </div>
+            <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
                 <div>
                     <p class="text-[13px] font-semibold text-slate-800">Include Super (12%)</p>
                     <p id="editSuperToggleLabel" class="text-[11px] text-slate-400 mt-0.5">${editSuperOverride ? 'On' : 'Off'}</p>
@@ -1535,15 +1561,17 @@ function openEntryCard(wrap, entry, readOnly = false) {
     const bonusHiddenSummary = (billing !== 'day_rate' || editDayType !== 'full' || editWorkflow === 'Own Brand') ? 'hidden' : '';
     const durationHidden     = (billing !== 'hourly') ? 'hidden' : '';
     html += `
-        <div class="summary-card px-4 py-3 bg-white">
-            <div class="flex justify-between items-baseline mb-2">
+        <div class="summary-card bg-white">
+            <div class="flex justify-between items-end mb-2">
                 <div>
-                    <p class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Total</p>
-                    <h2 id="editDisplayTotal" class="text-3xl font-bold tracking-tight text-slate-900">$0.00</h2>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Duration</p>
+                    <div id="editDurationBlock" class="${durationHidden}">
+                        <span id="editDisplayDuration" class="text-4xl font-black text-slate-900 leading-none">0h 0m</span>
+                    </div>
                 </div>
-                <div class="text-right ${durationHidden}" id="editDurationBlock">
-                    <p class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Duration</p>
-                    <p id="editDisplayDuration" class="text-base font-bold text-slate-700">0h 0m</p>
+                <div class="text-right">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Subtotal</p>
+                    <h2 id="editDisplayTotal" class="text-2xl font-bold text-slate-800">$0.00</h2>
                 </div>
             </div>
             <div class="space-y-1 pt-2 border-t border-slate-100">
@@ -1595,6 +1623,8 @@ function openEntryCard(wrap, entry, readOnly = false) {
         document.getElementById('editStartTime').value    = (entry.start_time  || '').substring(0, 5);
         document.getElementById('editFinishTime').value   = (entry.finish_time || '').substring(0, 5);
         document.getElementById('editBreakMinutes').value = entry.break_minutes || 0;
+        const editBreakDisp = document.getElementById('editBreakDisplay');
+        if (editBreakDisp) editBreakDisp.textContent = entry.break_minutes || 0;
     } else { // manual
         document.getElementById('editManualDesc').value   = entry.description || '';
         document.getElementById('editManualAmount').value = entry.base_amount != null ? entry.base_amount : '';
@@ -1671,7 +1701,9 @@ function setEditRole(role) {
 function adjustEditBreak(delta) {
     const el = document.getElementById('editBreakMinutes');
     if (el) {
-        el.value = (parseInt(el.value) || 0) + delta;
+        el.value = Math.max(0, (parseInt(el.value) || 0) + delta);
+        const disp = document.getElementById('editBreakDisplay');
+        if (disp) disp.textContent = el.value;
         editRecalculate();
     }
 }
