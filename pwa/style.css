@@ -339,27 +339,38 @@
             top: 0; left: 0; right: 0;
             z-index: 50;
             pointer-events: none;
-            background: linear-gradient(to bottom, #F2F3F5 40%, transparent);
         }
         #entriesHeader * {
             pointer-events: auto;
         }
         #entriesHeaderTop {
+            background-color: #F2F3F5;
             padding: 24px 20px 8px 20px;
         }
-        #headerTransitionZone { display: none; }
-        #entriesBlur {
-            position: fixed;
-            top: 0;
+        #headerTransitionZone {
+            height: 100px;
+            width: 100%;
+            position: absolute;
+            top: 100%;
             left: 0;
-            right: 0;
-            height: 180px;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            mask: linear-gradient(to bottom, black 0%, transparent 100%);
-            -webkit-mask: linear-gradient(to bottom, black 0%, transparent 100%);
             pointer-events: none;
-            z-index: 49;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: linear-gradient(to bottom,
+                #F2F3F5 0%,
+                rgba(242, 243, 245, 0.8) 20%,
+                transparent 100%
+            );
+            mask-image: linear-gradient(to bottom,
+                black 0%,
+                rgba(0,0,0,0.5) 40%,
+                transparent 100%
+            );
+            -webkit-mask-image: linear-gradient(to bottom,
+                black 0%,
+                rgba(0,0,0,0.5) 40%,
+                transparent 100%
+            );
         }
         #entriesScroll {
             height: 100%;
