@@ -1,4 +1,4 @@
-        :root { --accent: #007AFF; --build: "9c5aa13"; }
+        :root { --accent: #007AFF; --build: "a7406f2"; }
 
         #entriesHeaderTop::after {
             content: var(--build);
