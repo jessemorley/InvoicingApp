@@ -1,12 +1,13 @@
         :root { --accent: #007AFF; --build: "2607175"; }
 
-        #entriesHeaderTop::after {
+        #entriesHeaderTop h1::after {
             content: var(--build);
             font-size: 11px;
             font-family: monospace;
             color: #9ca3af;
             margin-left: 8px;
             font-weight: normal;
+            vertical-align: middle;
         }
 
         body {

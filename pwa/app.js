@@ -72,6 +72,11 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     }
 });
 
+document.getElementById('newEntryFab').addEventListener('click', () => {
+    newEntryWrap?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('newClientInput')?.focus();
+});
+
 document.getElementById('signOutBtn').addEventListener('click', async () => {
     await sb.auth.signOut();
     resetForm();
@@ -501,7 +506,7 @@ async function loadRecentEntries() {
         .order('date', { ascending: false })
         .limit(25);
 
-    const data = rawData?.slice().reverse();
+    const data = rawData;
 
     if (error || !data?.length) {
         list.innerHTML = '';
