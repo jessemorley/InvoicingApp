@@ -871,10 +871,10 @@ function openEntryCard(wrap, entry, readOnly = false) {
 
     // --- Date field ---
     let html = `
-        <div class="space-y-4">
-        <div class="bg-slate-50 rounded-2xl px-5 py-3">
-            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Date</span>
-            <input type="date" id="editDate" class="bg-transparent w-full text-[17px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
+        <div class="space-y-3">
+        <div class="bg-slate-50 rounded-xl px-4 py-2.5">
+            <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Date</span>
+            <input type="date" id="editDate" class="bg-transparent w-full text-[15px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
         </div>`;
 
     // --- Billing-specific fields ---
@@ -884,18 +884,18 @@ function openEntryCard(wrap, entry, readOnly = false) {
         const skuHidden    = editWorkflow === 'Own Brand' ? 'hidden' : '';
         const bonusHidden  = (editDayType !== 'full' || editWorkflow === 'Own Brand') ? 'hidden' : '';
         html += `
-        <div id="editDayRateFields" class="space-y-4">
+        <div id="editDayRateFields" class="space-y-3">
             <div>
-                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Day Type</span>
+                <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Day Type</span>
                 <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                     <button class="seg-btn${editDayType === 'full' ? ' active' : ''}" data-editday="full" onclick="setEditDayType('full')"${readOnly ? ' disabled' : ''}>Full Day</button>
                     <button class="seg-btn${editDayType === 'half' ? ' active' : ''}" data-editday="half" onclick="setEditDayType('half')"${readOnly ? ' disabled' : ''}>Half Day</button>
                 </div>
             </div>
-            <div id="editWorkflowSection" class="${wfHidden} space-y-4">
+            <div id="editWorkflowSection" class="${wfHidden} space-y-3">
                 <div>
-                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Workflow</span>
-                    <div class="flex gap-2" id="editWorkflowBtns">
+                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Workflow</span>
+                    <div class="flex gap-1.5" id="editWorkflowBtns">
                         <button class="workflow-btn${editWorkflow === 'Apparel' ? ' active' : ''}" data-editwf="Apparel" onclick="setEditWorkflow('Apparel')"${readOnly ? ' disabled' : ''}>Apparel</button>
                         <button class="workflow-btn${editWorkflow === 'Product' ? ' active' : ''}" data-editwf="Product" onclick="setEditWorkflow('Product')"${readOnly ? ' disabled' : ''}>Product</button>
                         <button class="workflow-btn${editWorkflow === 'Own Brand' ? ' active' : ''}" data-editwf="Own Brand" onclick="setEditWorkflow('Own Brand')"${readOnly ? ' disabled' : ''}>Own Brand</button>
@@ -903,25 +903,25 @@ function openEntryCard(wrap, entry, readOnly = false) {
                 </div>
                 <div id="editBrandField" class="${brandHidden}">
                     <input type="text" id="editBrandInput" placeholder="Brand name"
-                        class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium"${readOnly ? ' disabled' : ''}>
+                        class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 font-medium"${readOnly ? ' disabled' : ''}>
                 </div>
                 <div id="editSkuField" class="${skuHidden}">
-                    <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">SKUs Shot</span>
+                    <div class="bg-slate-50 rounded-xl px-4 py-2.5">
+                        <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">SKUs Shot</span>
                         <input type="number" id="editSkuInput" placeholder="0" min="0"
-                            class="bg-transparent w-full text-[17px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
+                            class="bg-transparent w-full text-[15px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
                     </div>
                 </div>
             </div>
         </div>`;
     } else if (billing === 'hourly') {
         html += `
-        <div id="editHourlyFields" class="space-y-4">
-            <div id="editItsFields" class="${isITS ? '' : 'hidden'} space-y-4">
+        <div id="editHourlyFields" class="space-y-3">
+            <div id="editItsFields" class="${isITS ? '' : 'hidden'} space-y-3">
                 <input type="text" id="editShootClientInput" placeholder="Shoot Client"
-                    class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium"${readOnly ? ' disabled' : ''}>
+                    class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 font-medium"${readOnly ? ' disabled' : ''}>
                 <div>
-                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Role</span>
+                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Role</span>
                     <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                         <button class="seg-btn${editRole === 'Photographer' ? ' active' : ''}" data-editrole="Photographer" onclick="setEditRole('Photographer')"${readOnly ? ' disabled' : ''}>Photographer</button>
                         <button class="seg-btn${editRole === 'Operator' ? ' active' : ''}" data-editrole="Operator" onclick="setEditRole('Operator')"${readOnly ? ' disabled' : ''}>Operator</button>
@@ -930,47 +930,47 @@ function openEntryCard(wrap, entry, readOnly = false) {
             </div>
             <div id="editHourlyDescField" class="${isITS ? 'hidden' : ''}">
                 <textarea id="editHourlyDesc" rows="2" placeholder="Description"
-                    class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"${readOnly ? ' disabled' : ''}></textarea>
+                    class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 resize-none font-medium"${readOnly ? ' disabled' : ''}></textarea>
             </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Start</span>
-                    <input type="time" id="editStartTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative"${readOnly ? ' disabled' : ''}>
+            <div class="grid grid-cols-2 gap-2">
+                <div class="bg-slate-50 rounded-xl px-4 py-2.5">
+                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Start</span>
+                    <input type="time" id="editStartTime" class="bg-transparent w-full text-[15px] font-medium outline-none relative"${readOnly ? ' disabled' : ''}>
                 </div>
-                <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">End</span>
-                    <input type="time" id="editFinishTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative"${readOnly ? ' disabled' : ''}>
+                <div class="bg-slate-50 rounded-xl px-4 py-2.5">
+                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">End</span>
+                    <input type="time" id="editFinishTime" class="bg-transparent w-full text-[15px] font-medium outline-none relative"${readOnly ? ' disabled' : ''}>
                 </div>
             </div>
-            <div class="bg-white p-5 rounded-2xl flex items-center justify-between">
+            <div class="bg-white px-4 py-2.5 rounded-xl flex items-center justify-between">
                 <div>
-                    <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Break</span>
+                    <span class="text-[9px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">Break</span>
                     <div class="flex items-baseline gap-1">
                         <input type="number" id="editBreakMinutes" value="0" min="0" step="5"
-                            class="bg-transparent border-none p-0 w-12 text-[17px] font-bold focus:ring-0 text-slate-800 outline-none"${readOnly ? ' disabled' : ''}>
-                        <span class="text-slate-400 text-xs font-bold uppercase">min</span>
+                            class="bg-transparent border-none p-0 w-10 text-[15px] font-bold focus:ring-0 text-slate-800 outline-none"${readOnly ? ' disabled' : ''}>
+                        <span class="text-slate-400 text-[11px] font-bold uppercase">min</span>
                     </div>
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="adjustEditBreak(15)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all"${readOnly ? ' disabled' : ''}>+15</button>
-                    <button onclick="adjustEditBreak(30)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all"${readOnly ? ' disabled' : ''}>+30</button>
+                <div class="flex gap-1.5">
+                    <button onclick="adjustEditBreak(15)" class="h-8 px-3 bg-slate-100 rounded-lg text-[12px] font-bold active:bg-slate-200 transition-all"${readOnly ? ' disabled' : ''}>+15</button>
+                    <button onclick="adjustEditBreak(30)" class="h-8 px-3 bg-slate-100 rounded-lg text-[12px] font-bold active:bg-slate-200 transition-all"${readOnly ? ' disabled' : ''}>+30</button>
                 </div>
             </div>
         </div>`;
     } else { // manual
         html += `
-        <div id="editManualFields" class="space-y-4">
+        <div id="editManualFields" class="space-y-3">
             <textarea id="editManualDesc" rows="2" placeholder="Description"
-                class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"${readOnly ? ' disabled' : ''}></textarea>
-            <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Amount ($)</span>
+                class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 resize-none font-medium"${readOnly ? ' disabled' : ''}></textarea>
+            <div class="bg-slate-50 rounded-xl px-4 py-2.5">
+                <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Amount ($)</span>
                 <input type="number" id="editManualAmount" placeholder="0.00" step="0.01" min="0"
-                    class="bg-transparent w-full text-[17px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
+                    class="bg-transparent w-full text-[15px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
             </div>
-            <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
+            <div class="bg-white rounded-xl px-4 py-2.5 flex items-center justify-between">
                 <div>
-                    <p class="text-[15px] font-semibold text-slate-800">Include Super (12%)</p>
-                    <p id="editSuperToggleLabel" class="text-[12px] text-slate-400 mt-0.5">${editSuperOverride ? 'On' : 'Off'}</p>
+                    <p class="text-[13px] font-semibold text-slate-800">Include Super (12%)</p>
+                    <p id="editSuperToggleLabel" class="text-[11px] text-slate-400 mt-0.5">${editSuperOverride ? 'On' : 'Off'}</p>
                 </div>
                 <label class="toggle-wrap">
                     <input type="checkbox" id="editSuperToggle"${editSuperOverride ? ' checked' : ''}${readOnly ? ' disabled' : ''}>
@@ -984,29 +984,29 @@ function openEntryCard(wrap, entry, readOnly = false) {
     const bonusHiddenSummary = (billing !== 'day_rate' || editDayType !== 'full' || editWorkflow === 'Own Brand') ? 'hidden' : '';
     const durationHidden     = (billing !== 'hourly') ? 'hidden' : '';
     html += `
-        <div class="summary-card p-6 bg-white">
-            <div class="flex justify-between items-start mb-4">
+        <div class="summary-card px-4 py-3 bg-white">
+            <div class="flex justify-between items-baseline mb-2">
                 <div>
-                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Total</p>
-                    <h2 id="editDisplayTotal" class="text-4xl font-bold tracking-tight text-slate-900">$0.00</h2>
+                    <p class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Total</p>
+                    <h2 id="editDisplayTotal" class="text-3xl font-bold tracking-tight text-slate-900">$0.00</h2>
                 </div>
                 <div class="text-right ${durationHidden}" id="editDurationBlock">
-                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Duration</p>
-                    <p id="editDisplayDuration" class="text-xl font-bold text-slate-700">0h 0m</p>
+                    <p class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Duration</p>
+                    <p id="editDisplayDuration" class="text-base font-bold text-slate-700">0h 0m</p>
                 </div>
             </div>
-            <div class="space-y-1.5 pt-4 border-t border-slate-100">
+            <div class="space-y-1 pt-2 border-t border-slate-100">
                 <div class="flex justify-between items-center">
-                    <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Base</span>
-                    <span id="editDisplayBase" class="text-[14px] font-bold text-slate-600">$0.00</span>
+                    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Base</span>
+                    <span id="editDisplayBase" class="text-[13px] font-bold text-slate-600">$0.00</span>
                 </div>
                 <div id="editBonusLine" class="flex justify-between items-center ${bonusHiddenSummary}">
-                    <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Bonus</span>
-                    <span id="editDisplayBonus" class="text-[14px] font-bold text-[#34c759]">+$0.00</span>
+                    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Bonus</span>
+                    <span id="editDisplayBonus" class="text-[13px] font-bold text-[#34c759]">+$0.00</span>
                 </div>
                 <div id="editSuperLine" class="flex justify-between items-center">
-                    <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Super (12%)</span>
-                    <span id="editDisplaySuper" class="text-[14px] font-bold text-[#007AFF]">+$0.00</span>
+                    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Super (12%)</span>
+                    <span id="editDisplaySuper" class="text-[13px] font-bold text-[#007AFF]">+$0.00</span>
                 </div>
             </div>
         </div>`;
@@ -1014,9 +1014,9 @@ function openEntryCard(wrap, entry, readOnly = false) {
     // --- Footer buttons ---
     if (!readOnly) {
         html += `
-        <div class="space-y-3 pt-1">
+        <div class="space-y-2 pt-1">
             <button id="editSaveBtn" onclick="saveEdit()" class="btn-primary">Save Changes</button>
-            <button onclick="deleteEntry()" class="w-full py-4 rounded-2xl text-[15px] font-bold text-red-500 bg-red-50 active:bg-red-100 transition-colors border-none cursor-pointer">Delete Entry</button>
+            <button onclick="deleteEntry()" class="w-full py-3 rounded-xl text-[14px] font-bold text-red-500 bg-red-50 active:bg-red-100 transition-colors border-none cursor-pointer">Delete Entry</button>
         </div>`;
     }
 

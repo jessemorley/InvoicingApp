@@ -97,9 +97,9 @@
             background: #111827;
             color: #fff;
             font-weight: 700;
-            font-size: 17px;
-            border-radius: 1.25rem;
-            padding: 18px;
+            font-size: 15px;
+            border-radius: 0.875rem;
+            padding: 14px;
             width: 100%;
             border: none;
             cursor: pointer;
@@ -343,7 +343,7 @@
             max-height: 900px;
         }
         .entry-detail-inner {
-            padding: 1rem 1.25rem 1.25rem;
+            padding: 0.75rem 1rem 1rem;
         }
         .entry-card-wrap.expanded .swipe-container {
             overflow: visible;
