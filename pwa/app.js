@@ -628,79 +628,32 @@ function appendNewEntryCard(list, cardIndex) {
     newWrap.className = 'entry-card-wrap';
     newWrap.style.animationDelay = `${cardIndex * 40 + 40}ms`;
     newWrap.style.marginTop = '1.25rem';
-
-    const newRow = document.createElement('div');
-    newRow.className = 'entry-row entry-row-tappable';
-    newRow.innerHTML = `
-        <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; opacity:0.35;">
-            <svg width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="2.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-            <span style="font-size:15px; font-weight:600; color:#9ca3af;">New Entry</span>
-        </div>`;
-
-    const newPanel = document.createElement('div');
-    newPanel.className = 'entry-detail-panel';
-    const newInner = document.createElement('div');
-    newInner.className = 'entry-detail-inner';
-    newPanel.appendChild(newInner);
-
-    newRow.addEventListener('click', openNewEntryCard);
-    newWrap.appendChild(newRow);
-    newWrap.appendChild(newPanel);
+    newWrap.innerHTML = buildNewEntryFormHTML();
     list.appendChild(newWrap);
     newEntryWrap = newWrap;
+    wireNewEntryForm();
 }
 
 // ─────────────────────────────────────────────
 // NEW ENTRY CARD
 // ─────────────────────────────────────────────
-function openNewEntryCard() {
-    if (expandedWrap && expandedWrap !== newEntryWrap) {
-        closeEntryCard(expandedWrap);
-    }
-    if (newEntryWrap.classList.contains('expanded')) {
-        closeNewEntryCard();
-        return;
-    }
-    expandedWrap = newEntryWrap;
-
-    const inner = newEntryWrap.querySelector('.entry-detail-inner');
-    inner.innerHTML = buildNewEntryFormHTML();
-    wireNewEntryForm();
-    newEntryWrap.classList.add('expanded');
-
-    setTimeout(() => {
-        const tabRecent = document.getElementById('tabRecent');
-        tabRecent.scrollTo({ top: tabRecent.scrollHeight, behavior: 'smooth' });
-    }, 100);
-}
-
 function closeNewEntryCard() {
     if (!newEntryWrap) return;
-    const row = newEntryWrap.querySelector('.entry-row');
-    if (row) row.style.borderRadius = '14px 14px 0 0';
-
-    newEntryWrap.classList.remove('expanded');
-
-    setTimeout(() => {
-        if (row) row.style.borderRadius = '';
-        const inner = newEntryWrap.querySelector('.entry-detail-inner');
-        if (inner) inner.innerHTML = '';
-    }, 400);
-
-    if (expandedWrap === newEntryWrap) expandedWrap = null;
 
     newEntrySelectedClient = null;
     newEntryDayType        = 'full';
     newEntryWorkflow       = 'Apparel';
     newEntryRole           = 'Photographer';
     newEntrySuperOverride  = false;
+
+    // Re-render the card fresh
+    newEntryWrap.innerHTML = buildNewEntryFormHTML();
+    wireNewEntryForm();
 }
 
 function buildNewEntryFormHTML() {
     return `
-    <div class="space-y-3">
+    <div style="background:#fff; border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:0;">
         <!-- Client selector -->
         <div id="newClientContainer" class="relative">
             <div class="relative flex items-center">
@@ -716,7 +669,7 @@ function buildNewEntryFormHTML() {
         </div>
 
         <!-- Billing fields (revealed after client select) -->
-        <div id="newEntryFields" class="reveal space-y-3">
+        <div id="newEntryFields" class="reveal space-y-3 mt-3">
 
             <!-- Date -->
             <div class="bg-slate-50 rounded-xl px-4 py-2.5">
