@@ -75,8 +75,8 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 document.getElementById('newEntryFab').addEventListener('click', () => {
     if (!newEntryWrap) return;
     newEntryWrap.style.display = '';
+    document.getElementById('newClientInput')?.focus();
     document.getElementById('tabRecent').scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => document.getElementById('newClientInput')?.focus(), 300);
 });
 
 document.getElementById('signOutBtn').addEventListener('click', async () => {
