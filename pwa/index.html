@@ -220,13 +220,13 @@
     </div>
 
     <!-- ── Recent Entries Tab ── -->
-    <div id="tabRecent" style="display:flex; flex-direction:column; height:100dvh; overflow:hidden;">
+    <div id="tabRecent">
 
-        <!-- Floating header with gradient -->
+        <!-- Fixed header -->
         <div id="entriesHeader" style="padding-top:env(safe-area-inset-top);">
-            <div class="max-w-md mx-auto px-5 pt-8 pb-5">
-                <div class="flex items-end justify-between px-1">
-                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Entries</h1>
+            <div id="entriesHeaderTop" class="max-w-md mx-auto">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-3xl font-extrabold text-gray-900">Entries</h1>
                     <button id="signOutBtn" class="p-2 -mr-1 text-gray-400 active:text-gray-600 transition-colors bg-transparent border-none cursor-pointer">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -234,10 +234,10 @@
                     </button>
                 </div>
             </div>
-            <div id="headerFade"></div>
+            <div id="headerTransitionZone"></div>
         </div>
 
-        <!-- Scrollable list — content pinned to bottom -->
+        <!-- Scrollable content -->
         <div id="entriesScroll">
             <div id="entriesInner">
                 <div id="pullIndicator" class="pull-indicator"><div class="spinner" id="pullSpinner"></div></div>

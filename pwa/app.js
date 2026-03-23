@@ -553,9 +553,10 @@ async function loadRecentEntries() {
             const el = document.createElement('div');
             el.className = 'entry-row' + (isInvoiced ? ' entry-row-invoiced' : ' entry-row-tappable');
             const dateParts = formatEntryDateParts(entry.date);
+            const dowColor  = clientDowColor(clientName);
             el.innerHTML = `
                 <div class="entry-date-col">
-                    <span class="dow">${dateParts.dow}</span>
+                    <span class="dow ${dowColor}">${dateParts.dow}</span>
                     <span class="day-num">${dateParts.day}</span>
                     <span class="mon">${dateParts.mon}</span>
                 </div>
@@ -1122,6 +1123,13 @@ function clientBadgeColor(name) {
     if (name.includes('Images'))  return 'bg-blue-50 text-blue-500';
     if (name.includes('JD'))      return 'bg-orange-50 text-orange-500';
     return 'bg-gray-100 text-gray-500';
+}
+
+function clientDowColor(name) {
+    if (name.includes('ICONIC'))  return 'text-purple-500';
+    if (name.includes('Images'))  return 'text-blue-500';
+    if (name.includes('JD'))      return 'text-orange-500';
+    return 'text-gray-400';
 }
 
 const invoiceChipColors = {
