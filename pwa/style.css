@@ -156,7 +156,7 @@
             position: absolute;
             inset: 0;
             background: #ff3b30;
-            border-radius: 16px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: flex-end;
@@ -168,65 +168,73 @@
         }
         .entry-row {
             background: #fff;
-            border-radius: 16px;
-            padding: 16px;
-            margin: 0 16px;
+            border-radius: 14px;
+            padding: 14px 16px;
             display: flex;
             align-items: center;
-            gap: 0;
+            gap: 12px;
             position: relative;
             touch-action: pan-y;
             will-change: transform;
             transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        .entry-row-tappable { cursor: pointer; }
-        .entry-row-tappable:active { background: #f9fafb; }
-        .entry-row-invoiced { cursor: pointer; }
-        .entry-row-invoiced:active { background: #f9fafb; }
+        .entry-row-tappable {
+            cursor: pointer;
+        }
+        .entry-row-tappable:active {
+            background: #f9fafb;
+        }
+        .entry-row-invoiced {
+            cursor: pointer;
+        }
+        .entry-row-invoiced:active {
+            background: #f9fafb;
+        }
         /* Date column inside entry card */
         .entry-date-col {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-width: 50px;
-            padding-right: 16px;
-            border-right: 1px solid #f0f0f0;
-            margin-right: 16px;
+            min-width: 40px;
+            padding: 0.2rem 0.35rem;
+            background: rgba(249,250,251,0.8);
+            border-radius: 8px;
             flex-shrink: 0;
-            line-height: 1;
         }
         .entry-date-col .dow {
-            font-size: 10px;
-            font-weight: 700;
+            font-size: 9px;
+            font-weight: 600;
+            color: #9ca3af;
             text-transform: uppercase;
-            margin-bottom: 4px;
+            letter-spacing: 0.12em;
         }
         .entry-date-col .day-num {
-            font-size: 20px;
+            font-size: 1.1rem;
             font-weight: 700;
             color: #111827;
+            line-height: 1.15;
         }
         .entry-date-col .mon {
-            font-size: 10px;
-            font-weight: 700;
-            color: #6b7280;
+            font-size: 9px;
+            font-weight: 600;
+            color: #9ca3af;
             text-transform: uppercase;
-            margin-top: 2px;
         }
         .client-badge {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 3px 9px;
+            border-radius: 0.5rem;
             white-space: nowrap;
         }
         .invoice-chip {
             font-size: 10px;
             font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
+            letter-spacing: 0.04em;
+            padding: 2px 7px;
+            border-radius: 20px;
             white-space: nowrap;
         }
 
@@ -278,13 +286,13 @@
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            padding: 16px 20px 4px;
-            margin-top: 4px;
+            padding: 0 2px;
+            margin: 1.25rem 0 0.5rem;
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.06em;
-            color: #9ca3af;
+            color: #b0b7c3;
         }
         .week-header:first-child {
             margin-top: 0;
@@ -292,20 +300,18 @@
         .week-group {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            padding-top: 4px;
+            gap: 0.5rem;
         }
 
         /* Expanded card */
         .entry-card-wrap {
         }
         .entry-card-wrap.expanded .entry-row {
-            border-radius: 16px 16px 0 0;
+            border-radius: 14px 14px 0 0;
         }
         .entry-detail-panel {
             background: #fff;
-            border-radius: 0 0 16px 16px;
-            margin: 0 16px;
+            border-radius: 0 0 14px 14px;
             overflow: hidden;
             max-height: 0;
             transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
@@ -323,57 +329,29 @@
         /* Entries tab layout */
         #tabRecent {
             position: relative;
-            height: 100dvh;
-            overflow: hidden;
         }
         #entriesHeader {
-            position: fixed;
+            position: absolute;
             top: 0; left: 0; right: 0;
-            z-index: 50;
+            z-index: 10;
+            background: linear-gradient(to bottom, #F2F3F5 55%, transparent);
             pointer-events: none;
         }
         #entriesHeader * {
             pointer-events: auto;
         }
-        #entriesHeaderTop {
-            background-color: #F2F3F5;
-            padding: 24px 20px 8px 20px;
-        }
-        #headerTransitionZone {
-            height: 100px;
-            width: 100%;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            pointer-events: none;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            background: linear-gradient(to bottom,
-                #F2F3F5 0%,
-                rgba(242, 243, 245, 0.8) 20%,
-                transparent 100%
-            );
-            mask-image: linear-gradient(to bottom,
-                black 0%,
-                rgba(0,0,0,0.5) 40%,
-                transparent 100%
-            );
-            -webkit-mask-image: linear-gradient(to bottom,
-                black 0%,
-                rgba(0,0,0,0.5) 40%,
-                transparent 100%
-            );
-        }
+        #headerFade { display: none; }
         #entriesScroll {
-            height: 100%;
+            flex: 1;
             overflow-y: auto;
+            min-height: 0;
+            padding-top: 8rem;
         }
         #entriesInner {
             min-height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
-            padding-top: 110px;
         }
 
         /* Login */
