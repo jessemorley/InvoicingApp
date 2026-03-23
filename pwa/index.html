@@ -250,10 +250,14 @@
 
     <!-- Client picker overlay -->
     <div id="clientPickerOverlay" style="display:none; position:fixed; inset:0; background:#F2F3F5; z-index:500; flex-direction:column; padding-top:env(safe-area-inset-top);">
-        <div style="padding:16px 20px 12px; display:flex; align-items:center; gap:12px;">
-            <input type="text" id="overlayClientInput" placeholder="Search client…" autocomplete="off"
-                style="flex:1; background:#fff; border:none; border-radius:14px; padding:14px 18px; font-size:17px; font-weight:600; outline:none; font-family:inherit;">
-            <button id="overlayCancel" style="background:none; border:none; font-size:15px; font-weight:600; color:#007AFF; cursor:pointer; padding:8px; white-space:nowrap;">Cancel</button>
+        <div style="padding:24px 20px 12px; display:flex; align-items:center; position:relative;">
+            <input type="text" id="overlayClientInput" placeholder="Client" autocomplete="off"
+                style="flex:1; background:transparent; border:none; border-radius:0; padding:0; padding-right:36px; font-size:30px; font-weight:800; outline:none; font-family:inherit; color:#111827;">
+            <button id="overlayCancel" style="position:absolute; right:20px; background:none; border:none; cursor:pointer; padding:4px; color:#9ca3af; display:flex; align-items:center;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
         </div>
         <div id="overlayClientList" style="flex:1; overflow-y:auto; padding:8px 20px;"></div>
     </div>
