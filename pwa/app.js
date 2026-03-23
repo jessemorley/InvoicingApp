@@ -658,7 +658,7 @@ function buildNewEntryFormHTML() {
         <div id="newClientContainer" class="relative">
             <div class="relative flex items-center">
                 <input type="text" id="newClientInput" placeholder="Client" autocomplete="off"
-                    class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 pr-10 font-medium">
+                    class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 pr-10 font-medium" style="border-color: transparent !important;">
                 <button id="newClearClient" class="clear-btn absolute right-3 p-1 rounded-full bg-slate-200 text-slate-500">
                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
