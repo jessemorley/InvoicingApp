@@ -1,0 +1,122 @@
+import React from 'react';
+import { Calendar, ChevronRight, Plus } from 'lucide-react';
+
+const TransactionItem = ({ agency, date, company, role, amount, code }) => {
+  const [day, month] = date.split(' ');
+  
+  const getDayOfWeek = (d, m) => {
+    const dates = {
+      '23 Mar': 'Mon',
+      '20 Mar': 'Fri',
+      '19 Mar': 'Thu',
+      '17 Mar': 'Tue',
+      '16 Mar': 'Mon',
+      '12 Mar': 'Thu',
+      '11 Mar': 'Wed',
+      '09 Mar': 'Mon'
+    };
+    return dates[`${d} ${m}`] || 'Day';
+  };
+
+  const dayOfWeek = getDayOfWeek(day, month);
+
+  const agencyStyles = {
+    'Images That Sell': 'bg-blue-50 text-blue-500',
+    'The ICONIC': 'bg-rose-50 text-rose-500'
+  };
+
+  return (
+    <div className="flex items-center gap-5 p-5 bg-white rounded-[2rem] border border-gray-50 shadow-sm hover:shadow-md transition-all duration-300 mb-4">
+      {/* Soft Date Column */}
+      <div className="flex flex-col items-center justify-center min-w-[60px] py-2 bg-gray-50/50 rounded-2xl">
+        <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+          {dayOfWeek}
+        </span>
+        <span className="text-xl font-semibold text-gray-800 leading-tight">
+          {day}
+        </span>
+        <span className="text-[10px] font-medium text-gray-400 uppercase">
+          {month}
+        </span>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-2">
+          <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-lg ${agencyStyles[agency] || 'bg-gray-100 text-gray-500'}`}>
+            {agency}
+          </span>
+          {code && (
+            <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-md">
+              {code}
+            </span>
+          )}
+        </div>
+        <h3 className="font-semibold text-gray-800 text-base truncate">
+          {company}
+        </h3>
+        <p className="text-sm text-gray-400 truncate">
+          {role}
+        </p>
+      </div>
+
+      {/* Amount Column */}
+      <div className="text-right flex items-center gap-2">
+        <span className="text-lg font-bold text-gray-800 tracking-tight">
+          ${amount}
+        </span>
+        <ChevronRight className="w-4 h-4 text-gray-300" />
+      </div>
+    </div>
+  );
+};
+
+const App = () => {
+  const transactions = [
+    { agency: 'Images That Sell', date: '23 Mar', company: 'Najo', role: 'Operator', amount: '403.20' },
+    { agency: 'Images That Sell', date: '20 Mar', company: 'Najo', role: 'Operator', amount: '428.40', code: 'JM169' },
+    { agency: 'Images That Sell', date: '19 Mar', company: 'Pandora', role: 'VO', amount: '441.00', code: 'JM169' },
+    { agency: 'Images That Sell', date: '17 Mar', company: 'Maison Balzac', role: 'O', amount: '415.80', code: 'JM169' },
+    { agency: 'Images That Sell', date: '16 Mar', company: 'Oroton', role: 'O', amount: '453.60', code: 'JM169' },
+    { agency: 'The ICONIC', date: '12 Mar', company: 'Full day', role: 'Apparel', amount: '392.00', code: 'TI63' },
+    { agency: 'The ICONIC', date: '11 Mar', company: 'Full day', role: 'Apparel', amount: '392.00', code: 'TI63' },
+    { agency: 'The ICONIC', date: '09 Mar', company: 'Full day', role: 'Own Brand', amount: '436.80', code: 'TI63' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#FBFBFC] font-sans p-6 pb-32 max-w-md mx-auto">
+      {/* Header Section */}
+      <div className="flex items-end justify-between mb-10 px-1">
+        <div>
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Overview</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Activity</h1>
+        </div>
+        <button className="p-3.5 bg-white rounded-[1.25rem] shadow-sm border border-gray-100 text-gray-400 hover:text-gray-900 transition-colors">
+          <Calendar className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Transaction List */}
+      <div className="space-y-0">
+        {transactions.map((t, index) => (
+          <TransactionItem key={index} {...t} />
+        ))}
+      </div>
+
+      {/* Balanced FAB */}
+      <button className="fixed bottom-28 right-8 w-14 h-14 bg-gray-900 text-white rounded-2xl shadow-xl shadow-gray-200 flex items-center justify-center active:scale-95 transition-all">
+        <Plus className="w-6 h-6" />
+      </button>
+
+      {/* Refined Navigation */}
+      <div className="fixed bottom-6 left-6 right-6 bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl shadow-gray-200/50 px-10 py-5 flex justify-between items-center max-w-[calc(448px-3rem)] mx-auto rounded-[2.5rem]">
+        <div className="w-5 h-5 bg-gray-900 rounded-md"></div>
+        <div className="w-5 h-5 bg-gray-200 rounded-md"></div>
+        <div className="w-5 h-5 bg-gray-200 rounded-md"></div>
+        <div className="w-5 h-5 bg-gray-200 rounded-md"></div>
+      </div>
+    </div>
+  );
+};
+
+export default App;

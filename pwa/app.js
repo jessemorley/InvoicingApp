@@ -10,13 +10,22 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ─────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────
-let allClients       = [];
-let workflowRates    = [];
+let allClients              = [];
+let clientLatestInvoiceMap  = {};
+let workflowRates           = [];
 let selectedClient   = null;
 let currentDayType   = 'full';
 let currentWorkflow  = 'Apparel';
 let currentRole      = 'Photographer';
 let superOverride    = false;   // for manual clients
+
+// New entry card state
+let newEntryWrap           = null;
+let newEntrySelectedClient = null;
+let newEntryDayType        = 'full';
+let newEntryWorkflow       = 'Apparel';
+let newEntryRole           = 'Photographer';
+let newEntrySuperOverride  = false;
 
 // ─────────────────────────────────────────────
 // AUTH
@@ -64,12 +73,90 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     }
 });
 
+document.getElementById('newEntryFab').addEventListener('click', () => {
+    openClientPicker();
+});
+
+function openClientPicker() {
+    const overlay = document.getElementById('clientPickerOverlay');
+    const input   = document.getElementById('overlayClientInput');
+    overlay.style.display = 'flex';
+    input.value = '';
+    document.getElementById('overlayInputClear').style.display = 'none';
+    renderOverlayClients('');
+    input.focus();
+}
+
+function closeClientPicker() {
+    document.getElementById('clientPickerOverlay').style.display = 'none';
+    document.getElementById('overlayClientInput').value = '';
+}
+
+function renderOverlayClients(query) {
+    const list = document.getElementById('overlayClientList');
+    const matches = query
+        ? allClients.filter(c => c.name.toLowerCase().includes(query.toLowerCase()))
+        : allClients;
+
+    list.innerHTML = '';
+
+    const label = document.createElement('div');
+    label.style.cssText = 'padding:20px 24px 10px; font-size:13px; font-weight:700; color:#8e8e93; text-transform:uppercase; letter-spacing:0.06em;';
+    label.textContent = query ? `${matches.length} ${matches.length === 1 ? 'Result' : 'Results'}` : 'Clients';
+    list.appendChild(label);
+
+    if (!matches.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'padding:60px 24px; text-align:center; color:#8e8e93; font-size:15px;';
+        empty.textContent = 'No clients found';
+        list.appendChild(empty);
+        return;
+    }
+
+    matches.forEach(client => {
+        const invNum = clientLatestInvoiceMap[client.name] || null;
+        const row = document.createElement('button');
+        row.style.cssText = 'display:flex; width:100%; box-sizing:border-box; align-items:center; text-align:left; background:none; border:none; border-bottom:1px solid #f3f4f6; padding:14px 24px; cursor:pointer; font-family:inherit;';
+        row.innerHTML = `
+            <svg width="18" height="18" fill="none" stroke="#c7c7cc" stroke-width="1.75" viewBox="0 0 24 24" style="flex-shrink:0; margin-right:16px;">
+                <circle cx="12" cy="12" r="10"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/>
+            </svg>
+            <div style="flex:1; min-width:0;">
+                <div style="font-size:17px; font-weight:600; color:#111827;">${client.name}</div>
+                ${invNum ? `<div style="font-size:13px; color:#8e8e93; margin-top:2px;">${invNum}</div>` : ''}
+            </div>
+            <svg width="18" height="18" fill="none" stroke="#c7c7cc" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/>
+            </svg>`;
+        row.addEventListener('click', () => {
+            closeClientPicker();
+            openNewEntryCardForClient(client);
+        });
+        list.appendChild(row);
+    });
+}
+
+document.getElementById('overlayClientInput').addEventListener('input', e => {
+    const val = e.target.value.trim();
+    renderOverlayClients(val);
+    document.getElementById('overlayInputClear').style.display = val ? 'flex' : 'none';
+});
+
+document.getElementById('overlayInputClear').addEventListener('click', () => {
+    const input = document.getElementById('overlayClientInput');
+    input.value = '';
+    input.focus();
+    document.getElementById('overlayInputClear').style.display = 'none';
+    renderOverlayClients('');
+});
+
+document.getElementById('overlayCancel').addEventListener('click', closeClientPicker);
+
 document.getElementById('signOutBtn').addEventListener('click', async () => {
     await sb.auth.signOut();
     resetForm();
-    switchTab('log');
     showLogin();
-    document.getElementById('tabSettings').classList.add('hidden');
 });
 
 // ─────────────────────────────────────────────
@@ -95,20 +182,6 @@ function setDefaultDate() {
     document.getElementById('entryDate').value = `${yyyy}-${mm}-${dd}`;
 }
 
-// ─────────────────────────────────────────────
-// TAB SWITCHING
-// ─────────────────────────────────────────────
-function switchTab(tab) {
-    document.getElementById('tabLog').classList.toggle('hidden', tab !== 'log');
-    document.getElementById('tabRecent').classList.toggle('hidden', tab !== 'recent');
-    document.getElementById('tabSettings').classList.toggle('hidden', tab !== 'settings');
-
-    document.getElementById('tabIconLog').className      = `w-5 h-5 ${tab === 'log'      ? 'text-gray-900' : 'text-gray-300'}`;
-    document.getElementById('tabIconRecent').className   = `w-5 h-5 ${tab === 'recent'   ? 'text-gray-900' : 'text-gray-300'}`;
-    document.getElementById('tabIconSettings').className = `w-5 h-5 ${tab === 'settings' ? 'text-gray-900' : 'text-gray-300'}`;
-
-    if (tab === 'recent') loadRecentEntries();
-}
 
 // ─────────────────────────────────────────────
 // CLIENT AUTOCOMPLETE
@@ -438,7 +511,7 @@ function buildPayload() {
         const result = calcHourly(selectedClient, start, finish, brk);
 
         const isITS = selectedClient.name.toLowerCase().includes('images that sell');
-        const shootClient = isITS ? document.getElementById('shootClientInput').value.trim() || null : null;
+        const shootClient = isITS ? document.getElementById('jobInput').value.trim() || null : null;
         const role        = isITS ? currentRole : null;
         const description = !isITS ? document.getElementById('hourlyDesc').value.trim() || null : null;
 
@@ -503,21 +576,27 @@ async function loadRecentEntries() {
     const list = document.getElementById('recentList');
     list.innerHTML = '<div class="spinner"></div>';
 
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 14);
-    const yyyy = cutoff.getFullYear();
-    const mm   = String(cutoff.getMonth() + 1).padStart(2, '0');
-    const dd   = String(cutoff.getDate()).padStart(2, '0');
-
-    const { data, error } = await sb
+    const { data: rawData, error } = await sb
         .from('entries')
         .select('*, clients(name, billing_type), invoices(invoice_number, status)')
-        .gte('date', `${yyyy}-${mm}-${dd}`)
         .order('date', { ascending: false })
-        .limit(60);
+        .limit(25);
+
+    const data = rawData;
+
+    // Build latest invoice map for client picker
+    clientLatestInvoiceMap = {};
+    (rawData || []).forEach(entry => {
+        const name = entry.clients?.name;
+        const inv  = entry.invoices?.invoice_number;
+        if (name && inv && !clientLatestInvoiceMap[name]) {
+            clientLatestInvoiceMap[name] = inv;
+        }
+    });
 
     if (error || !data?.length) {
-        list.innerHTML = '<p class="text-slate-400 text-sm py-8 text-center">No entries in the last 14 days.</p>';
+        list.innerHTML = '';
+        appendNewEntryCard(list, 0);
         return;
     }
 
@@ -542,7 +621,7 @@ async function loadRecentEntries() {
         header.className = 'week-header';
         header.style.animation = `cardIn 0.3s ease both`;
         header.style.animationDelay = `${cardIndex * 40}ms`;
-        const weekTotal = entries.reduce((sum, e) => sum + (e.total_amount || 0), 0);
+        const weekTotal = entries.reduce((sum, e) => sum + ((e.total_amount || 0) - (e.super_amount || 0)), 0);
         header.innerHTML = `<span>${formatWeekLabel(weekStart)}</span><span>${fmt(weekTotal)}</span>`;
         list.appendChild(header);
 
@@ -553,7 +632,7 @@ async function loadRecentEntries() {
             const clientName  = entry.clients?.name || 'Unknown';
             const badgeColor  = clientBadgeColor(clientName);
             const description = entryDescription(entry);
-            const total       = fmt(entry.total_amount);
+            const total       = fmt((entry.total_amount || 0) - (entry.super_amount || 0));
             const inv         = entry.invoices;
             const isInvoiced  = !!entry.invoice_id;
 
@@ -565,9 +644,10 @@ async function loadRecentEntries() {
             const el = document.createElement('div');
             el.className = 'entry-row' + (isInvoiced ? ' entry-row-invoiced' : ' entry-row-tappable');
             const dateParts = formatEntryDateParts(entry.date);
+            const dowColor  = clientDowColor(clientName);
             el.innerHTML = `
                 <div class="entry-date-col">
-                    <span class="dow">${dateParts.dow}</span>
+                    <span class="dow ${dowColor}">${dateParts.dow}</span>
                     <span class="day-num">${dateParts.day}</span>
                     <span class="mon">${dateParts.mon}</span>
                 </div>
@@ -595,37 +675,511 @@ async function loadRecentEntries() {
 
             if (!isInvoiced) {
                 el.addEventListener('click', () => openEntryCard(wrap, entry, false));
-                const swipeContainer = document.createElement('div');
-                swipeContainer.className = 'swipe-container';
-                swipeContainer.innerHTML = '<div class="swipe-delete-bg"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>Delete</div>';
-                swipeContainer.appendChild(el);
-                addSwipeToDelete(swipeContainer, el, entry);
-                wrap.appendChild(swipeContainer);
             } else {
                 el.addEventListener('click', () => openEntryCard(wrap, entry, true));
-                wrap.appendChild(el);
             }
+            wrap.appendChild(el);
 
             wrap.appendChild(detailPanel);
             group.appendChild(wrap);
         });
         list.appendChild(group);
     });
+
+    appendNewEntryCard(list, cardIndex);
+}
+
+function appendNewEntryCard(_list, _cardIndex) {
+    const slot = document.getElementById('newEntrySlot');
+    const newWrap = document.createElement('div');
+    newWrap.className = 'entry-card-wrap';
+    newWrap.style.marginTop = '24px';
+    newWrap.style.marginBottom = '1rem';
+    newWrap.style.display = 'none';
+    newWrap.innerHTML = buildNewEntryFormHTML();
+    slot.innerHTML = '';
+    slot.appendChild(newWrap);
+    newEntryWrap = newWrap;
+    wireNewEntryForm();
+}
+
+// ─────────────────────────────────────────────
+// NEW ENTRY CARD
+// ─────────────────────────────────────────────
+function closeNewEntryCard() {
+    if (!newEntryWrap) return;
+
+    newEntrySelectedClient = null;
+    newEntryDayType        = 'full';
+    newEntryWorkflow       = 'Apparel';
+    newEntryRole           = 'Photographer';
+    newEntrySuperOverride  = false;
+
+    // Hide and re-render the card fresh
+    newEntryWrap.style.display = 'none';
+    newEntryWrap.innerHTML = buildNewEntryFormHTML();
+    wireNewEntryForm();
+}
+
+function buildNewEntryFormHTML() {
+    return `
+    <div style="background:#fff; border-radius:1.75rem; padding:20px 24px; display:flex; flex-direction:column; gap:0;">
+        <!-- Client selector -->
+        <div id="newClientContainer" class="relative">
+            <div class="relative flex items-center">
+                <input type="text" id="newClientInput" placeholder="Client" autocomplete="off"
+                    class="input-field w-full rounded-xl px-4 py-3 text-[17px] placeholder-slate-400 pr-10 font-semibold" style="border-color: transparent !important;">
+                <button id="newClearClient" class="clear-btn absolute right-3 p-1 rounded-full bg-slate-200 text-slate-500">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="newAutocompleteList" style="position:fixed;background:rgba(255,255,255,0.98);backdrop-filter:blur(20px);border:1px solid rgba(0,0,0,0.06);border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.10);z-index:1000;overflow:hidden;display:none;"></div>
+        </div>
+
+        <!-- Billing fields (revealed after client select) -->
+        <div id="newEntryFields" class="reveal space-y-3 mt-3">
+
+            <!-- Date -->
+            <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Date</span>
+                <input type="date" id="newEntryDate" class="bg-transparent w-full text-[15px] font-semibold outline-none">
+            </div>
+
+            <!-- DAY RATE -->
+            <div id="newDayRateFields" class="hidden space-y-3">
+                <div>
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Day Type</span>
+                    <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
+                        <button class="seg-btn active" data-newday="full">Full Day</button>
+                        <button class="seg-btn" data-newday="half">Half Day</button>
+                    </div>
+                </div>
+                <div id="newWorkflowSection" class="reveal open space-y-3">
+                    <div>
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Workflow</span>
+                        <div class="flex gap-1.5" id="newWorkflowBtns">
+                            <button class="workflow-btn active" data-newwf="Apparel">Apparel</button>
+                            <button class="workflow-btn" data-newwf="Product">Product</button>
+                            <button class="workflow-btn" data-newwf="Own Brand">Own Brand</button>
+                        </div>
+                    </div>
+                    <div id="newBrandField" class="hidden">
+                        <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Brand</span>
+                            <input type="text" id="newBrandInput"
+                                class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400">
+                        </div>
+                    </div>
+                    <div id="newSkuField" class="hidden">
+                        <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">SKUs Shot</span>
+                            <input type="number" id="newSkuInput" placeholder="0" min="0"
+                                class="bg-transparent w-full text-[15px] font-semibold outline-none">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HOURLY -->
+            <div id="newHourlyFields" class="hidden space-y-3">
+                <div id="newItsFields" class="hidden space-y-3">
+                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Shoot Client</span>
+                        <input type="text" id="newShootClientInput"
+                            class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400" placeholder="">
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Role</span>
+                        <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
+                            <button class="seg-btn active" data-newrole="Photographer">Photographer</button>
+                            <button class="seg-btn" data-newrole="Operator">Operator</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="newHourlyDescField" class="hidden">
+                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
+                        <input type="text" id="newHourlyDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Start</span>
+                        <input type="time" id="newStartTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative">
+                    </div>
+                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">End</span>
+                        <input type="time" id="newFinishTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative">
+                    </div>
+                </div>
+                <div class="bg-slate-50 px-5 py-4 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Break</span>
+                        <div class="flex items-baseline gap-2">
+                            <span id="newBreakDisplay" class="text-2xl font-black text-gray-900">0</span>
+                            <span class="text-slate-400 text-[11px] font-bold uppercase">min</span>
+                        </div>
+                        <input type="hidden" id="newBreakMinutes" value="0">
+                    </div>
+                    <div class="flex gap-2">
+                        <button data-newbreakadj="-15" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all">-15</button>
+                        <button data-newbreakadj="15" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all">+15</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MANUAL -->
+            <div id="newManualFields" class="hidden space-y-3">
+                <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
+                    <input type="text" id="newManualDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none">
+                </div>
+                <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Amount ($)</span>
+                    <input type="number" id="newManualAmount" placeholder="0.00" step="0.01" min="0"
+                        class="bg-transparent w-full text-[15px] font-semibold outline-none">
+                </div>
+                <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-[13px] font-semibold text-slate-800">Include Super (12%)</p>
+                        <p id="newSuperToggleLabel" class="text-[11px] text-slate-400 mt-0.5">Off</p>
+                    </div>
+                    <label class="toggle-wrap">
+                        <input type="checkbox" id="newSuperToggle">
+                        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- SUMMARY -->
+            <div class="summary-card bg-white">
+                <div class="flex justify-between items-end mb-2">
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Duration</p>
+                        <div id="newDurationBlock" class="hidden">
+                            <span id="newDisplayDuration" class="text-4xl font-black text-slate-900 leading-none">0h 0m</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Subtotal</p>
+                        <h2 id="newDisplayTotal" class="text-2xl font-bold text-slate-800">$0.00</h2>
+                    </div>
+                </div>
+                <div class="space-y-1 pt-2 border-t border-slate-100">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Base</span>
+                        <span id="newDisplayBase" class="text-[13px] font-bold text-slate-600">$0.00</span>
+                    </div>
+                    <div id="newBonusLine" class="flex justify-between items-center hidden">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Bonus</span>
+                        <span id="newDisplayBonus" class="text-[13px] font-bold text-[#34c759]">+$0.00</span>
+                    </div>
+                    <div id="newSuperLine" class="flex justify-between items-center hidden">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Super (12%)</span>
+                        <span id="newDisplaySuper" class="text-[13px] font-bold text-[#007AFF]">+$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save -->
+            <div class="pt-1 pb-2">
+                <button id="newSaveBtn" class="btn-primary">Save Entry</button>
+            </div>
+
+        </div><!-- /newEntryFields -->
+    </div>`;
+}
+
+function wireNewEntryForm() {
+    const today = new Date();
+    const yyyy  = today.getFullYear();
+    const mm    = String(today.getMonth() + 1).padStart(2, '0');
+    const dd    = String(today.getDate()).padStart(2, '0');
+    document.getElementById('newEntryDate').value = `${yyyy}-${mm}-${dd}`;
+
+    // Clear client — reopens the picker
+    document.getElementById('newClearClient').addEventListener('click', () => {
+        closeNewEntryCard();
+        openClientPicker();
+    });
+
+    // Day type buttons
+    newEntryWrap.querySelectorAll('[data-newday]').forEach(btn => {
+        btn.addEventListener('click', () => setNewEntryDayType(btn.dataset.newday));
+    });
+
+    // Workflow buttons
+    newEntryWrap.querySelectorAll('[data-newwf]').forEach(btn => {
+        btn.addEventListener('click', () => setNewEntryWorkflow(btn.dataset.newwf));
+    });
+
+    // Role buttons
+    newEntryWrap.querySelectorAll('[data-newrole]').forEach(btn => {
+        btn.addEventListener('click', () => setNewEntryRole(btn.dataset.newrole));
+    });
+
+    // Break adjust
+    newEntryWrap.querySelectorAll('[data-newbreakadj]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const el = document.getElementById('newBreakMinutes');
+            el.value = Math.max(0, (parseInt(el.value) || 0) + parseInt(btn.dataset.newbreakadj));
+            const disp = document.getElementById('newBreakDisplay');
+            if (disp) disp.textContent = el.value;
+            newEntryRecalculate();
+        });
+    });
+
+    // Live recalc
+    ['newStartTime','newFinishTime','newBreakMinutes','newSkuInput','newManualAmount','newBrandInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', newEntryRecalculate);
+    });
+
+    // Super toggle
+    const superToggle = document.getElementById('newSuperToggle');
+    if (superToggle) {
+        superToggle.addEventListener('change', function() {
+            newEntrySuperOverride = this.checked;
+            document.getElementById('newSuperLine').classList.toggle('hidden', !newEntrySuperOverride);
+            document.getElementById('newSuperToggleLabel').textContent = newEntrySuperOverride ? 'Super will be added' : 'Off';
+            newEntryRecalculate();
+        });
+    }
+
+    // Save
+    document.getElementById('newSaveBtn').addEventListener('click', saveNewEntry);
+}
+
+function openNewEntryCardForClient(client) {
+    if (!newEntryWrap) return;
+    newEntryWrap.style.display = '';
+    document.getElementById('tabRecent').scrollTo({ top: 0, behavior: 'smooth' });
+    selectNewEntryClient(client);
+}
+
+function selectNewEntryClient(client) {
+    newEntrySelectedClient = client;
+    const clientInput = document.getElementById('newClientInput');
+    clientInput.value    = client.name;
+    clientInput.disabled = true;
+    document.getElementById('newClientContainer').classList.add('has-client');
+    document.getElementById('newAutocompleteList').style.display = 'none';
+    showNewEntryFields(client);
+}
+
+function showNewEntryFields(client) {
+    document.getElementById('newDayRateFields').classList.add('hidden');
+    document.getElementById('newHourlyFields').classList.add('hidden');
+    document.getElementById('newManualFields').classList.add('hidden');
+    document.getElementById('newDurationBlock').classList.add('hidden');
+    document.getElementById('newBonusLine').classList.add('hidden');
+    document.getElementById('newSuperLine').classList.add('hidden');
+
+    if (client.billing_type === 'day_rate') {
+        document.getElementById('newDayRateFields').classList.remove('hidden');
+        document.getElementById('newBonusLine').classList.remove('hidden');
+        if (client.pays_super) document.getElementById('newSuperLine').classList.remove('hidden');
+        setNewEntryDayType('full');
+
+    } else if (client.billing_type === 'hourly') {
+        document.getElementById('newHourlyFields').classList.remove('hidden');
+        document.getElementById('newDurationBlock').classList.remove('hidden');
+        if (client.pays_super) document.getElementById('newSuperLine').classList.remove('hidden');
+
+        const isITS = client.name.toLowerCase().includes('images that sell');
+        document.getElementById('newItsFields').classList.toggle('hidden', !isITS);
+        document.getElementById('newHourlyDescField').classList.toggle('hidden', isITS);
+
+        document.getElementById('newStartTime').value    = '09:00';
+        document.getElementById('newFinishTime').value   = '17:00';
+        document.getElementById('newBreakMinutes').value = '0';
+        const newBreakDisp = document.getElementById('newBreakDisplay');
+        if (newBreakDisp) newBreakDisp.textContent = '0';
+
+    } else { // manual
+        document.getElementById('newManualFields').classList.remove('hidden');
+        newEntrySuperOverride = client.pays_super;
+        const toggle = document.getElementById('newSuperToggle');
+        toggle.checked = newEntrySuperOverride;
+        document.getElementById('newSuperToggleLabel').textContent = newEntrySuperOverride ? 'Super will be added' : 'Off';
+        if (client.pays_super) document.getElementById('newSuperLine').classList.remove('hidden');
+    }
+
+    document.getElementById('newEntryFields').classList.add('open');
+    newEntryRecalculate();
+
+    setTimeout(() => {
+        const tabRecent = document.getElementById('entriesScroll');
+        tabRecent.scrollTo({ top: tabRecent.scrollHeight, behavior: 'smooth' });
+    }, 150);
+}
+
+function setNewEntryDayType(type) {
+    newEntryDayType = type;
+    newEntryWrap.querySelectorAll('[data-newday]').forEach(b => {
+        b.classList.toggle('active', b.dataset.newday === type);
+    });
+    const wfSection = document.getElementById('newWorkflowSection');
+    const bonusLine = document.getElementById('newBonusLine');
+    if (type === 'full') {
+        wfSection.classList.add('open');
+        bonusLine.classList.remove('hidden');
+        setNewEntryWorkflow(newEntryWorkflow);
+    } else {
+        wfSection.classList.remove('open');
+        bonusLine.classList.add('hidden');
+    }
+    newEntryRecalculate();
+}
+
+function setNewEntryWorkflow(wf) {
+    newEntryWorkflow = wf;
+    newEntryWrap.querySelectorAll('[data-newwf]').forEach(b => {
+        b.classList.toggle('active', b.dataset.newwf === wf);
+    });
+    document.getElementById('newBrandField').classList.toggle('hidden', wf !== 'Own Brand');
+    document.getElementById('newSkuField').classList.toggle('hidden', wf === 'Own Brand');
+    const bonusLine = document.getElementById('newBonusLine');
+    if (bonusLine) bonusLine.classList.toggle('hidden', wf === 'Own Brand');
+    newEntryRecalculate();
+}
+
+function setNewEntryRole(role) {
+    newEntryRole = role;
+    newEntryWrap.querySelectorAll('[data-newrole]').forEach(b => {
+        b.classList.toggle('active', b.dataset.newrole === role);
+    });
+}
+
+function newEntryRecalculate() {
+    if (!newEntrySelectedClient) return;
+    const client = newEntrySelectedClient;
+    let result = null;
+
+    if (client.billing_type === 'day_rate') {
+        const skus = document.getElementById('newSkuInput')?.value;
+        result = calcDayRate(client, newEntryDayType, newEntryWorkflow, skus);
+
+    } else if (client.billing_type === 'hourly') {
+        const start  = document.getElementById('newStartTime').value;
+        const finish = document.getElementById('newFinishTime').value;
+        const brk    = document.getElementById('newBreakMinutes').value;
+        result = calcHourly(client, start, finish, brk);
+        if (result) {
+            const h = Math.floor(result.rawMins / 60);
+            const m = result.rawMins % 60;
+            document.getElementById('newDisplayDuration').textContent = `${h}h ${m}m`;
+        }
+
+    } else { // manual
+        const amount = document.getElementById('newManualAmount').value;
+        result = calcManual(amount, newEntrySuperOverride, client.super_rate);
+    }
+
+    if (!result) return;
+    document.getElementById('newDisplayTotal').textContent = fmt(result.total);
+    document.getElementById('newDisplayBase').textContent  = fmt(result.base);
+    document.getElementById('newDisplayBonus').textContent = `+${fmt(result.bonus)}`;
+    document.getElementById('newDisplaySuper').textContent = `+${fmt(result.superAmt)}`;
+}
+
+function buildNewEntryPayload() {
+    const client = newEntrySelectedClient;
+    const date   = document.getElementById('newEntryDate').value;
+    const base   = {
+        client_id: client.id,
+        date,
+        billing_type_snapshot: client.billing_type,
+    };
+
+    if (client.billing_type === 'day_rate') {
+        const skus   = parseInt(document.getElementById('newSkuInput').value) || null;
+        const brand  = document.getElementById('newBrandInput').value.trim() || null;
+        const result = calcDayRate(client, newEntryDayType, newEntryWorkflow, skus);
+        return {
+            ...base,
+            day_type:      newEntryDayType,
+            workflow_type: newEntryDayType === 'full' ? newEntryWorkflow : null,
+            brand:         newEntryDayType === 'full' && newEntryWorkflow === 'Own Brand' ? brand : null,
+            skus:          newEntryDayType === 'full' && newEntryWorkflow !== 'Own Brand' ? skus : null,
+            base_amount:   result.base,
+            bonus_amount:  result.bonus,
+            super_amount:  result.superAmt,
+            total_amount:  result.total,
+        };
+
+    } else if (client.billing_type === 'hourly') {
+        const start  = document.getElementById('newStartTime').value;
+        const finish = document.getElementById('newFinishTime').value;
+        const brk    = parseInt(document.getElementById('newBreakMinutes').value) || 0;
+        const result = calcHourly(client, start, finish, brk);
+        const isITS  = client.name.toLowerCase().includes('images that sell');
+        return {
+            ...base,
+            start_time:    start,
+            finish_time:   finish,
+            break_minutes: brk,
+            hours_worked:  result.hoursWorked,
+            shoot_client:  isITS ? document.getElementById('newShootClientInput').value.trim() || null : null,
+            role:          isITS ? newEntryRole : null,
+            description:   !isITS ? document.getElementById('newHourlyDesc').value.trim() || null : null,
+            base_amount:   result.base,
+            bonus_amount:  0,
+            super_amount:  result.superAmt,
+            total_amount:  result.total,
+        };
+
+    } else { // manual
+        const amount = parseFloat(document.getElementById('newManualAmount').value) || 0;
+        const result = calcManual(amount, newEntrySuperOverride, client.super_rate);
+        return {
+            ...base,
+            description:  document.getElementById('newManualDesc').value.trim() || null,
+            base_amount:  result.base,
+            bonus_amount: 0,
+            super_amount: result.superAmt,
+            total_amount: result.total,
+        };
+    }
+}
+
+async function saveNewEntry() {
+    if (!newEntrySelectedClient) return;
+    const btn = document.getElementById('newSaveBtn');
+    btn.disabled    = true;
+    btn.textContent = 'Saving…';
+    try {
+        const payload = buildNewEntryPayload();
+        const { error } = await sb.from('entries').insert(payload);
+        if (error) throw error;
+        btn.textContent = 'Saved ✓';
+        btn.classList.add('success');
+        setTimeout(() => {
+            closeNewEntryCard();
+            loadRecentEntries();
+        }, 1500);
+    } catch (err) {
+        alert('Error saving entry: ' + err.message);
+        btn.disabled    = false;
+        btn.textContent = 'Save Entry';
+    }
 }
 
 // ─────────────────────────────────────────────
 // PULL TO REFRESH
 // ─────────────────────────────────────────────
 (function() {
-    const THRESHOLD = 72;   // px of pull needed to trigger
-    const MAX_PULL  = 90;   // px cap on drag
+    const THRESHOLD = 110;  // px of pull needed to trigger
+    const MAX_PULL  = 130;  // px cap on drag
     let startY = 0, pulling = false, triggered = false;
 
     const scroller   = document.getElementById('tabRecent');
     const indicator  = document.getElementById('pullIndicator');
 
     scroller.addEventListener('touchstart', e => {
-        if (scroller.scrollTop > 0) return;
+        if (scroller.scrollTop > 5) return;
         startY   = e.touches[0].clientY;
         pulling  = true;
         triggered = false;
@@ -634,7 +1188,7 @@ async function loadRecentEntries() {
     scroller.addEventListener('touchmove', e => {
         if (!pulling) return;
         const dy = Math.min(e.touches[0].clientY - startY, MAX_PULL);
-        if (dy <= 0) return;
+        if (dy <= 10) return;
         indicator.classList.add('visible');
         // Slightly rotate the spinner based on pull distance as a progress cue
         const progress = Math.min(dy / THRESHOLD, 1);
@@ -659,6 +1213,13 @@ function clientBadgeColor(name) {
     if (name.includes('Images'))  return 'bg-blue-50 text-blue-500';
     if (name.includes('JD'))      return 'bg-orange-50 text-orange-500';
     return 'bg-gray-100 text-gray-500';
+}
+
+function clientDowColor(name) {
+    if (name.includes('ICONIC'))  return 'text-purple-500';
+    if (name.includes('Images'))  return 'text-blue-500';
+    if (name.includes('JD'))      return 'text-orange-500';
+    return 'text-gray-400';
 }
 
 const invoiceChipColors = {
@@ -716,100 +1277,6 @@ function formatWeekLabel(weekStart) {
     return `${weekStart.toLocaleDateString('en-AU', opts)} – ${end.toLocaleDateString('en-AU', opts)}`;
 }
 
-// ─────────────────────────────────────────────
-// SWIPE TO DELETE
-// ─────────────────────────────────────────────
-function addSwipeToDelete(wrapper, el, entry) {
-    let startX = 0, startY = 0, dx = 0;
-    let swiping = false, decided = false;
-    let activeSnapBack = null;
-    const threshold = 80; // px to reveal delete
-    const commitAt  = 0.5; // fraction of row width to auto-confirm
-
-    el.addEventListener('touchstart', e => {
-        // Remove any pending snap-back listener so dragging this row again works
-        if (activeSnapBack) {
-            document.removeEventListener('touchstart', activeSnapBack);
-            activeSnapBack = null;
-        }
-        startX  = e.touches[0].clientX;
-        startY  = e.touches[0].clientY;
-        dx      = 0;
-        swiping = false;
-        decided = false;
-        el.style.transition = 'none';
-    }, { passive: true });
-
-    el.addEventListener('touchmove', e => {
-        const curX = e.touches[0].clientX;
-        const curY = e.touches[0].clientY;
-        if (!decided) {
-            // Determine axis on first move
-            decided = true;
-            swiping = Math.abs(curX - startX) > Math.abs(curY - startY);
-        }
-        if (!swiping) return;
-        dx = Math.min(0, curX - startX); // only left swipe
-        el.style.transform = `translateX(${dx}px)`;
-    }, { passive: true });
-
-    el.addEventListener('touchend', async () => {
-        if (!swiping) return;
-        el.style.transition = '';
-        const rowWidth = el.offsetWidth;
-        if (dx < -(rowWidth * commitAt)) {
-            // Full swipe — delete
-            el.style.transform = `translateX(-${rowWidth}px)`;
-            try {
-                const { error } = await sb.from('entries').delete().eq('id', entry.id);
-                if (error) throw error;
-                const cardWrap = wrapper.parentElement;
-                const collapseTarget = cardWrap || wrapper;
-                collapseTarget.style.transition = 'max-height 0.3s, opacity 0.3s';
-                collapseTarget.style.maxHeight  = collapseTarget.offsetHeight + 'px';
-                requestAnimationFrame(() => {
-                    collapseTarget.style.maxHeight = '0';
-                    collapseTarget.style.opacity   = '0';
-                    collapseTarget.style.overflow  = 'hidden';
-                });
-                setTimeout(() => collapseTarget.remove(), 350);
-            } catch (err) {
-                alert('Error deleting entry: ' + err.message);
-                el.style.transform = '';
-            }
-        } else if (dx < -threshold) {
-            // Partial — snap to threshold to keep delete visible
-            el.style.transform = `translateX(-${threshold}px)`;
-            // Tap on the revealed delete bg to confirm
-            wrapper.querySelector('.swipe-delete-bg').addEventListener('click', async () => {
-                el.style.transition = 'none';
-                el.style.transform  = `translateX(-${el.offsetWidth}px)`;
-                try {
-                    const { error } = await sb.from('entries').delete().eq('id', entry.id);
-                    if (error) throw error;
-                    const cardWrap = wrapper.parentElement;
-                    (cardWrap || wrapper).remove();
-                } catch (err) {
-                    alert('Error deleting entry: ' + err.message);
-                    el.style.transition = '';
-                    el.style.transform  = '';
-                }
-            }, { once: true });
-            // Tap/drag elsewhere snaps back
-            activeSnapBack = (e) => {
-                if (wrapper.contains(e.target)) return; // ignore touches on this row
-                document.removeEventListener('touchstart', activeSnapBack);
-                activeSnapBack = null;
-                el.style.transform = '';
-            };
-            document.addEventListener('touchstart', activeSnapBack, { passive: true });
-        } else {
-            // Snap back
-            el.style.transform = '';
-        }
-        dx = 0;
-    });
-}
 
 // ─────────────────────────────────────────────
 // ENTRY CARD EXPAND / COLLAPSE
@@ -872,9 +1339,9 @@ function openEntryCard(wrap, entry, readOnly = false) {
     // --- Date field ---
     let html = `
         <div class="space-y-3">
-        <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-            <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Date</span>
-            <input type="date" id="editDate" class="bg-transparent w-full text-[15px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
+        <div class="bg-slate-50 rounded-2xl px-5 py-4">
+            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Date</span>
+            <input type="date" id="editDate" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
         </div>`;
 
     // --- Billing-specific fields ---
@@ -886,7 +1353,7 @@ function openEntryCard(wrap, entry, readOnly = false) {
         html += `
         <div id="editDayRateFields" class="space-y-3">
             <div>
-                <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Day Type</span>
+                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Day Type</span>
                 <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                     <button class="seg-btn${editDayType === 'full' ? ' active' : ''}" data-editday="full" onclick="setEditDayType('full')"${readOnly ? ' disabled' : ''}>Full Day</button>
                     <button class="seg-btn${editDayType === 'half' ? ' active' : ''}" data-editday="half" onclick="setEditDayType('half')"${readOnly ? ' disabled' : ''}>Half Day</button>
@@ -894,7 +1361,7 @@ function openEntryCard(wrap, entry, readOnly = false) {
             </div>
             <div id="editWorkflowSection" class="${wfHidden} space-y-3">
                 <div>
-                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Workflow</span>
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Workflow</span>
                     <div class="flex gap-1.5" id="editWorkflowBtns">
                         <button class="workflow-btn${editWorkflow === 'Apparel' ? ' active' : ''}" data-editwf="Apparel" onclick="setEditWorkflow('Apparel')"${readOnly ? ' disabled' : ''}>Apparel</button>
                         <button class="workflow-btn${editWorkflow === 'Product' ? ' active' : ''}" data-editwf="Product" onclick="setEditWorkflow('Product')"${readOnly ? ' disabled' : ''}>Product</button>
@@ -902,14 +1369,17 @@ function openEntryCard(wrap, entry, readOnly = false) {
                     </div>
                 </div>
                 <div id="editBrandField" class="${brandHidden}">
-                    <input type="text" id="editBrandInput" placeholder="Brand name"
-                        class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 font-medium"${readOnly ? ' disabled' : ''}>
+                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Brand</span>
+                        <input type="text" id="editBrandInput"
+                            class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400"${readOnly ? ' disabled' : ''}>
+                    </div>
                 </div>
                 <div id="editSkuField" class="${skuHidden}">
-                    <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-                        <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">SKUs Shot</span>
+                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">SKUs Shot</span>
                         <input type="number" id="editSkuInput" placeholder="0" min="0"
-                            class="bg-transparent w-full text-[15px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
+                            class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
                     </div>
                 </div>
             </div>
@@ -918,10 +1388,13 @@ function openEntryCard(wrap, entry, readOnly = false) {
         html += `
         <div id="editHourlyFields" class="space-y-3">
             <div id="editItsFields" class="${isITS ? '' : 'hidden'} space-y-3">
-                <input type="text" id="editShootClientInput" placeholder="Shoot Client"
-                    class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 font-medium"${readOnly ? ' disabled' : ''}>
+                <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Shoot Client</span>
+                    <input type="text" id="editShootClientInput"
+                        class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400"${readOnly ? ' disabled' : ''}>
+                </div>
                 <div>
-                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Role</span>
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Role</span>
                     <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                         <button class="seg-btn${editRole === 'Photographer' ? ' active' : ''}" data-editrole="Photographer" onclick="setEditRole('Photographer')"${readOnly ? ' disabled' : ''}>Photographer</button>
                         <button class="seg-btn${editRole === 'Operator' ? ' active' : ''}" data-editrole="Operator" onclick="setEditRole('Operator')"${readOnly ? ' disabled' : ''}>Operator</button>
@@ -929,45 +1402,49 @@ function openEntryCard(wrap, entry, readOnly = false) {
                 </div>
             </div>
             <div id="editHourlyDescField" class="${isITS ? 'hidden' : ''}">
-                <textarea id="editHourlyDesc" rows="2" placeholder="Description"
-                    class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 resize-none font-medium"${readOnly ? ' disabled' : ''}></textarea>
+                <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
+                    <input type="text" id="editHourlyDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
+                </div>
             </div>
             <div class="grid grid-cols-2 gap-2">
-                <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Start</span>
-                    <input type="time" id="editStartTime" class="bg-transparent w-full text-[15px] font-medium outline-none relative"${readOnly ? ' disabled' : ''}>
+                <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Start</span>
+                    <input type="time" id="editStartTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative"${readOnly ? ' disabled' : ''}>
                 </div>
-                <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">End</span>
-                    <input type="time" id="editFinishTime" class="bg-transparent w-full text-[15px] font-medium outline-none relative"${readOnly ? ' disabled' : ''}>
+                <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">End</span>
+                    <input type="time" id="editFinishTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative"${readOnly ? ' disabled' : ''}>
                 </div>
             </div>
-            <div class="bg-white px-4 py-2.5 rounded-xl flex items-center justify-between">
+            <div class="bg-slate-50 px-5 py-4 rounded-2xl flex items-center justify-between">
                 <div>
-                    <span class="text-[9px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">Break</span>
-                    <div class="flex items-baseline gap-1">
-                        <input type="number" id="editBreakMinutes" value="0" min="0" step="5"
-                            class="bg-transparent border-none p-0 w-10 text-[15px] font-bold focus:ring-0 text-slate-800 outline-none"${readOnly ? ' disabled' : ''}>
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Break</span>
+                    <div class="flex items-baseline gap-2">
+                        <span id="editBreakDisplay" class="text-2xl font-black text-gray-900">0</span>
                         <span class="text-slate-400 text-[11px] font-bold uppercase">min</span>
                     </div>
+                    <input type="hidden" id="editBreakMinutes" value="0">
                 </div>
-                <div class="flex gap-1.5">
-                    <button onclick="adjustEditBreak(15)" class="h-8 px-3 bg-slate-100 rounded-lg text-[12px] font-bold active:bg-slate-200 transition-all"${readOnly ? ' disabled' : ''}>+15</button>
-                    <button onclick="adjustEditBreak(30)" class="h-8 px-3 bg-slate-100 rounded-lg text-[12px] font-bold active:bg-slate-200 transition-all"${readOnly ? ' disabled' : ''}>+30</button>
+                <div class="flex gap-2">
+                    <button onclick="adjustEditBreak(-15)" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all"${readOnly ? ' disabled' : ''}>-15</button>
+                    <button onclick="adjustEditBreak(15)" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all"${readOnly ? ' disabled' : ''}>+15</button>
                 </div>
             </div>
         </div>`;
     } else { // manual
         html += `
         <div id="editManualFields" class="space-y-3">
-            <textarea id="editManualDesc" rows="2" placeholder="Description"
-                class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 resize-none font-medium"${readOnly ? ' disabled' : ''}></textarea>
-            <div class="bg-slate-50 rounded-xl px-4 py-2.5">
-                <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Amount ($)</span>
-                <input type="number" id="editManualAmount" placeholder="0.00" step="0.01" min="0"
-                    class="bg-transparent w-full text-[15px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
+            <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
+                <input type="text" id="editManualDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
             </div>
-            <div class="bg-white rounded-xl px-4 py-2.5 flex items-center justify-between">
+            <div class="bg-slate-50 rounded-2xl px-5 py-4">
+                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Amount ($)</span>
+                <input type="number" id="editManualAmount" placeholder="0.00" step="0.01" min="0"
+                    class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
+            </div>
+            <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
                 <div>
                     <p class="text-[13px] font-semibold text-slate-800">Include Super (12%)</p>
                     <p id="editSuperToggleLabel" class="text-[11px] text-slate-400 mt-0.5">${editSuperOverride ? 'On' : 'Off'}</p>
@@ -984,15 +1461,17 @@ function openEntryCard(wrap, entry, readOnly = false) {
     const bonusHiddenSummary = (billing !== 'day_rate' || editDayType !== 'full' || editWorkflow === 'Own Brand') ? 'hidden' : '';
     const durationHidden     = (billing !== 'hourly') ? 'hidden' : '';
     html += `
-        <div class="summary-card px-4 py-3 bg-white">
-            <div class="flex justify-between items-baseline mb-2">
+        <div class="summary-card bg-white">
+            <div class="flex justify-between items-end mb-2">
                 <div>
-                    <p class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Total</p>
-                    <h2 id="editDisplayTotal" class="text-3xl font-bold tracking-tight text-slate-900">$0.00</h2>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Duration</p>
+                    <div id="editDurationBlock" class="${durationHidden}">
+                        <span id="editDisplayDuration" class="text-4xl font-black text-slate-900 leading-none">0h 0m</span>
+                    </div>
                 </div>
-                <div class="text-right ${durationHidden}" id="editDurationBlock">
-                    <p class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Duration</p>
-                    <p id="editDisplayDuration" class="text-base font-bold text-slate-700">0h 0m</p>
+                <div class="text-right">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Subtotal</p>
+                    <h2 id="editDisplayTotal" class="text-2xl font-bold text-slate-800">$0.00</h2>
                 </div>
             </div>
             <div class="space-y-1 pt-2 border-t border-slate-100">
@@ -1044,6 +1523,8 @@ function openEntryCard(wrap, entry, readOnly = false) {
         document.getElementById('editStartTime').value    = (entry.start_time  || '').substring(0, 5);
         document.getElementById('editFinishTime').value   = (entry.finish_time || '').substring(0, 5);
         document.getElementById('editBreakMinutes').value = entry.break_minutes || 0;
+        const editBreakDisp = document.getElementById('editBreakDisplay');
+        if (editBreakDisp) editBreakDisp.textContent = entry.break_minutes || 0;
     } else { // manual
         document.getElementById('editManualDesc').value   = entry.description || '';
         document.getElementById('editManualAmount').value = entry.base_amount != null ? entry.base_amount : '';
@@ -1070,8 +1551,8 @@ function openEntryCard(wrap, entry, readOnly = false) {
     // Expand the card
     wrap.classList.add('expanded');
 
-    // Scroll to near top of tabRecent
-    const tabRecent = document.getElementById('tabRecent');
+    // Scroll to near top of entriesScroll
+    const tabRecent = document.getElementById('entriesScroll');
     const wrapTop = wrap.getBoundingClientRect().top + tabRecent.scrollTop - 100;
     tabRecent.scrollTo({ top: wrapTop, behavior: 'smooth' });
 }
@@ -1120,7 +1601,9 @@ function setEditRole(role) {
 function adjustEditBreak(delta) {
     const el = document.getElementById('editBreakMinutes');
     if (el) {
-        el.value = (parseInt(el.value) || 0) + delta;
+        el.value = Math.max(0, (parseInt(el.value) || 0) + delta);
+        const disp = document.getElementById('editBreakDisplay');
+        if (disp) disp.textContent = el.value;
         editRecalculate();
     }
 }

@@ -1,4 +1,14 @@
-        :root { --accent: #007AFF; }
+        :root { --accent: #007AFF; --build: "1bf001b"; }
+
+        #entriesHeaderTop h1::after {
+            content: var(--build);
+            font-size: 11px;
+            font-family: monospace;
+            color: #9ca3af;
+            margin-left: 8px;
+            font-weight: normal;
+            vertical-align: middle;
+        }
 
         body {
             font-family: -apple-system, 'SF Pro Display', 'Inter', sans-serif;
@@ -10,31 +20,8 @@
 
         /* Screens */
         .screen { display: none; }
-        .screen.active { display: flex; flex-direction: column; }
+        .screen.active { display: flex; flex-direction: column; width: 100%; }
 
-        /* Tab bar — floating pill */
-        #tabBar {
-            position: fixed;
-            bottom: 0;
-            left: 0; right: 0;
-            z-index: 100;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-        #tabBar-inner {
-            display: flex;
-            width: calc(100% - 2.5rem);
-            max-width: calc(448px - 2.5rem);
-            margin: 0 auto 1.5rem;
-            background: rgba(255,255,255,0.8);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 2.5rem;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
-            padding: 1rem 2.5rem;
-            justify-content: space-between;
-            align-items: center;
-        }
 
         /* Inputs */
         .input-field {
@@ -90,6 +77,7 @@
         /* Summary card */
         .summary-card {
             border-radius: 2rem;
+            padding: 1rem 1.25rem;
         }
 
         /* Primary button */
@@ -98,13 +86,13 @@
             color: #fff;
             font-weight: 700;
             font-size: 15px;
-            border-radius: 0.875rem;
-            padding: 14px;
+            border-radius: 1rem;
+            padding: 18px 14px;
             width: 100%;
             border: none;
             cursor: pointer;
             transition: transform 0.1s, background 0.2s;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
         .btn-primary:active { transform: scale(0.98); }
         .btn-primary.success { background: #34c759; box-shadow: 0 4px 16px rgba(52,199,89,0.3); }
@@ -170,25 +158,6 @@
         .toggle-wrap input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
 
         /* Recent entries list */
-        .swipe-container {
-            position: relative;
-            border-radius: 0;
-            overflow: hidden;
-        }
-        .swipe-delete-bg {
-            position: absolute;
-            inset: 0;
-            background: #ff3b30;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding-right: 24px;
-            color: #fff;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 0.02em;
-        }
         .entry-row {
             background: #fff;
             border-radius: 14px;
@@ -197,9 +166,7 @@
             align-items: center;
             gap: 12px;
             position: relative;
-            touch-action: pan-y;
-            will-change: transform;
-            transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .entry-row-tappable {
             cursor: pointer;
@@ -219,30 +186,30 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-width: 40px;
-            padding: 0.2rem 0.35rem;
-            background: rgba(249,250,251,0.8);
-            border-radius: 8px;
+            min-width: 50px;
+            padding-right: 16px;
+            border-right: 1px solid #f0f0f0;
+            margin-right: 4px;
             flex-shrink: 0;
+            line-height: 1;
         }
         .entry-date-col .dow {
-            font-size: 9px;
-            font-weight: 600;
-            color: #9ca3af;
+            font-size: 10px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
+            margin-bottom: 4px;
         }
         .entry-date-col .day-num {
-            font-size: 1.1rem;
+            font-size: 20px;
             font-weight: 700;
             color: #111827;
-            line-height: 1.15;
         }
         .entry-date-col .mon {
-            font-size: 9px;
-            font-weight: 600;
-            color: #9ca3af;
+            font-size: 10px;
+            font-weight: 700;
+            color: #6b7280;
             text-transform: uppercase;
+            margin-top: 2px;
         }
         .client-badge {
             font-size: 10px;
@@ -309,13 +276,13 @@
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            padding: 0 2px;
-            margin: 1.25rem 0 0.5rem;
+            padding: 16px 0 4px;
+            margin-top: 4px;
             font-size: 11px;
-            font-weight: 500;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.06em;
-            color: #b0b7c3;
+            color: #9ca3af;
         }
         .week-header:first-child {
             margin-top: 0;
@@ -323,7 +290,8 @@
         .week-group {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 12px;
+            padding-top: 4px;
         }
 
         /* Expanded card */
@@ -345,8 +313,12 @@
         .entry-detail-inner {
             padding: 0.75rem 1rem 1rem;
         }
-        .entry-card-wrap.expanded .swipe-container {
-            overflow: visible;
+        /* Entries tab layout */
+        #tabRecent {
+            width: 100%;
+            height: 100dvh;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         /* Login */

@@ -38,7 +38,7 @@
 <div id="appShell" class="screen" style="min-height: 100dvh;">
 
     <!-- ── Log Entry Tab ── -->
-    <div id="tabLog" class="flex-1 overflow-y-auto pb-36" style="padding-top: env(safe-area-inset-top)">
+    <div id="tabLog" class="flex-1 overflow-y-auto pb-36 hidden" style="padding-top: env(safe-area-inset-top)">
         <div class="max-w-md mx-auto px-5 pt-4">
 
             <div id="clientSection">
@@ -110,10 +110,12 @@
                 <!-- ── HOURLY FIELDS ── -->
                 <div id="hourlyFields" class="hidden space-y-4">
 
-                    <!-- ITS: Shoot client + Role -->
+                    <!-- ITS: Job + Role -->
                     <div id="itsFields" class="hidden space-y-4">
-                        <input type="text" id="shootClientInput" placeholder="Shoot Client"
-                            class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium">
+                        <div class="bg-white rounded-2xl px-5 py-3">
+                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Job</span>
+                            <input type="text" id="jobInput" class="bg-transparent w-full text-[17px] font-medium outline-none">
+                        </div>
                         <div>
                             <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Role</span>
                             <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
@@ -125,8 +127,10 @@
 
                     <!-- Generic hourly: description -->
                     <div id="hourlyDescField" class="hidden">
-                        <textarea id="hourlyDesc" rows="2" placeholder="Description"
-                            class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"></textarea>
+                        <div class="bg-white rounded-2xl px-5 py-3">
+                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Description</span>
+                            <input type="text" id="hourlyDesc" class="bg-transparent w-full text-[17px] font-medium outline-none">
+                        </div>
                     </div>
 
                     <!-- Times -->
@@ -152,8 +156,8 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="adjustBreak(15)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all">+15</button>
-                            <button onclick="adjustBreak(30)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all">+30</button>
+                            <button onclick="adjustBreak(-15)" class="h-10 px-4 bg-white border border-gray-100 shadow-sm rounded-xl text-[13px] font-bold active:bg-gray-100 transition-all">-15</button>
+                            <button onclick="adjustBreak(15)" class="h-10 px-4 bg-white border border-gray-100 shadow-sm rounded-xl text-[13px] font-bold active:bg-gray-100 transition-all">+15</button>
                         </div>
                     </div>
                 </div>
@@ -220,61 +224,68 @@
     </div>
 
     <!-- ── Recent Entries Tab ── -->
-    <div id="tabRecent" class="flex-1 overflow-y-auto pb-36 hidden" style="padding-top: env(safe-area-inset-top)">
-        <div id="pullIndicator" class="pull-indicator"><div class="spinner" id="pullSpinner"></div></div>
-        <div class="max-w-md mx-auto px-5 pt-10">
-            <div class="flex items-end justify-between mb-7 px-1">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Entries</h1>
+    <div id="tabRecent">
+
+        <div id="entriesScroll">
+            <div id="entriesInner" style="padding-top:env(safe-area-inset-top);">
+                <div class="px-5">
+                    <div id="newEntrySlot"></div>
+                    <div id="entriesHeaderTop" class="flex justify-between items-center pt-6 pb-3">
+                        <h1 class="text-3xl font-extrabold text-gray-900">Entries</h1>
+                        <button id="signOutBtn" class="p-2 -mr-1 text-gray-400 active:text-gray-600 transition-colors bg-transparent border-none cursor-pointer">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="pullIndicator" class="pull-indicator"><div class="spinner" id="pullSpinner"></div></div>
+                    <div id="recentList" class="space-y-3 pb-24">
+                        <p class="text-gray-400 text-sm py-8 text-center">Loading entries...</p>
+                    </div>
                 </div>
             </div>
-            <div id="recentList" class="space-y-3">
-                <p class="text-gray-400 text-sm py-8 text-center">Loading entries...</p>
+        </div>
+
+    <!-- FAB -->
+    <button id="newEntryFab" style="position:fixed; bottom:2rem; right:1.25rem; width:3rem; height:3rem; border-radius:50%; background:rgba(255,255,255,0.2); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1.5px solid rgba(255,255,255,0.4); color:#111827; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 16px rgba(0,0,0,0.12); cursor:pointer; z-index:99; transition:transform 0.15s;">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+    </button>
+
+    <!-- Client picker overlay -->
+    <div id="clientPickerOverlay" style="display:none; position:fixed; inset:0; background:#fff; z-index:500; flex-direction:column; padding-top:env(safe-area-inset-top);">
+        <div style="padding:24px 20px 16px; border-bottom:1px solid #e5e7eb; background:#fff;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                <h1 style="font-size:30px; font-weight:800; color:#111827; margin:0; font-family:inherit;">Search</h1>
+                <button id="overlayCancel" style="background:none; border:none; cursor:pointer; padding:6px; color:#8e8e93; display:flex; align-items:center; border-radius:50%;">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div style="position:relative;">
+                <div style="position:absolute; top:0; bottom:0; left:16px; display:flex; align-items:center; pointer-events:none;">
+                    <svg width="18" height="18" fill="none" stroke="#8e8e93" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/>
+                    </svg>
+                </div>
+                <input type="text" id="overlayClientInput" placeholder="Client name..." autocomplete="off"
+                    style="width:100%; box-sizing:border-box; background:#e5e7eb; border:none; border-radius:16px; padding:14px 44px; font-size:17px; font-weight:500; outline:none; font-family:inherit; color:#111827;">
+                <button id="overlayInputClear" style="display:none; position:absolute; top:0; bottom:0; right:12px; align-items:center; justify-content:center; background:none; border:none; cursor:pointer; padding:4px;">
+                    <div style="background:#8e8e93; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center;">
+                        <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </div>
+                </button>
             </div>
         </div>
+        <div id="overlayClientList" style="flex:1; overflow-y:auto;"></div>
     </div>
 
-    <!-- ── Settings Tab ── -->
-    <div id="tabSettings" class="flex-1 overflow-y-auto pb-36 hidden" style="padding-top: env(safe-area-inset-top)">
-        <div class="max-w-md mx-auto px-5 pt-10">
-            <div class="mb-7 px-1">
-                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Settings</h1>
-            </div>
-            <button id="signOutBtn" class="w-full py-4 rounded-2xl text-[15px] font-semibold text-red-500 bg-white border border-gray-100 shadow-sm active:bg-red-50 transition-colors cursor-pointer">
-                Sign Out
-            </button>
-        </div>
     </div>
 
-    <!-- ── Tab Bar — floating pill ── -->
-    <nav id="tabBar">
-        <div id="tabBar-inner">
-            <!-- New Entry -->
-            <button onclick="switchTab('log')" id="tabBtnLog" class="flex flex-col items-center gap-1.5 bg-transparent border-none cursor-pointer p-0">
-                <svg id="tabIconLog" class="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-                </svg>
-            </button>
-            <!-- Entries -->
-            <button onclick="switchTab('recent')" id="tabBtnRecent" class="flex flex-col items-center gap-1.5 bg-transparent border-none cursor-pointer p-0">
-                <svg id="tabIconRecent" class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                </svg>
-            </button>
-            <!-- Invoices -->
-            <button class="flex flex-col items-center gap-1.5 bg-transparent border-none cursor-pointer p-0" disabled>
-                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-            </button>
-            <!-- Settings -->
-            <button onclick="switchTab('settings')" id="tabBtnSettings" class="flex flex-col items-center gap-1.5 bg-transparent border-none cursor-pointer p-0">
-                <svg id="tabIconSettings" class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-            </button>
-        </div>
-    </nav>
 </div>
 
 <script src="app.js"></script>

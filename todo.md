@@ -7,6 +7,8 @@ Entries View:
 - List view: Instead of tick for group invoice button when invoiced, continue to use document icon; colour invoice button to correspond to invoice chips (grey, orange (issued) or green (paid))
 - Entries list view: move invoice button/number to group header (the line with client name and date range), but right-aligned. Then align group total with the subtotals.
 
+- Generate invoices bar says 1 invoice(s), when there are uninvoiced dates across two weeks
+
 Invoices Summary View:
 - Add column for super amount
 
@@ -28,3 +30,9 @@ PWA:
 Features
 - Export feature
 - App seems to be relying on network connection to pull all data from supabase as needed without a local caching system, making the interface sluggish and unusable without a network connection. Plan a system to solve this.
+- System that flags potential errors:
+    - Invoice with dates from more than one week
+    - Duplicate invoice numbers
+    - More than one entry per date
+
+- Add line items to invoice (e.g. gear hire)
