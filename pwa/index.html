@@ -186,7 +186,7 @@
         /* Recent entries list */
         .swipe-container {
             position: relative;
-            border-radius: 2rem;
+            border-radius: 0;
             overflow: hidden;
         }
         .swipe-delete-bg {
@@ -278,35 +278,33 @@
             white-space: nowrap;
         }
 
-        /* Edit modal */
-        .edit-modal {
-            position: fixed;
-            inset: 0;
-            z-index: 300;
-            background: rgba(0,0,0,0.35);
-            display: flex;
-            align-items: flex-end;
+        /* Expanded card */
+        .entry-card-wrap {
+            margin-bottom: 0.75rem;
         }
-        .edit-modal.hidden { display: none; }
-        .edit-modal-inner {
-            background: #FBFBFC;
-            border-radius: 1.5rem 1.5rem 0 0;
-            width: 100%;
-            max-width: 448px;
-            margin: 0 auto;
-            max-height: 92dvh;
-            display: flex;
-            flex-direction: column;
-            padding-bottom: env(safe-area-inset-bottom);
-            animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
+        .entry-card-wrap.expanded .entry-row {
+            border-radius: 2rem 2rem 0 0;
+            border-bottom: none;
+            box-shadow: none;
         }
-        @media (min-width: 640px) {
-            .edit-modal { align-items: center; }
-            .edit-modal-inner { border-radius: 1.5rem; }
+        .entry-detail-panel {
+            background: #fff;
+            border-radius: 0 0 2rem 2rem;
+            border: 1px solid #f3f4f6;
+            border-top: none;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
-        @keyframes slideUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to   { transform: translateY(0);    opacity: 1; }
+        .entry-card-wrap.expanded .entry-detail-panel {
+            max-height: 900px;
+        }
+        .entry-detail-inner {
+            padding: 1rem 1.25rem 1.25rem;
+        }
+        .entry-card-wrap.expanded .swipe-container {
+            overflow: visible;
         }
 
         /* Login */
@@ -572,164 +570,6 @@
             <div id="recentList" class="space-y-3">
                 <p class="text-gray-400 text-sm py-8 text-center">Loading entries...</p>
             </div>
-        </div>
-    </div>
-
-    <!-- ── Edit Entry Modal ── -->
-    <div id="editModal" class="edit-modal hidden">
-        <div class="edit-modal-inner">
-
-            <!-- Header -->
-            <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-100">
-                <h2 class="text-[17px] font-bold text-slate-900">Edit Entry</h2>
-                <button onclick="closeEditModal()" class="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Scrollable body -->
-            <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-
-                <!-- Date -->
-                <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Date</span>
-                    <input type="date" id="editDate" class="bg-transparent w-full text-[17px] font-medium outline-none">
-                </div>
-
-                <!-- ── DAY RATE EDIT FIELDS ── -->
-                <div id="editDayRateFields" class="hidden space-y-4">
-                    <div>
-                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Day Type</span>
-                        <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
-                            <button class="seg-btn" data-editday="full" onclick="setEditDayType('full')">Full Day</button>
-                            <button class="seg-btn" data-editday="half" onclick="setEditDayType('half')">Half Day</button>
-                        </div>
-                    </div>
-                    <div id="editWorkflowSection" class="space-y-4">
-                        <div>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Workflow</span>
-                            <div class="flex gap-2" id="editWorkflowBtns">
-                                <button class="workflow-btn" data-editwf="Apparel" onclick="setEditWorkflow('Apparel')">Apparel</button>
-                                <button class="workflow-btn" data-editwf="Product" onclick="setEditWorkflow('Product')">Product</button>
-                                <button class="workflow-btn" data-editwf="Own Brand" onclick="setEditWorkflow('Own Brand')">Own Brand</button>
-                            </div>
-                        </div>
-                        <div id="editBrandField" class="hidden">
-                            <input type="text" id="editBrandInput" placeholder="Brand name"
-                                class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium">
-                        </div>
-                        <div id="editSkuField" class="hidden">
-                            <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">SKUs Shot</span>
-                                <input type="number" id="editSkuInput" placeholder="0" min="0"
-                                    class="bg-transparent w-full text-[17px] font-medium outline-none">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ── HOURLY EDIT FIELDS ── -->
-                <div id="editHourlyFields" class="hidden space-y-4">
-                    <div id="editItsFields" class="hidden space-y-4">
-                        <input type="text" id="editShootClientInput" placeholder="Shoot Client"
-                            class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium">
-                        <div>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Role</span>
-                            <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
-                                <button class="seg-btn" data-editrole="Photographer" onclick="setEditRole('Photographer')">Photographer</button>
-                                <button class="seg-btn" data-editrole="Operator" onclick="setEditRole('Operator')">Operator</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="editHourlyDescField" class="hidden">
-                        <textarea id="editHourlyDesc" rows="2" placeholder="Description"
-                            class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"></textarea>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Start</span>
-                            <input type="time" id="editStartTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
-                        </div>
-                        <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">End</span>
-                            <input type="time" id="editFinishTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
-                        </div>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl flex items-center justify-between">
-                        <div>
-                            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Break</span>
-                            <div class="flex items-baseline gap-1">
-                                <input type="number" id="editBreakMinutes" value="0" min="0" step="5"
-                                    class="bg-transparent border-none p-0 w-12 text-[17px] font-bold focus:ring-0 text-slate-800 outline-none">
-                                <span class="text-slate-400 text-xs font-bold uppercase">min</span>
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="adjustEditBreak(15)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all">+15</button>
-                            <button onclick="adjustEditBreak(30)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all">+30</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ── MANUAL EDIT FIELDS ── -->
-                <div id="editManualFields" class="hidden space-y-4">
-                    <textarea id="editManualDesc" rows="2" placeholder="Description"
-                        class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"></textarea>
-                    <div class="bg-slate-50 rounded-2xl px-5 py-3">
-                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Amount ($)</span>
-                        <input type="number" id="editManualAmount" placeholder="0.00" step="0.01" min="0"
-                            class="bg-transparent w-full text-[17px] font-medium outline-none">
-                    </div>
-                    <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
-                        <div>
-                            <p class="text-[15px] font-semibold text-slate-800">Include Super (12%)</p>
-                            <p id="editSuperToggleLabel" class="text-[12px] text-slate-400 mt-0.5">Off</p>
-                        </div>
-                        <label class="toggle-wrap">
-                            <input type="checkbox" id="editSuperToggle">
-                            <div class="toggle-track"><div class="toggle-thumb"></div></div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Summary card -->
-                <div class="summary-card p-6 bg-white">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Total</p>
-                            <h2 id="editDisplayTotal" class="text-4xl font-bold tracking-tight text-slate-900">$0.00</h2>
-                        </div>
-                        <div class="text-right" id="editDurationBlock">
-                            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Duration</p>
-                            <p id="editDisplayDuration" class="text-xl font-bold text-slate-700">0h 0m</p>
-                        </div>
-                    </div>
-                    <div class="space-y-1.5 pt-4 border-t border-slate-100">
-                        <div class="flex justify-between items-center">
-                            <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Base</span>
-                            <span id="editDisplayBase" class="text-[14px] font-bold text-slate-600">$0.00</span>
-                        </div>
-                        <div id="editBonusLine" class="flex justify-between items-center hidden">
-                            <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Bonus</span>
-                            <span id="editDisplayBonus" class="text-[14px] font-bold text-[#34c759]">+$0.00</span>
-                        </div>
-                        <div id="editSuperLine" class="flex justify-between items-center">
-                            <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Super (12%)</span>
-                            <span id="editDisplaySuper" class="text-[14px] font-bold text-[#007AFF]">+$0.00</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div><!-- /scrollable body -->
-
-            <!-- Footer buttons -->
-            <div class="px-5 py-4 space-y-3 border-t border-slate-100">
-                <button id="editSaveBtn" onclick="saveEdit()" class="btn-primary">Save Changes</button>
-                <button onclick="deleteEntry()" class="w-full py-4 rounded-2xl text-[15px] font-bold text-red-500 bg-red-50 active:bg-red-100 transition-colors border-none cursor-pointer">Delete Entry</button>
-            </div>
-
         </div>
     </div>
 
@@ -1338,18 +1178,32 @@ async function loadRecentEntries() {
                 </div>
             </div>`;
 
+        // Outer wrap
+        const wrap = document.createElement('div');
+        wrap.className = 'entry-card-wrap';
+
+        // Detail panel
+        const detailPanel = document.createElement('div');
+        detailPanel.className = 'entry-detail-panel';
+        const detailInner = document.createElement('div');
+        detailInner.className = 'entry-detail-inner';
+        detailPanel.appendChild(detailInner);
+
         if (!isInvoiced) {
-            el.addEventListener('click', () => openEditModal(entry));
-            const wrapper = document.createElement('div');
-            wrapper.className = 'swipe-container';
-            wrapper.innerHTML = '<div class="swipe-delete-bg"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>Delete</div>';
-            wrapper.appendChild(el);
-            addSwipeToDelete(wrapper, el, entry);
-            list.appendChild(wrapper);
+            el.addEventListener('click', () => openEntryCard(wrap, entry, false));
+            const swipeContainer = document.createElement('div');
+            swipeContainer.className = 'swipe-container';
+            swipeContainer.innerHTML = '<div class="swipe-delete-bg"><svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>Delete</div>';
+            swipeContainer.appendChild(el);
+            addSwipeToDelete(swipeContainer, el, entry);
+            wrap.appendChild(swipeContainer);
         } else {
-            el.addEventListener('click', () => openEditModal(entry, true));
-            list.appendChild(el);
+            el.addEventListener('click', () => openEntryCard(wrap, entry, true));
+            wrap.appendChild(el);
         }
+
+        wrap.appendChild(detailPanel);
+        list.appendChild(wrap);
     });
 }
 
@@ -1440,14 +1294,16 @@ function addSwipeToDelete(wrapper, el, entry) {
             try {
                 const { error } = await sb.from('entries').delete().eq('id', entry.id);
                 if (error) throw error;
-                wrapper.style.transition = 'max-height 0.3s, opacity 0.3s';
-                wrapper.style.maxHeight  = wrapper.offsetHeight + 'px';
+                const cardWrap = wrapper.parentElement;
+                const collapseTarget = cardWrap || wrapper;
+                collapseTarget.style.transition = 'max-height 0.3s, opacity 0.3s';
+                collapseTarget.style.maxHeight  = collapseTarget.offsetHeight + 'px';
                 requestAnimationFrame(() => {
-                    wrapper.style.maxHeight = '0';
-                    wrapper.style.opacity   = '0';
-                    wrapper.style.overflow  = 'hidden';
+                    collapseTarget.style.maxHeight = '0';
+                    collapseTarget.style.opacity   = '0';
+                    collapseTarget.style.overflow  = 'hidden';
                 });
-                setTimeout(() => wrapper.remove(), 350);
+                setTimeout(() => collapseTarget.remove(), 350);
             } catch (err) {
                 alert('Error deleting entry: ' + err.message);
                 el.style.transform = '';
@@ -1462,7 +1318,8 @@ function addSwipeToDelete(wrapper, el, entry) {
                 try {
                     const { error } = await sb.from('entries').delete().eq('id', entry.id);
                     if (error) throw error;
-                    wrapper.remove();
+                    const cardWrap = wrapper.parentElement;
+                    (cardWrap || wrapper).remove();
                 } catch (err) {
                     alert('Error deleting entry: ' + err.message);
                     el.style.transition = '';
@@ -1486,7 +1343,7 @@ function addSwipeToDelete(wrapper, el, entry) {
 }
 
 // ─────────────────────────────────────────────
-// EDIT MODAL
+// ENTRY CARD EXPAND / COLLAPSE
 // ─────────────────────────────────────────────
 let editingEntry    = null;
 let editingClient   = null;
@@ -1494,105 +1351,256 @@ let editDayType     = 'full';
 let editWorkflow    = 'Apparel';
 let editRole        = 'Photographer';
 let editSuperOverride = false;
+let expandedWrap    = null;
 
-function openEditModal(entry, readOnly = false) {
+function closeEntryCard(wrap) {
+    wrap.classList.remove('expanded');
+    setTimeout(() => {
+        const inner = wrap.querySelector('.entry-detail-inner');
+        if (inner) inner.innerHTML = '';
+    }, 400);
+    if (expandedWrap === wrap) {
+        expandedWrap  = null;
+        editingEntry  = null;
+        editingClient = null;
+    }
+}
+
+function openEntryCard(wrap, entry, readOnly = false) {
+    // Collapse any previously expanded card
+    if (expandedWrap && expandedWrap !== wrap) {
+        closeEntryCard(expandedWrap);
+    }
+
+    // If this card is already expanded, collapse it
+    if (wrap.classList.contains('expanded')) {
+        closeEntryCard(wrap);
+        return;
+    }
+
     editingEntry  = entry;
     editingClient = allClients.find(c => c.id === entry.client_id) || null;
-
-    // Read-only mode for invoiced entries
-    const footer = document.querySelector('#editModal .edit-modal-inner > div:last-child');
-    const header = document.querySelector('#editModal h2');
-    header.textContent = readOnly ? 'Entry Details' : 'Edit Entry';
-    footer.style.display = readOnly ? 'none' : '';
-    document.getElementById('editModal').querySelectorAll('input, textarea, button[data-editday], button[data-editwf], button[data-editrole]').forEach(el => {
-        el.disabled = readOnly;
-    });
+    expandedWrap  = wrap;
 
     const billing = entry.billing_type_snapshot;
+    const isITS   = editingClient?.name?.toLowerCase().includes('images that sell');
 
-    // Populate date
+    editDayType        = entry.day_type || 'full';
+    editWorkflow       = entry.workflow_type || 'Apparel';
+    editRole           = entry.role || 'Photographer';
+    editSuperOverride  = (entry.super_amount > 0);
+
+    // Build detail panel HTML
+    const inner = wrap.querySelector('.entry-detail-inner');
+
+    // --- Date field ---
+    let html = `
+        <div class="flex justify-end mb-2">
+            <button onclick="closeEntryCard(expandedWrap)" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 text-lg leading-none border-none cursor-pointer">&times;</button>
+        </div>
+        <div class="space-y-4">
+        <div class="bg-slate-50 rounded-2xl px-5 py-3">
+            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Date</span>
+            <input type="date" id="editDate" class="bg-transparent w-full text-[17px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
+        </div>`;
+
+    // --- Billing-specific fields ---
+    if (billing === 'day_rate') {
+        const wfHidden     = editDayType !== 'full' ? 'hidden' : '';
+        const brandHidden  = editWorkflow !== 'Own Brand' ? 'hidden' : '';
+        const skuHidden    = editWorkflow === 'Own Brand' ? 'hidden' : '';
+        const bonusHidden  = (editDayType !== 'full' || editWorkflow === 'Own Brand') ? 'hidden' : '';
+        html += `
+        <div id="editDayRateFields" class="space-y-4">
+            <div>
+                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Day Type</span>
+                <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
+                    <button class="seg-btn${editDayType === 'full' ? ' active' : ''}" data-editday="full" onclick="setEditDayType('full')"${readOnly ? ' disabled' : ''}>Full Day</button>
+                    <button class="seg-btn${editDayType === 'half' ? ' active' : ''}" data-editday="half" onclick="setEditDayType('half')"${readOnly ? ' disabled' : ''}>Half Day</button>
+                </div>
+            </div>
+            <div id="editWorkflowSection" class="${wfHidden} space-y-4">
+                <div>
+                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Workflow</span>
+                    <div class="flex gap-2" id="editWorkflowBtns">
+                        <button class="workflow-btn${editWorkflow === 'Apparel' ? ' active' : ''}" data-editwf="Apparel" onclick="setEditWorkflow('Apparel')"${readOnly ? ' disabled' : ''}>Apparel</button>
+                        <button class="workflow-btn${editWorkflow === 'Product' ? ' active' : ''}" data-editwf="Product" onclick="setEditWorkflow('Product')"${readOnly ? ' disabled' : ''}>Product</button>
+                        <button class="workflow-btn${editWorkflow === 'Own Brand' ? ' active' : ''}" data-editwf="Own Brand" onclick="setEditWorkflow('Own Brand')"${readOnly ? ' disabled' : ''}>Own Brand</button>
+                    </div>
+                </div>
+                <div id="editBrandField" class="${brandHidden}">
+                    <input type="text" id="editBrandInput" placeholder="Brand name"
+                        class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium"${readOnly ? ' disabled' : ''}>
+                </div>
+                <div id="editSkuField" class="${skuHidden}">
+                    <div class="bg-slate-50 rounded-2xl px-5 py-3">
+                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">SKUs Shot</span>
+                        <input type="number" id="editSkuInput" placeholder="0" min="0"
+                            class="bg-transparent w-full text-[17px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    } else if (billing === 'hourly') {
+        html += `
+        <div id="editHourlyFields" class="space-y-4">
+            <div id="editItsFields" class="${isITS ? '' : 'hidden'} space-y-4">
+                <input type="text" id="editShootClientInput" placeholder="Shoot Client"
+                    class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium"${readOnly ? ' disabled' : ''}>
+                <div>
+                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Role</span>
+                    <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
+                        <button class="seg-btn${editRole === 'Photographer' ? ' active' : ''}" data-editrole="Photographer" onclick="setEditRole('Photographer')"${readOnly ? ' disabled' : ''}>Photographer</button>
+                        <button class="seg-btn${editRole === 'Operator' ? ' active' : ''}" data-editrole="Operator" onclick="setEditRole('Operator')"${readOnly ? ' disabled' : ''}>Operator</button>
+                    </div>
+                </div>
+            </div>
+            <div id="editHourlyDescField" class="${isITS ? 'hidden' : ''}">
+                <textarea id="editHourlyDesc" rows="2" placeholder="Description"
+                    class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"${readOnly ? ' disabled' : ''}></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-50 rounded-2xl px-5 py-3">
+                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Start</span>
+                    <input type="time" id="editStartTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative"${readOnly ? ' disabled' : ''}>
+                </div>
+                <div class="bg-slate-50 rounded-2xl px-5 py-3">
+                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">End</span>
+                    <input type="time" id="editFinishTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative"${readOnly ? ' disabled' : ''}>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Break</span>
+                    <div class="flex items-baseline gap-1">
+                        <input type="number" id="editBreakMinutes" value="0" min="0" step="5"
+                            class="bg-transparent border-none p-0 w-12 text-[17px] font-bold focus:ring-0 text-slate-800 outline-none"${readOnly ? ' disabled' : ''}>
+                        <span class="text-slate-400 text-xs font-bold uppercase">min</span>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="adjustEditBreak(15)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all"${readOnly ? ' disabled' : ''}>+15</button>
+                    <button onclick="adjustEditBreak(30)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all"${readOnly ? ' disabled' : ''}>+30</button>
+                </div>
+            </div>
+        </div>`;
+    } else { // manual
+        html += `
+        <div id="editManualFields" class="space-y-4">
+            <textarea id="editManualDesc" rows="2" placeholder="Description"
+                class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"${readOnly ? ' disabled' : ''}></textarea>
+            <div class="bg-slate-50 rounded-2xl px-5 py-3">
+                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Amount ($)</span>
+                <input type="number" id="editManualAmount" placeholder="0.00" step="0.01" min="0"
+                    class="bg-transparent w-full text-[17px] font-medium outline-none"${readOnly ? ' disabled' : ''}>
+            </div>
+            <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
+                <div>
+                    <p class="text-[15px] font-semibold text-slate-800">Include Super (12%)</p>
+                    <p id="editSuperToggleLabel" class="text-[12px] text-slate-400 mt-0.5">${editSuperOverride ? 'On' : 'Off'}</p>
+                </div>
+                <label class="toggle-wrap">
+                    <input type="checkbox" id="editSuperToggle"${editSuperOverride ? ' checked' : ''}${readOnly ? ' disabled' : ''}>
+                    <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                </label>
+            </div>
+        </div>`;
+    }
+
+    // --- Summary card ---
+    const bonusHiddenSummary = (billing !== 'day_rate' || editDayType !== 'full' || editWorkflow === 'Own Brand') ? 'hidden' : '';
+    const durationHidden     = (billing !== 'hourly') ? 'hidden' : '';
+    html += `
+        <div class="summary-card p-6 bg-white">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Total</p>
+                    <h2 id="editDisplayTotal" class="text-4xl font-bold tracking-tight text-slate-900">$0.00</h2>
+                </div>
+                <div class="text-right ${durationHidden}" id="editDurationBlock">
+                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Duration</p>
+                    <p id="editDisplayDuration" class="text-xl font-bold text-slate-700">0h 0m</p>
+                </div>
+            </div>
+            <div class="space-y-1.5 pt-4 border-t border-slate-100">
+                <div class="flex justify-between items-center">
+                    <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Base</span>
+                    <span id="editDisplayBase" class="text-[14px] font-bold text-slate-600">$0.00</span>
+                </div>
+                <div id="editBonusLine" class="flex justify-between items-center ${bonusHiddenSummary}">
+                    <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Bonus</span>
+                    <span id="editDisplayBonus" class="text-[14px] font-bold text-[#34c759]">+$0.00</span>
+                </div>
+                <div id="editSuperLine" class="flex justify-between items-center">
+                    <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Super (12%)</span>
+                    <span id="editDisplaySuper" class="text-[14px] font-bold text-[#007AFF]">+$0.00</span>
+                </div>
+            </div>
+        </div>`;
+
+    // --- Footer buttons ---
+    if (!readOnly) {
+        html += `
+        <div class="space-y-3 pt-1">
+            <button id="editSaveBtn" onclick="saveEdit()" class="btn-primary">Save Changes</button>
+            <button onclick="deleteEntry()" class="w-full py-4 rounded-2xl text-[15px] font-bold text-red-500 bg-red-50 active:bg-red-100 transition-colors border-none cursor-pointer">Delete Entry</button>
+        </div>`;
+    }
+
+    html += `</div>`; // close space-y-4
+
+    inner.innerHTML = html;
+
+    // Populate field values now that DOM is built
     document.getElementById('editDate').value = entry.date || '';
 
-    // Hide all billing-specific sections
-    document.getElementById('editDayRateFields').classList.add('hidden');
-    document.getElementById('editHourlyFields').classList.add('hidden');
-    document.getElementById('editManualFields').classList.add('hidden');
-
     if (billing === 'day_rate') {
-        document.getElementById('editDayRateFields').classList.remove('hidden');
-
-        editDayType = entry.day_type || 'full';
-        editWorkflow = entry.workflow_type || 'Apparel';
-
-        // Set day type buttons
-        document.querySelectorAll('[data-editday]').forEach(b => {
-            b.classList.toggle('active', b.dataset.editday === editDayType);
-        });
-
-        // Show/hide workflow section
-        const wfSection = document.getElementById('editWorkflowSection');
         if (editDayType === 'full') {
-            wfSection.classList.remove('hidden');
-            setEditWorkflow(editWorkflow);
-            // Set brand/sku
             if (editWorkflow === 'Own Brand') {
                 document.getElementById('editBrandInput').value = entry.brand || '';
             } else {
                 document.getElementById('editSkuInput').value = entry.skus != null ? entry.skus : '';
             }
-        } else {
-            wfSection.classList.add('hidden');
         }
-
-        document.getElementById('editBonusLine').classList.toggle('hidden', editDayType !== 'full' || editWorkflow === 'Own Brand');
-        document.getElementById('editDurationBlock').classList.add('hidden');
-
     } else if (billing === 'hourly') {
-        document.getElementById('editHourlyFields').classList.remove('hidden');
-
-        const isITS = editingClient?.name?.toLowerCase().includes('images that sell');
-        document.getElementById('editItsFields').classList.toggle('hidden', !isITS);
-        document.getElementById('editHourlyDescField').classList.toggle('hidden', isITS);
-
         if (isITS) {
             document.getElementById('editShootClientInput').value = entry.shoot_client || '';
-            editRole = entry.role || 'Photographer';
-            document.querySelectorAll('[data-editrole]').forEach(b => {
-                b.classList.toggle('active', b.dataset.editrole === editRole);
-            });
         } else {
             document.getElementById('editHourlyDesc').value = entry.description || '';
         }
-
-        document.getElementById('editStartTime').value  = (entry.start_time  || '').substring(0, 5);
-        document.getElementById('editFinishTime').value = (entry.finish_time || '').substring(0, 5);
+        document.getElementById('editStartTime').value    = (entry.start_time  || '').substring(0, 5);
+        document.getElementById('editFinishTime').value   = (entry.finish_time || '').substring(0, 5);
         document.getElementById('editBreakMinutes').value = entry.break_minutes || 0;
-
-        document.getElementById('editBonusLine').classList.add('hidden');
-        document.getElementById('editDurationBlock').classList.remove('hidden');
-
     } else { // manual
-        document.getElementById('editManualFields').classList.remove('hidden');
         document.getElementById('editManualDesc').value   = entry.description || '';
         document.getElementById('editManualAmount').value = entry.base_amount != null ? entry.base_amount : '';
+    }
 
-        editSuperOverride = (entry.super_amount > 0);
-        const superToggle = document.getElementById('editSuperToggle');
-        superToggle.checked = editSuperOverride;
-        document.getElementById('editSuperToggleLabel').textContent = editSuperOverride ? 'On' : 'Off';
-
-        document.getElementById('editBonusLine').classList.add('hidden');
-        document.getElementById('editDurationBlock').classList.add('hidden');
+    // Wire up live recalc listeners
+    ['editStartTime','editFinishTime','editBreakMinutes','editSkuInput','editManualAmount','editBrandInput']
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', editRecalculate);
+        });
+    const superToggleEl = document.getElementById('editSuperToggle');
+    if (superToggleEl) {
+        superToggleEl.addEventListener('change', function() {
+            editSuperOverride = this.checked;
+            const lbl = document.getElementById('editSuperToggleLabel');
+            if (lbl) lbl.textContent = editSuperOverride ? 'On' : 'Off';
+            editRecalculate();
+        });
     }
 
     editRecalculate();
-    document.getElementById('editModal').classList.remove('hidden');
-}
 
-function closeEditModal() {
-    document.getElementById('editModal').classList.add('hidden');
-    editingEntry  = null;
-    editingClient = null;
+    // Expand the card
+    wrap.classList.add('expanded');
+
+    // Scroll to near top of tabRecent
+    const tabRecent = document.getElementById('tabRecent');
+    const wrapTop = wrap.getBoundingClientRect().top + tabRecent.scrollTop - 100;
+    tabRecent.scrollTo({ top: wrapTop, behavior: 'smooth' });
 }
 
 function setEditDayType(type) {
@@ -1601,12 +1609,15 @@ function setEditDayType(type) {
         b.classList.toggle('active', b.dataset.editday === type);
     });
     const wfSection = document.getElementById('editWorkflowSection');
-    if (type === 'full') {
-        wfSection.classList.remove('hidden');
-        setEditWorkflow(editWorkflow);
-    } else {
-        wfSection.classList.add('hidden');
-        document.getElementById('editBonusLine').classList.add('hidden');
+    if (wfSection) {
+        if (type === 'full') {
+            wfSection.classList.remove('hidden');
+            setEditWorkflow(editWorkflow);
+        } else {
+            wfSection.classList.add('hidden');
+            const bl = document.getElementById('editBonusLine');
+            if (bl) bl.classList.add('hidden');
+        }
     }
     editRecalculate();
 }
@@ -1616,9 +1627,12 @@ function setEditWorkflow(wf) {
     document.querySelectorAll('[data-editwf]').forEach(b => {
         b.classList.toggle('active', b.dataset.editwf === wf);
     });
-    document.getElementById('editBrandField').classList.toggle('hidden', wf !== 'Own Brand');
-    document.getElementById('editSkuField').classList.toggle('hidden', wf === 'Own Brand');
-    document.getElementById('editBonusLine').classList.toggle('hidden', wf === 'Own Brand');
+    const brandField = document.getElementById('editBrandField');
+    const skuField   = document.getElementById('editSkuField');
+    const bonusLine  = document.getElementById('editBonusLine');
+    if (brandField) brandField.classList.toggle('hidden', wf !== 'Own Brand');
+    if (skuField)   skuField.classList.toggle('hidden', wf === 'Own Brand');
+    if (bonusLine)  bonusLine.classList.toggle('hidden', wf === 'Own Brand');
     editRecalculate();
 }
 
@@ -1632,21 +1646,11 @@ function setEditRole(role) {
 
 function adjustEditBreak(delta) {
     const el = document.getElementById('editBreakMinutes');
-    el.value = (parseInt(el.value) || 0) + delta;
-    editRecalculate();
+    if (el) {
+        el.value = (parseInt(el.value) || 0) + delta;
+        editRecalculate();
+    }
 }
-
-['editStartTime','editFinishTime','editBreakMinutes','editSkuInput','editManualAmount','editBrandInput']
-    .forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('input', editRecalculate);
-    });
-
-document.getElementById('editSuperToggle').addEventListener('change', function() {
-    editSuperOverride = this.checked;
-    document.getElementById('editSuperToggleLabel').textContent = editSuperOverride ? 'On' : 'Off';
-    editRecalculate();
-});
 
 function editRecalculate() {
     if (!editingEntry) return;
@@ -1655,23 +1659,32 @@ function editRecalculate() {
     let result;
 
     if (billing === 'day_rate' && client) {
-        const skus = parseInt(document.getElementById('editSkuInput').value) || null;
+        const skuEl = document.getElementById('editSkuInput');
+        const skus = skuEl ? (parseInt(skuEl.value) || null) : null;
         result = calcDayRate(client, editDayType, editDayType === 'full' ? editWorkflow : null, skus);
-        document.getElementById('editDisplayDuration').textContent = '';
-        document.getElementById('editBonusLine').classList.toggle('hidden',
-            editDayType !== 'full' || editWorkflow === 'Own Brand');
+        const durEl = document.getElementById('editDisplayDuration');
+        if (durEl) durEl.textContent = '';
+        const bl = document.getElementById('editBonusLine');
+        if (bl) bl.classList.toggle('hidden', editDayType !== 'full' || editWorkflow === 'Own Brand');
 
     } else if (billing === 'hourly' && client) {
-        const start = document.getElementById('editStartTime').value;
-        const finish = document.getElementById('editFinishTime').value;
-        const brk   = parseInt(document.getElementById('editBreakMinutes').value) || 0;
+        const startEl  = document.getElementById('editStartTime');
+        const finishEl = document.getElementById('editFinishTime');
+        const brkEl    = document.getElementById('editBreakMinutes');
+        if (!startEl || !finishEl) return;
+        const start  = startEl.value;
+        const finish = finishEl.value;
+        const brk    = parseInt(brkEl?.value) || 0;
         result = calcHourly(client, start, finish, brk);
-        const totalMins = Math.round(result.hoursWorked * 60);
-        document.getElementById('editDisplayDuration').textContent =
-            `${Math.floor(totalMins / 60)}h ${totalMins % 60}m`;
+        if (result) {
+            const totalMins = Math.round(result.hoursWorked * 60);
+            const durEl = document.getElementById('editDisplayDuration');
+            if (durEl) durEl.textContent = `${Math.floor(totalMins / 60)}h ${totalMins % 60}m`;
+        }
 
     } else if (billing === 'manual') {
-        const amount = parseFloat(document.getElementById('editManualAmount').value) || 0;
+        const amountEl = document.getElementById('editManualAmount');
+        const amount = parseFloat(amountEl?.value) || 0;
         const superRate = client?.super_rate ?? 0.12;
         result = calcManual(amount, editSuperOverride, superRate);
 
@@ -1680,11 +1693,16 @@ function editRecalculate() {
     }
 
     if (result) {
-        document.getElementById('editDisplayTotal').textContent = fmt(result.total);
-        document.getElementById('editDisplayBase').textContent  = fmt(result.base);
-        document.getElementById('editDisplayBonus').textContent = '+' + fmt(result.bonus || 0);
-        document.getElementById('editDisplaySuper').textContent = '+' + fmt(result.superAmt || 0);
-        document.getElementById('editSuperLine').classList.toggle('hidden', (result.superAmt || 0) === 0);
+        const totalEl = document.getElementById('editDisplayTotal');
+        const baseEl  = document.getElementById('editDisplayBase');
+        const bonusEl = document.getElementById('editDisplayBonus');
+        const superEl = document.getElementById('editDisplaySuper');
+        const superLine = document.getElementById('editSuperLine');
+        if (totalEl) totalEl.textContent = fmt(result.total);
+        if (baseEl)  baseEl.textContent  = fmt(result.base);
+        if (bonusEl) bonusEl.textContent = '+' + fmt(result.bonus || 0);
+        if (superEl) superEl.textContent = '+' + fmt(result.superAmt || 0);
+        if (superLine) superLine.classList.toggle('hidden', (result.superAmt || 0) === 0);
     }
 }
 
@@ -1755,7 +1773,8 @@ async function saveEdit() {
         const payload = buildEditPayload();
         const { error } = await sb.from('entries').update(payload).eq('id', editingEntry.id);
         if (error) throw error;
-        closeEditModal();
+        const wrap = expandedWrap;
+        closeEntryCard(wrap);
         loadRecentEntries();
     } catch (err) {
         alert('Error saving entry: ' + err.message);
@@ -1769,7 +1788,8 @@ async function deleteEntry() {
     try {
         const { error } = await sb.from('entries').delete().eq('id', editingEntry.id);
         if (error) throw error;
-        closeEditModal();
+        const wrap = expandedWrap;
+        closeEntryCard(wrap);
         loadRecentEntries();
     } catch (err) {
         alert('Error deleting entry: ' + err.message);
