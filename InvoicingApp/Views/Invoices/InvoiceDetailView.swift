@@ -1,9 +1,19 @@
 import SwiftUI
+import WebKit
+
+struct HTMLPreviewView: NSViewRepresentable {
+    let html: String
+    func makeNSView(context: Context) -> WKWebView { WKWebView() }
+    func updateNSView(_ nsView: WKWebView, context: Context) {
+        nsView.loadHTMLString(html, baseURL: nil)
+    }
+}
 
 struct InvoiceDetailView: View {
     @StateObject private var vm: InvoiceDetailViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var showDeleteConfirmation = false
+    @State private var showPreview = false
 
     init(invoice: Invoice) {
         self._vm = StateObject(wrappedValue: InvoiceDetailViewModel(invoice: invoice))
@@ -105,6 +115,11 @@ struct InvoiceDetailView: View {
                     }
                     .buttonStyle(.bordered)
 
+                    Button("Preview") {
+                        showPreview = true
+                    }
+                    .buttonStyle(.bordered)
+
                     Button("Export PDF") {
                         Task { await vm.exportPDF() }
                     }
@@ -122,6 +137,22 @@ struct InvoiceDetailView: View {
         }
         .navigationTitle("Invoice \(vm.invoice.invoiceNumber)")
         .task { await vm.loadDetails() }
+        .sheet(isPresented: $showPreview) {
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Invoice \(vm.invoice.invoiceNumber)")
+                        .font(.headline)
+                    Spacer()
+                    Button("Done") { showPreview = false }
+                }
+                .padding(12)
+                Divider()
+                if let html = vm.previewHTML() {
+                    HTMLPreviewView(html: html)
+                }
+            }
+            .frame(width: 700, height: 900)
+        }
         .confirmationDialog(
             "Delete invoice \(vm.invoice.invoiceNumber)?",
             isPresented: $showDeleteConfirmation,

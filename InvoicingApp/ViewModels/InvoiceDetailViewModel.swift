@@ -65,6 +65,12 @@ final class InvoiceDetailViewModel: ObservableObject {
         }
     }
 
+    func previewHTML() -> String? {
+        guard let client else { return nil }
+        let settings = UserSettings.load()
+        return PDFExportService().buildHTML(invoice: invoice, entries: entries, client: client, settings: settings)
+    }
+
     func exportPDF() async {
         guard let client else { return }
         do {
