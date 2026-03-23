@@ -327,20 +327,25 @@
         }
 
         /* Entries tab layout */
-        #entriesHeader {
+        #tabRecent {
             position: relative;
-            flex-shrink: 0;
-            z-index: 10;
         }
-        #headerFade {
-            height: 2rem;
-            background: linear-gradient(to bottom, #F2F3F5, transparent);
+        #entriesHeader {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            z-index: 10;
+            background: linear-gradient(to bottom, #F2F3F5 55%, transparent);
             pointer-events: none;
         }
+        #entriesHeader * {
+            pointer-events: auto;
+        }
+        #headerFade { display: none; }
         #entriesScroll {
             flex: 1;
             overflow-y: auto;
             min-height: 0;
+            padding-top: 8rem;
         }
         #entriesInner {
             min-height: 100%;
