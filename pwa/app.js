@@ -12,6 +12,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ─────────────────────────────────────────────
 let allClients              = [];
 let clientLatestInvoiceMap  = {};
+let clientInvoiceCountMap   = {};
 let workflowRates           = [];
 let selectedClient   = null;
 let currentDayType   = 'full';
@@ -90,11 +91,21 @@ function closeClientPicker() {
     document.getElementById('overlayClientInput').value = '';
 }
 
+function clientDotColor(name) {
+    if (name.includes('ICONIC'))  return '#a855f7';
+    if (name.includes('Images'))  return '#3b82f6';
+    if (name.includes('JD'))      return '#f97316';
+    return '#9ca3af';
+}
+
 function renderOverlayClients(query) {
     const list = document.getElementById('overlayClientList');
-    const matches = query
+
+    let matches = query
         ? allClients.filter(c => c.name.toLowerCase().includes(query.toLowerCase()))
-        : allClients;
+        : [...allClients].sort((a, b) =>
+            (clientInvoiceCountMap[b.id] || 0) - (clientInvoiceCountMap[a.id] || 0)
+          );
 
     list.innerHTML = '';
 
@@ -112,17 +123,16 @@ function renderOverlayClients(query) {
     }
 
     matches.forEach(client => {
-        const invNum = clientLatestInvoiceMap[client.name] || null;
+        const count = clientInvoiceCountMap[client.id] || 0;
+        const subtitle = count > 0 ? `${count} ${count === 1 ? 'invoice' : 'invoices'}` : null;
+        const dotColor = clientDotColor(client.name);
         const row = document.createElement('button');
         row.style.cssText = 'display:flex; width:100%; box-sizing:border-box; align-items:center; text-align:left; background:none; border:none; border-bottom:1px solid #f3f4f6; padding:14px 24px; cursor:pointer; font-family:inherit;';
         row.innerHTML = `
-            <svg width="18" height="18" fill="none" stroke="#c7c7cc" stroke-width="1.75" viewBox="0 0 24 24" style="flex-shrink:0; margin-right:16px;">
-                <circle cx="12" cy="12" r="10"/>
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/>
-            </svg>
+            <div style="flex-shrink:0; width:10px; height:10px; border-radius:50%; background:${dotColor}; margin-right:16px;"></div>
             <div style="flex:1; min-width:0;">
                 <div style="font-size:17px; font-weight:600; color:#111827;">${client.name}</div>
-                ${invNum ? `<div style="font-size:13px; color:#8e8e93; margin-top:2px;">${invNum}</div>` : ''}
+                ${subtitle ? `<div style="font-size:13px; color:#8e8e93; margin-top:2px;">${subtitle}</div>` : ''}
             </div>
             <svg width="18" height="18" fill="none" stroke="#c7c7cc" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/>
@@ -161,12 +171,20 @@ document.getElementById('signOutBtn').addEventListener('click', async () => {
 // DATA LOADING
 // ─────────────────────────────────────────────
 async function loadData() {
-    const [{ data: clients }, { data: rates }] = await Promise.all([
+    const [{ data: clients }, { data: rates }, { data: invoices }] = await Promise.all([
         sb.from('clients').select('*').eq('is_active', true).order('name'),
-        sb.from('client_workflow_rates').select('*')
+        sb.from('client_workflow_rates').select('*'),
+        sb.from('invoices').select('client_id')
     ]);
     allClients   = clients || [];
     workflowRates = rates || [];
+
+    clientInvoiceCountMap = {};
+    (invoices || []).forEach(inv => {
+        if (inv.client_id) {
+            clientInvoiceCountMap[inv.client_id] = (clientInvoiceCountMap[inv.client_id] || 0) + 1;
+        }
+    });
 
     setDefaultDate();
     loadRecentEntries();
