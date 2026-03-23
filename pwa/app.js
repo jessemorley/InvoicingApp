@@ -647,14 +647,14 @@ function buildNewEntryFormHTML() {
         <div id="newClientContainer" class="relative">
             <div class="relative flex items-center">
                 <input type="text" id="newClientInput" placeholder="Client" autocomplete="off"
-                    class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 pr-10 font-medium" style="border-color: transparent !important;">
+                    class="input-field w-full rounded-xl px-4 py-3 text-[17px] placeholder-slate-400 pr-10 font-semibold" style="border-color: transparent !important;">
                 <button id="newClearClient" class="clear-btn absolute right-3 p-1 rounded-full bg-slate-200 text-slate-500">
                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
-            <div id="newAutocompleteList" style="position:absolute;left:0;right:0;top:calc(100% + 6px);background:rgba(255,255,255,0.98);backdrop-filter:blur(20px);border:1px solid rgba(0,0,0,0.06);border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.10);z-index:200;overflow:hidden;display:none;"></div>
+            <div id="newAutocompleteList" style="position:fixed;background:rgba(255,255,255,0.98);backdrop-filter:blur(20px);border:1px solid rgba(0,0,0,0.06);border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.10);z-index:1000;overflow:hidden;display:none;"></div>
         </div>
 
         <!-- Billing fields (revealed after client select) -->
@@ -809,6 +809,13 @@ function wireNewEntryForm() {
     // Client autocomplete
     const clientInput = document.getElementById('newClientInput');
     const autocomplete = document.getElementById('newAutocompleteList');
+    const positionAutocomplete = () => {
+        const rect = clientInput.getBoundingClientRect();
+        autocomplete.style.left  = rect.left + 'px';
+        autocomplete.style.top   = (rect.bottom + 6) + 'px';
+        autocomplete.style.width = rect.width + 'px';
+    };
+
     clientInput.addEventListener('input', () => {
         const val = clientInput.value.trim();
         autocomplete.innerHTML = '';
@@ -822,6 +829,7 @@ function wireNewEntryForm() {
             el.addEventListener('click', () => selectNewEntryClient(client));
             autocomplete.appendChild(el);
         });
+        positionAutocomplete();
         autocomplete.style.display = 'block';
     });
 
