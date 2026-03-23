@@ -823,11 +823,18 @@ let editSuperOverride = false;
 let expandedWrap    = null;
 
 function closeEntryCard(wrap) {
+    // Hold the squared-off bottom corners on the row during collapse
+    const row = wrap.querySelector('.entry-row');
+    if (row) row.style.borderRadius = '14px 14px 0 0';
+
     wrap.classList.remove('expanded');
+
     setTimeout(() => {
+        if (row) row.style.borderRadius = '';
         const inner = wrap.querySelector('.entry-detail-inner');
         if (inner) inner.innerHTML = '';
     }, 400);
+
     if (expandedWrap === wrap) {
         expandedWrap  = null;
         editingEntry  = null;
