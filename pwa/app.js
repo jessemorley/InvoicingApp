@@ -118,11 +118,15 @@ function renderOverlayClients(query) {
         const row = document.createElement('button');
         row.style.cssText = 'display:flex; width:100%; box-sizing:border-box; align-items:center; text-align:left; background:none; border:none; border-bottom:1px solid #f3f4f6; padding:14px 24px; cursor:pointer; font-family:inherit;';
         row.innerHTML = `
+            <svg width="18" height="18" fill="none" stroke="#c7c7cc" stroke-width="1.75" viewBox="0 0 24 24" style="flex-shrink:0; margin-right:16px;">
+                <circle cx="12" cy="12" r="10"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/>
+            </svg>
             <div style="flex:1; min-width:0;">
                 <div style="font-size:17px; font-weight:600; color:#111827;">${client.name}</div>
                 ${invNum ? `<div style="font-size:13px; color:#8e8e93; margin-top:2px;">${invNum}</div>` : ''}
             </div>
-            <svg width="18" height="18" fill="none" stroke="#c7c7cc" stroke-width="2" viewBox="0 0 24 24">
+            <svg width="18" height="18" fill="none" stroke="#c7c7cc" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/>
             </svg>`;
         row.addEventListener('click', () => {
