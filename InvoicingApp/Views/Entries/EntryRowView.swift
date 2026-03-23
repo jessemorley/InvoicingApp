@@ -41,7 +41,7 @@ struct EntryRowView: View {
             }
 
             if showAmount {
-                CurrencyText(amount: entry.totalAmount - entry.superAmount)
+                CurrencyText(amount: entry.totalAmount)
                     .font(.body.monospacedDigit())
                     .frame(width: 100, alignment: .trailing)
             }
