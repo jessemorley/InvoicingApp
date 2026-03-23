@@ -41,7 +41,10 @@ final class SupabaseService: ObservableObject {
             supabaseURL: supabaseURL,
             supabaseKey: key,
             options: SupabaseClientOptions(
-                auth: .init(storage: UserDefaultsAuthStorage())
+                auth: .init(
+                    storage: UserDefaultsAuthStorage(),
+                    emitLocalSessionAsInitialSession: true
+                )
             )
         )
     }
