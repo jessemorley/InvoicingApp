@@ -495,18 +495,13 @@ async function loadRecentEntries() {
     const list = document.getElementById('recentList');
     list.innerHTML = '<div class="spinner"></div>';
 
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 14);
-    const yyyy = cutoff.getFullYear();
-    const mm   = String(cutoff.getMonth() + 1).padStart(2, '0');
-    const dd   = String(cutoff.getDate()).padStart(2, '0');
-
-    const { data, error } = await sb
+    const { data: rawData, error } = await sb
         .from('entries')
         .select('*, clients(name, billing_type), invoices(invoice_number, status)')
-        .gte('date', `${yyyy}-${mm}-${dd}`)
-        .order('date', { ascending: true })
-        .limit(60);
+        .order('date', { ascending: false })
+        .limit(25);
+
+    const data = rawData?.slice().reverse();
 
     if (error || !data?.length) {
         list.innerHTML = '';
