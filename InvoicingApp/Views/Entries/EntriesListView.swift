@@ -211,20 +211,8 @@ struct EntriesListView: View {
                 }
             }
         }
-        .background {
-            NavigationLink(
-                isActive: Binding(
-                    get: { selectedInvoice != nil },
-                    set: { if !$0 { selectedInvoice = nil } }
-                )
-            ) {
-                if let invoice = selectedInvoice {
-                    InvoiceDetailView(invoice: invoice)
-                }
-            } label: {
-                EmptyView()
-            }
-            .hidden()
+        .navigationDestination(item: $selectedInvoice) { invoice in
+            InvoiceDetailView(invoice: invoice)
         }
         .confirmationDialog(
             "Delete this entry?",

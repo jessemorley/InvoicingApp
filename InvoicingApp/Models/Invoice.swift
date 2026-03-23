@@ -6,7 +6,7 @@ enum InvoiceStatus: String, Codable, CaseIterable, Sendable {
     case paid
 }
 
-struct Invoice: Codable, Identifiable, Sendable {
+struct Invoice: Codable, Identifiable, Hashable, Sendable {
     let id: UUID
     var invoiceNumber: String
     var clientId: UUID
