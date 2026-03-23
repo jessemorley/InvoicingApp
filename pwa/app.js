@@ -18,6 +18,14 @@ let currentWorkflow  = 'Apparel';
 let currentRole      = 'Photographer';
 let superOverride    = false;   // for manual clients
 
+// New entry card state
+let newEntryWrap           = null;
+let newEntrySelectedClient = null;
+let newEntryDayType        = 'full';
+let newEntryWorkflow       = 'Apparel';
+let newEntryRole           = 'Photographer';
+let newEntrySuperOverride  = false;
+
 // ─────────────────────────────────────────────
 // AUTH
 // ─────────────────────────────────────────────
@@ -39,6 +47,7 @@ function showLogin() {
 function showApp() {
     document.getElementById('loginScreen').classList.remove('active');
     document.getElementById('appShell').classList.add('active');
+    switchTab('recent', true); // skip load — loadData() will call loadRecentEntries()
 }
 
 document.getElementById('loginBtn').addEventListener('click', async () => {
@@ -67,7 +76,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 document.getElementById('signOutBtn').addEventListener('click', async () => {
     await sb.auth.signOut();
     resetForm();
-    switchTab('log');
+    switchTab('recent');
     showLogin();
     document.getElementById('tabSettings').classList.add('hidden');
 });
@@ -98,16 +107,14 @@ function setDefaultDate() {
 // ─────────────────────────────────────────────
 // TAB SWITCHING
 // ─────────────────────────────────────────────
-function switchTab(tab) {
-    document.getElementById('tabLog').classList.toggle('hidden', tab !== 'log');
+function switchTab(tab, skipLoad = false) {
     document.getElementById('tabRecent').classList.toggle('hidden', tab !== 'recent');
     document.getElementById('tabSettings').classList.toggle('hidden', tab !== 'settings');
 
-    document.getElementById('tabIconLog').className      = `w-5 h-5 ${tab === 'log'      ? 'text-gray-900' : 'text-gray-300'}`;
     document.getElementById('tabIconRecent').className   = `w-5 h-5 ${tab === 'recent'   ? 'text-gray-900' : 'text-gray-300'}`;
     document.getElementById('tabIconSettings').className = `w-5 h-5 ${tab === 'settings' ? 'text-gray-900' : 'text-gray-300'}`;
 
-    if (tab === 'recent') loadRecentEntries();
+    if (tab === 'recent' && !skipLoad) loadRecentEntries();
 }
 
 // ─────────────────────────────────────────────
@@ -513,11 +520,12 @@ async function loadRecentEntries() {
         .from('entries')
         .select('*, clients(name, billing_type), invoices(invoice_number, status)')
         .gte('date', `${yyyy}-${mm}-${dd}`)
-        .order('date', { ascending: false })
+        .order('date', { ascending: true })
         .limit(60);
 
     if (error || !data?.length) {
-        list.innerHTML = '<p class="text-slate-400 text-sm py-8 text-center">No entries in the last 14 days.</p>';
+        list.innerHTML = '';
+        appendNewEntryCard(list, 0);
         return;
     }
 
@@ -611,6 +619,528 @@ async function loadRecentEntries() {
         });
         list.appendChild(group);
     });
+
+    appendNewEntryCard(list, cardIndex);
+}
+
+function appendNewEntryCard(list, cardIndex) {
+    const newWrap = document.createElement('div');
+    newWrap.className = 'entry-card-wrap';
+    newWrap.style.animationDelay = `${cardIndex * 40 + 40}ms`;
+    newWrap.style.marginTop = '1.25rem';
+
+    const newRow = document.createElement('div');
+    newRow.className = 'entry-row entry-row-tappable';
+    newRow.innerHTML = `
+        <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; opacity:0.35;">
+            <svg width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            <span style="font-size:15px; font-weight:600; color:#9ca3af;">New Entry</span>
+        </div>`;
+
+    const newPanel = document.createElement('div');
+    newPanel.className = 'entry-detail-panel';
+    const newInner = document.createElement('div');
+    newInner.className = 'entry-detail-inner';
+    newPanel.appendChild(newInner);
+
+    newRow.addEventListener('click', openNewEntryCard);
+    newWrap.appendChild(newRow);
+    newWrap.appendChild(newPanel);
+    list.appendChild(newWrap);
+    newEntryWrap = newWrap;
+}
+
+// ─────────────────────────────────────────────
+// NEW ENTRY CARD
+// ─────────────────────────────────────────────
+function openNewEntryCard() {
+    if (expandedWrap && expandedWrap !== newEntryWrap) {
+        closeEntryCard(expandedWrap);
+    }
+    if (newEntryWrap.classList.contains('expanded')) {
+        closeNewEntryCard();
+        return;
+    }
+    expandedWrap = newEntryWrap;
+
+    const inner = newEntryWrap.querySelector('.entry-detail-inner');
+    inner.innerHTML = buildNewEntryFormHTML();
+    wireNewEntryForm();
+    newEntryWrap.classList.add('expanded');
+
+    setTimeout(() => {
+        const tabRecent = document.getElementById('tabRecent');
+        tabRecent.scrollTo({ top: tabRecent.scrollHeight, behavior: 'smooth' });
+    }, 100);
+}
+
+function closeNewEntryCard() {
+    if (!newEntryWrap) return;
+    const row = newEntryWrap.querySelector('.entry-row');
+    if (row) row.style.borderRadius = '14px 14px 0 0';
+
+    newEntryWrap.classList.remove('expanded');
+
+    setTimeout(() => {
+        if (row) row.style.borderRadius = '';
+        const inner = newEntryWrap.querySelector('.entry-detail-inner');
+        if (inner) inner.innerHTML = '';
+    }, 400);
+
+    if (expandedWrap === newEntryWrap) expandedWrap = null;
+
+    newEntrySelectedClient = null;
+    newEntryDayType        = 'full';
+    newEntryWorkflow       = 'Apparel';
+    newEntryRole           = 'Photographer';
+    newEntrySuperOverride  = false;
+}
+
+function buildNewEntryFormHTML() {
+    return `
+    <div class="space-y-3">
+        <!-- Client selector -->
+        <div id="newClientContainer" class="relative">
+            <div class="relative flex items-center">
+                <input type="text" id="newClientInput" placeholder="Client" autocomplete="off"
+                    class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 pr-10 font-medium">
+                <button id="newClearClient" class="clear-btn absolute right-3 p-1 rounded-full bg-slate-200 text-slate-500">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="newAutocompleteList" style="position:absolute;left:0;right:0;top:calc(100% + 6px);background:rgba(255,255,255,0.98);backdrop-filter:blur(20px);border:1px solid rgba(0,0,0,0.06);border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.10);z-index:200;overflow:hidden;display:none;"></div>
+        </div>
+
+        <!-- Billing fields (revealed after client select) -->
+        <div id="newEntryFields" class="reveal space-y-3">
+
+            <!-- Date -->
+            <div class="bg-slate-50 rounded-xl px-4 py-2.5">
+                <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Date</span>
+                <input type="date" id="newEntryDate" class="bg-transparent w-full text-[15px] font-medium outline-none">
+            </div>
+
+            <!-- DAY RATE -->
+            <div id="newDayRateFields" class="hidden space-y-3">
+                <div>
+                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Day Type</span>
+                    <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
+                        <button class="seg-btn active" data-newday="full">Full Day</button>
+                        <button class="seg-btn" data-newday="half">Half Day</button>
+                    </div>
+                </div>
+                <div id="newWorkflowSection" class="reveal open space-y-3">
+                    <div>
+                        <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Workflow</span>
+                        <div class="flex gap-1.5" id="newWorkflowBtns">
+                            <button class="workflow-btn active" data-newwf="Apparel">Apparel</button>
+                            <button class="workflow-btn" data-newwf="Product">Product</button>
+                            <button class="workflow-btn" data-newwf="Own Brand">Own Brand</button>
+                        </div>
+                    </div>
+                    <div id="newBrandField" class="hidden">
+                        <input type="text" id="newBrandInput" placeholder="Brand name"
+                            class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 font-medium">
+                    </div>
+                    <div id="newSkuField" class="hidden">
+                        <div class="bg-slate-50 rounded-xl px-4 py-2.5">
+                            <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">SKUs Shot</span>
+                            <input type="number" id="newSkuInput" placeholder="0" min="0"
+                                class="bg-transparent w-full text-[15px] font-medium outline-none">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HOURLY -->
+            <div id="newHourlyFields" class="hidden space-y-3">
+                <div id="newItsFields" class="hidden space-y-3">
+                    <input type="text" id="newShootClientInput" placeholder="Shoot Client"
+                        class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 font-medium">
+                    <div>
+                        <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5 px-1">Role</span>
+                        <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
+                            <button class="seg-btn active" data-newrole="Photographer">Photographer</button>
+                            <button class="seg-btn" data-newrole="Operator">Operator</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="newHourlyDescField" class="hidden">
+                    <textarea id="newHourlyDesc" rows="2" placeholder="Description"
+                        class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 resize-none font-medium"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-slate-50 rounded-xl px-4 py-2.5">
+                        <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Start</span>
+                        <input type="time" id="newStartTime" class="bg-transparent w-full text-[15px] font-medium outline-none relative">
+                    </div>
+                    <div class="bg-slate-50 rounded-xl px-4 py-2.5">
+                        <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">End</span>
+                        <input type="time" id="newFinishTime" class="bg-transparent w-full text-[15px] font-medium outline-none relative">
+                    </div>
+                </div>
+                <div class="bg-white px-4 py-2.5 rounded-xl flex items-center justify-between">
+                    <div>
+                        <span class="text-[9px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">Break</span>
+                        <div class="flex items-baseline gap-1">
+                            <input type="number" id="newBreakMinutes" value="0" min="0" step="5"
+                                class="bg-transparent border-none p-0 w-10 text-[15px] font-bold focus:ring-0 text-slate-800 outline-none">
+                            <span class="text-slate-400 text-[11px] font-bold uppercase">min</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button data-newbreakadj="15" class="h-8 px-3 bg-slate-100 rounded-lg text-[12px] font-bold active:bg-slate-200 transition-all">+15</button>
+                        <button data-newbreakadj="30" class="h-8 px-3 bg-slate-100 rounded-lg text-[12px] font-bold active:bg-slate-200 transition-all">+30</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MANUAL -->
+            <div id="newManualFields" class="hidden space-y-3">
+                <textarea id="newManualDesc" rows="2" placeholder="Description"
+                    class="input-field w-full rounded-xl px-4 py-2.5 text-[15px] placeholder-slate-400 resize-none font-medium"></textarea>
+                <div class="bg-slate-50 rounded-xl px-4 py-2.5">
+                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">Amount ($)</span>
+                    <input type="number" id="newManualAmount" placeholder="0.00" step="0.01" min="0"
+                        class="bg-transparent w-full text-[15px] font-medium outline-none">
+                </div>
+                <div class="bg-white rounded-xl px-4 py-2.5 flex items-center justify-between">
+                    <div>
+                        <p class="text-[13px] font-semibold text-slate-800">Include Super (12%)</p>
+                        <p id="newSuperToggleLabel" class="text-[11px] text-slate-400 mt-0.5">Off</p>
+                    </div>
+                    <label class="toggle-wrap">
+                        <input type="checkbox" id="newSuperToggle">
+                        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- SUMMARY -->
+            <div class="summary-card px-4 py-3 bg-white">
+                <div class="flex justify-between items-baseline mb-2">
+                    <div>
+                        <p class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Total</p>
+                        <h2 id="newDisplayTotal" class="text-3xl font-bold tracking-tight text-slate-900">$0.00</h2>
+                    </div>
+                    <div class="text-right hidden" id="newDurationBlock">
+                        <p class="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Duration</p>
+                        <p id="newDisplayDuration" class="text-base font-bold text-slate-700">0h 0m</p>
+                    </div>
+                </div>
+                <div class="space-y-1 pt-2 border-t border-slate-100">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Base</span>
+                        <span id="newDisplayBase" class="text-[13px] font-bold text-slate-600">$0.00</span>
+                    </div>
+                    <div id="newBonusLine" class="flex justify-between items-center hidden">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Bonus</span>
+                        <span id="newDisplayBonus" class="text-[13px] font-bold text-[#34c759]">+$0.00</span>
+                    </div>
+                    <div id="newSuperLine" class="flex justify-between items-center hidden">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Super (12%)</span>
+                        <span id="newDisplaySuper" class="text-[13px] font-bold text-[#007AFF]">+$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save -->
+            <div class="pt-1 pb-2">
+                <button id="newSaveBtn" class="btn-primary">Save Entry</button>
+            </div>
+
+        </div><!-- /newEntryFields -->
+    </div>`;
+}
+
+function wireNewEntryForm() {
+    const today = new Date();
+    const yyyy  = today.getFullYear();
+    const mm    = String(today.getMonth() + 1).padStart(2, '0');
+    const dd    = String(today.getDate()).padStart(2, '0');
+    document.getElementById('newEntryDate').value = `${yyyy}-${mm}-${dd}`;
+
+    // Client autocomplete
+    const clientInput = document.getElementById('newClientInput');
+    const autocomplete = document.getElementById('newAutocompleteList');
+    clientInput.addEventListener('input', () => {
+        const val = clientInput.value.trim();
+        autocomplete.innerHTML = '';
+        if (!val) { autocomplete.style.display = 'none'; return; }
+        const matches = allClients.filter(c => c.name.toLowerCase().includes(val.toLowerCase()));
+        if (!matches.length) { autocomplete.style.display = 'none'; return; }
+        matches.forEach(client => {
+            const el = document.createElement('div');
+            el.className = 'px-4 py-3 cursor-pointer active:bg-slate-50 border-b border-slate-100 last:border-0 font-bold text-slate-800 text-[15px]';
+            el.textContent = client.name;
+            el.addEventListener('click', () => selectNewEntryClient(client));
+            autocomplete.appendChild(el);
+        });
+        autocomplete.style.display = 'block';
+    });
+
+    // Clear client
+    document.getElementById('newClearClient').addEventListener('click', () => {
+        clientInput.value    = '';
+        clientInput.disabled = false;
+        document.getElementById('newClientContainer').classList.remove('has-client');
+        newEntrySelectedClient = null;
+        document.getElementById('newEntryFields').classList.remove('open');
+    });
+
+    // Day type buttons
+    newEntryWrap.querySelectorAll('[data-newday]').forEach(btn => {
+        btn.addEventListener('click', () => setNewEntryDayType(btn.dataset.newday));
+    });
+
+    // Workflow buttons
+    newEntryWrap.querySelectorAll('[data-newwf]').forEach(btn => {
+        btn.addEventListener('click', () => setNewEntryWorkflow(btn.dataset.newwf));
+    });
+
+    // Role buttons
+    newEntryWrap.querySelectorAll('[data-newrole]').forEach(btn => {
+        btn.addEventListener('click', () => setNewEntryRole(btn.dataset.newrole));
+    });
+
+    // Break adjust
+    newEntryWrap.querySelectorAll('[data-newbreakadj]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const el = document.getElementById('newBreakMinutes');
+            el.value = Math.max(0, (parseInt(el.value) || 0) + parseInt(btn.dataset.newbreakadj));
+            newEntryRecalculate();
+        });
+    });
+
+    // Live recalc
+    ['newStartTime','newFinishTime','newBreakMinutes','newSkuInput','newManualAmount','newBrandInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', newEntryRecalculate);
+    });
+
+    // Super toggle
+    const superToggle = document.getElementById('newSuperToggle');
+    if (superToggle) {
+        superToggle.addEventListener('change', function() {
+            newEntrySuperOverride = this.checked;
+            document.getElementById('newSuperLine').classList.toggle('hidden', !newEntrySuperOverride);
+            document.getElementById('newSuperToggleLabel').textContent = newEntrySuperOverride ? 'Super will be added' : 'Off';
+            newEntryRecalculate();
+        });
+    }
+
+    // Save
+    document.getElementById('newSaveBtn').addEventListener('click', saveNewEntry);
+}
+
+function selectNewEntryClient(client) {
+    newEntrySelectedClient = client;
+    const clientInput = document.getElementById('newClientInput');
+    clientInput.value    = client.name;
+    clientInput.disabled = true;
+    document.getElementById('newClientContainer').classList.add('has-client');
+    document.getElementById('newAutocompleteList').style.display = 'none';
+    showNewEntryFields(client);
+}
+
+function showNewEntryFields(client) {
+    document.getElementById('newDayRateFields').classList.add('hidden');
+    document.getElementById('newHourlyFields').classList.add('hidden');
+    document.getElementById('newManualFields').classList.add('hidden');
+    document.getElementById('newDurationBlock').classList.add('hidden');
+    document.getElementById('newBonusLine').classList.add('hidden');
+    document.getElementById('newSuperLine').classList.add('hidden');
+
+    if (client.billing_type === 'day_rate') {
+        document.getElementById('newDayRateFields').classList.remove('hidden');
+        document.getElementById('newBonusLine').classList.remove('hidden');
+        if (client.pays_super) document.getElementById('newSuperLine').classList.remove('hidden');
+        setNewEntryDayType('full');
+
+    } else if (client.billing_type === 'hourly') {
+        document.getElementById('newHourlyFields').classList.remove('hidden');
+        document.getElementById('newDurationBlock').classList.remove('hidden');
+        if (client.pays_super) document.getElementById('newSuperLine').classList.remove('hidden');
+
+        const isITS = client.name.toLowerCase().includes('images that sell');
+        document.getElementById('newItsFields').classList.toggle('hidden', !isITS);
+        document.getElementById('newHourlyDescField').classList.toggle('hidden', isITS);
+
+        document.getElementById('newStartTime').value    = '09:00';
+        document.getElementById('newFinishTime').value   = '17:00';
+        document.getElementById('newBreakMinutes').value = '0';
+
+    } else { // manual
+        document.getElementById('newManualFields').classList.remove('hidden');
+        newEntrySuperOverride = client.pays_super;
+        const toggle = document.getElementById('newSuperToggle');
+        toggle.checked = newEntrySuperOverride;
+        document.getElementById('newSuperToggleLabel').textContent = newEntrySuperOverride ? 'Super will be added' : 'Off';
+        if (client.pays_super) document.getElementById('newSuperLine').classList.remove('hidden');
+    }
+
+    document.getElementById('newEntryFields').classList.add('open');
+    newEntryRecalculate();
+
+    setTimeout(() => {
+        const tabRecent = document.getElementById('tabRecent');
+        tabRecent.scrollTo({ top: tabRecent.scrollHeight, behavior: 'smooth' });
+    }, 150);
+}
+
+function setNewEntryDayType(type) {
+    newEntryDayType = type;
+    newEntryWrap.querySelectorAll('[data-newday]').forEach(b => {
+        b.classList.toggle('active', b.dataset.newday === type);
+    });
+    const wfSection = document.getElementById('newWorkflowSection');
+    const bonusLine = document.getElementById('newBonusLine');
+    if (type === 'full') {
+        wfSection.classList.add('open');
+        bonusLine.classList.remove('hidden');
+        setNewEntryWorkflow(newEntryWorkflow);
+    } else {
+        wfSection.classList.remove('open');
+        bonusLine.classList.add('hidden');
+    }
+    newEntryRecalculate();
+}
+
+function setNewEntryWorkflow(wf) {
+    newEntryWorkflow = wf;
+    newEntryWrap.querySelectorAll('[data-newwf]').forEach(b => {
+        b.classList.toggle('active', b.dataset.newwf === wf);
+    });
+    document.getElementById('newBrandField').classList.toggle('hidden', wf !== 'Own Brand');
+    document.getElementById('newSkuField').classList.toggle('hidden', wf === 'Own Brand');
+    const bonusLine = document.getElementById('newBonusLine');
+    if (bonusLine) bonusLine.classList.toggle('hidden', wf === 'Own Brand');
+    newEntryRecalculate();
+}
+
+function setNewEntryRole(role) {
+    newEntryRole = role;
+    newEntryWrap.querySelectorAll('[data-newrole]').forEach(b => {
+        b.classList.toggle('active', b.dataset.newrole === role);
+    });
+}
+
+function newEntryRecalculate() {
+    if (!newEntrySelectedClient) return;
+    const client = newEntrySelectedClient;
+    let result = null;
+
+    if (client.billing_type === 'day_rate') {
+        const skus = document.getElementById('newSkuInput')?.value;
+        result = calcDayRate(client, newEntryDayType, newEntryWorkflow, skus);
+
+    } else if (client.billing_type === 'hourly') {
+        const start  = document.getElementById('newStartTime').value;
+        const finish = document.getElementById('newFinishTime').value;
+        const brk    = document.getElementById('newBreakMinutes').value;
+        result = calcHourly(client, start, finish, brk);
+        if (result) {
+            const h = Math.floor(result.rawMins / 60);
+            const m = result.rawMins % 60;
+            document.getElementById('newDisplayDuration').textContent = `${h}h ${m}m`;
+        }
+
+    } else { // manual
+        const amount = document.getElementById('newManualAmount').value;
+        result = calcManual(amount, newEntrySuperOverride, client.super_rate);
+    }
+
+    if (!result) return;
+    document.getElementById('newDisplayTotal').textContent = fmt(result.total);
+    document.getElementById('newDisplayBase').textContent  = fmt(result.base);
+    document.getElementById('newDisplayBonus').textContent = `+${fmt(result.bonus)}`;
+    document.getElementById('newDisplaySuper').textContent = `+${fmt(result.superAmt)}`;
+}
+
+function buildNewEntryPayload() {
+    const client = newEntrySelectedClient;
+    const date   = document.getElementById('newEntryDate').value;
+    const base   = {
+        client_id: client.id,
+        date,
+        billing_type_snapshot: client.billing_type,
+    };
+
+    if (client.billing_type === 'day_rate') {
+        const skus   = parseInt(document.getElementById('newSkuInput').value) || null;
+        const brand  = document.getElementById('newBrandInput').value.trim() || null;
+        const result = calcDayRate(client, newEntryDayType, newEntryWorkflow, skus);
+        return {
+            ...base,
+            day_type:      newEntryDayType,
+            workflow_type: newEntryDayType === 'full' ? newEntryWorkflow : null,
+            brand:         newEntryDayType === 'full' && newEntryWorkflow === 'Own Brand' ? brand : null,
+            skus:          newEntryDayType === 'full' && newEntryWorkflow !== 'Own Brand' ? skus : null,
+            base_amount:   result.base,
+            bonus_amount:  result.bonus,
+            super_amount:  result.superAmt,
+            total_amount:  result.total,
+        };
+
+    } else if (client.billing_type === 'hourly') {
+        const start  = document.getElementById('newStartTime').value;
+        const finish = document.getElementById('newFinishTime').value;
+        const brk    = parseInt(document.getElementById('newBreakMinutes').value) || 0;
+        const result = calcHourly(client, start, finish, brk);
+        const isITS  = client.name.toLowerCase().includes('images that sell');
+        return {
+            ...base,
+            start_time:    start,
+            finish_time:   finish,
+            break_minutes: brk,
+            hours_worked:  result.hoursWorked,
+            shoot_client:  isITS ? document.getElementById('newShootClientInput').value.trim() || null : null,
+            role:          isITS ? newEntryRole : null,
+            description:   !isITS ? document.getElementById('newHourlyDesc').value.trim() || null : null,
+            base_amount:   result.base,
+            bonus_amount:  0,
+            super_amount:  result.superAmt,
+            total_amount:  result.total,
+        };
+
+    } else { // manual
+        const amount = parseFloat(document.getElementById('newManualAmount').value) || 0;
+        const result = calcManual(amount, newEntrySuperOverride, client.super_rate);
+        return {
+            ...base,
+            description:  document.getElementById('newManualDesc').value.trim() || null,
+            base_amount:  result.base,
+            bonus_amount: 0,
+            super_amount: result.superAmt,
+            total_amount: result.total,
+        };
+    }
+}
+
+async function saveNewEntry() {
+    if (!newEntrySelectedClient) return;
+    const btn = document.getElementById('newSaveBtn');
+    btn.disabled    = true;
+    btn.textContent = 'Saving…';
+    try {
+        const payload = buildNewEntryPayload();
+        const { error } = await sb.from('entries').insert(payload);
+        if (error) throw error;
+        btn.textContent = 'Saved ✓';
+        btn.classList.add('success');
+        setTimeout(() => {
+            closeNewEntryCard();
+            loadRecentEntries();
+        }, 1500);
+    } catch (err) {
+        alert('Error saving entry: ' + err.message);
+        btn.disabled    = false;
+        btn.textContent = 'Save Entry';
+    }
 }
 
 // ─────────────────────────────────────────────
