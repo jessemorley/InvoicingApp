@@ -161,6 +161,12 @@
             align-items: center;
             gap: 12px;
         }
+        .entry-row-tappable {
+            cursor: pointer;
+        }
+        .entry-row-tappable:active {
+            background: #f5f5f7;
+        }
         .client-badge {
             font-size: 10px;
             font-weight: 700;
@@ -168,6 +174,40 @@
             padding: 3px 8px;
             border-radius: 6px;
             white-space: nowrap;
+        }
+        .invoice-chip {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 2px 7px;
+            border-radius: 6px;
+            border: 1px solid;
+            white-space: nowrap;
+        }
+
+        /* Edit modal */
+        .edit-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 300;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: flex-end;
+        }
+        .edit-modal.hidden { display: none; }
+        .edit-modal-inner {
+            background: #f2f2f7;
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-height: 92dvh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: env(safe-area-inset-bottom);
+            animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
         }
 
         /* Login */
@@ -435,6 +475,164 @@
             <div id="recentList" class="space-y-2">
                 <p class="text-slate-400 text-sm py-8 text-center">Loading entries...</p>
             </div>
+        </div>
+    </div>
+
+    <!-- ── Edit Entry Modal ── -->
+    <div id="editModal" class="edit-modal hidden">
+        <div class="edit-modal-inner">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-100">
+                <h2 class="text-[17px] font-bold text-slate-900">Edit Entry</h2>
+                <button onclick="closeEditModal()" class="w-9 h-9 flex items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Scrollable body -->
+            <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+
+                <!-- Date -->
+                <div class="bg-slate-50 rounded-2xl px-5 py-3">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Date</span>
+                    <input type="date" id="editDate" class="bg-transparent w-full text-[17px] font-medium outline-none">
+                </div>
+
+                <!-- ── DAY RATE EDIT FIELDS ── -->
+                <div id="editDayRateFields" class="hidden space-y-4">
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">Day Type</span>
+                        <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
+                            <button class="seg-btn" data-editday="full" onclick="setEditDayType('full')">Full Day</button>
+                            <button class="seg-btn" data-editday="half" onclick="setEditDayType('half')">Half Day</button>
+                        </div>
+                    </div>
+                    <div id="editWorkflowSection" class="space-y-4">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">Workflow</span>
+                            <div class="flex gap-2" id="editWorkflowBtns">
+                                <button class="workflow-btn" data-editwf="Apparel" onclick="setEditWorkflow('Apparel')">Apparel</button>
+                                <button class="workflow-btn" data-editwf="Product" onclick="setEditWorkflow('Product')">Product</button>
+                                <button class="workflow-btn" data-editwf="Own Brand" onclick="setEditWorkflow('Own Brand')">Own Brand</button>
+                            </div>
+                        </div>
+                        <div id="editBrandField" class="hidden">
+                            <input type="text" id="editBrandInput" placeholder="Brand name"
+                                class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium">
+                        </div>
+                        <div id="editSkuField" class="hidden">
+                            <div class="bg-slate-50 rounded-2xl px-5 py-3">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">SKUs Shot</span>
+                                <input type="number" id="editSkuInput" placeholder="0" min="0"
+                                    class="bg-transparent w-full text-[17px] font-medium outline-none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── HOURLY EDIT FIELDS ── -->
+                <div id="editHourlyFields" class="hidden space-y-4">
+                    <div id="editItsFields" class="hidden space-y-4">
+                        <input type="text" id="editShootClientInput" placeholder="Shoot Client"
+                            class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">Role</span>
+                            <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
+                                <button class="seg-btn" data-editrole="Photographer" onclick="setEditRole('Photographer')">Photographer</button>
+                                <button class="seg-btn" data-editrole="Operator" onclick="setEditRole('Operator')">Operator</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="editHourlyDescField" class="hidden">
+                        <textarea id="editHourlyDesc" rows="2" placeholder="Description"
+                            class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-slate-50 rounded-2xl px-5 py-3">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Start</span>
+                            <input type="time" id="editStartTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
+                        </div>
+                        <div class="bg-slate-50 rounded-2xl px-5 py-3">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">End</span>
+                            <input type="time" id="editFinishTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Break</span>
+                            <div class="flex items-baseline gap-1">
+                                <input type="number" id="editBreakMinutes" value="0" min="0" step="5"
+                                    class="bg-transparent border-none p-0 w-12 text-[17px] font-bold focus:ring-0 text-slate-800 outline-none">
+                                <span class="text-slate-400 text-xs font-bold uppercase">min</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="adjustEditBreak(15)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all">+15</button>
+                            <button onclick="adjustEditBreak(30)" class="h-10 px-4 bg-slate-100 rounded-xl text-[13px] font-bold active:bg-slate-200 transition-all">+30</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── MANUAL EDIT FIELDS ── -->
+                <div id="editManualFields" class="hidden space-y-4">
+                    <textarea id="editManualDesc" rows="2" placeholder="Description"
+                        class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"></textarea>
+                    <div class="bg-slate-50 rounded-2xl px-5 py-3">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Amount ($)</span>
+                        <input type="number" id="editManualAmount" placeholder="0.00" step="0.01" min="0"
+                            class="bg-transparent w-full text-[17px] font-medium outline-none">
+                    </div>
+                    <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
+                        <div>
+                            <p class="text-[15px] font-semibold text-slate-800">Include Super (12%)</p>
+                            <p id="editSuperToggleLabel" class="text-[12px] text-slate-400 mt-0.5">Off</p>
+                        </div>
+                        <label class="toggle-wrap">
+                            <input type="checkbox" id="editSuperToggle">
+                            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Summary card -->
+                <div class="summary-card p-6 bg-white">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total</p>
+                            <h2 id="editDisplayTotal" class="text-4xl font-bold tracking-tight text-slate-900">$0.00</h2>
+                        </div>
+                        <div class="text-right" id="editDurationBlock">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Duration</p>
+                            <p id="editDisplayDuration" class="text-xl font-bold text-slate-700">0h 0m</p>
+                        </div>
+                    </div>
+                    <div class="space-y-1.5 pt-4 border-t border-slate-100">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Base</span>
+                            <span id="editDisplayBase" class="text-[14px] font-bold text-slate-600">$0.00</span>
+                        </div>
+                        <div id="editBonusLine" class="flex justify-between items-center hidden">
+                            <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Bonus</span>
+                            <span id="editDisplayBonus" class="text-[14px] font-bold text-[#34c759]">+$0.00</span>
+                        </div>
+                        <div id="editSuperLine" class="flex justify-between items-center">
+                            <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Super (12%)</span>
+                            <span id="editDisplaySuper" class="text-[14px] font-bold text-[#007AFF]">+$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /scrollable body -->
+
+            <!-- Footer buttons -->
+            <div class="px-5 py-4 space-y-3 border-t border-slate-100">
+                <button id="editSaveBtn" onclick="saveEdit()" class="btn-primary">Save Changes</button>
+                <button onclick="deleteEntry()" class="w-full py-4 rounded-2xl text-[15px] font-bold text-red-500 bg-red-50 active:bg-red-100 transition-colors border-none cursor-pointer">Delete Entry</button>
+            </div>
+
         </div>
     </div>
 
@@ -976,7 +1174,7 @@ async function loadRecentEntries() {
 
     const { data, error } = await sb
         .from('entries')
-        .select('*, clients(name, billing_type)')
+        .select('*, clients(name, billing_type), invoices(invoice_number, status)')
         .gte('date', `${yyyy}-${mm}-${dd}`)
         .order('date', { ascending: false })
         .limit(60);
@@ -994,9 +1192,16 @@ async function loadRecentEntries() {
         const description = entryDescription(entry);
         const dateStr     = formatEntryDate(entry.date);
         const total       = fmt(entry.total_amount);
+        const inv         = entry.invoices;
+        const isInvoiced  = !!entry.invoice_id;
+
+        const chipHtml = inv ? (() => {
+            const chipColor = invoiceChipColors[inv.status] || 'bg-slate-100 text-slate-500 border-slate-200';
+            return `<span class="invoice-chip ${chipColor}">#${String(inv.invoice_number).padStart(3, '0')}</span>`;
+        })() : '';
 
         const el = document.createElement('div');
-        el.className = 'entry-row';
+        el.className = 'entry-row' + (isInvoiced ? '' : ' entry-row-tappable');
         el.innerHTML = `
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 mb-1">
@@ -1005,7 +1210,14 @@ async function loadRecentEntries() {
                 </div>
                 <p class="text-[14px] font-semibold text-slate-700 truncate">${description}</p>
             </div>
-            <span class="text-[16px] font-bold text-slate-900 shrink-0">${total}</span>`;
+            <div class="flex flex-col items-end gap-1 shrink-0">
+                <span class="text-[16px] font-bold text-slate-900">${total}</span>
+                ${chipHtml}
+            </div>`;
+
+        if (!isInvoiced) {
+            el.addEventListener('click', () => openEditModal(entry));
+        }
         list.appendChild(el);
     });
 }
@@ -1014,6 +1226,12 @@ const badgeColors = {
     'day_rate': 'bg-purple-100 text-purple-700',
     'hourly':   'bg-blue-100 text-blue-700',
     'manual':   'bg-amber-100 text-amber-700',
+};
+
+const invoiceChipColors = {
+    'draft':  'bg-orange-50 text-orange-600 border-orange-200',
+    'issued': 'bg-blue-50 text-blue-600 border-blue-200',
+    'paid':   'bg-green-50 text-green-600 border-green-200',
 };
 
 function entryDescription(entry) {
@@ -1030,6 +1248,289 @@ function formatEntryDate(dateStr) {
     const [y, m, d] = dateStr.split('-');
     const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
     return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+}
+
+// ─────────────────────────────────────────────
+// EDIT MODAL
+// ─────────────────────────────────────────────
+let editingEntry    = null;
+let editingClient   = null;
+let editDayType     = 'full';
+let editWorkflow    = 'Apparel';
+let editRole        = 'Photographer';
+let editSuperOverride = false;
+
+function openEditModal(entry) {
+    editingEntry  = entry;
+    // Find the client from allClients so we have rate data
+    editingClient = allClients.find(c => c.id === entry.client_id) || null;
+
+    const billing = entry.billing_type_snapshot;
+
+    // Populate date
+    document.getElementById('editDate').value = entry.date || '';
+
+    // Hide all billing-specific sections
+    document.getElementById('editDayRateFields').classList.add('hidden');
+    document.getElementById('editHourlyFields').classList.add('hidden');
+    document.getElementById('editManualFields').classList.add('hidden');
+
+    if (billing === 'day_rate') {
+        document.getElementById('editDayRateFields').classList.remove('hidden');
+
+        editDayType = entry.day_type || 'full';
+        editWorkflow = entry.workflow_type || 'Apparel';
+
+        // Set day type buttons
+        document.querySelectorAll('[data-editday]').forEach(b => {
+            b.classList.toggle('active', b.dataset.editday === editDayType);
+        });
+
+        // Show/hide workflow section
+        const wfSection = document.getElementById('editWorkflowSection');
+        if (editDayType === 'full') {
+            wfSection.classList.remove('hidden');
+            setEditWorkflow(editWorkflow);
+            // Set brand/sku
+            if (editWorkflow === 'Own Brand') {
+                document.getElementById('editBrandInput').value = entry.brand || '';
+            } else {
+                document.getElementById('editSkuInput').value = entry.skus != null ? entry.skus : '';
+            }
+        } else {
+            wfSection.classList.add('hidden');
+        }
+
+        document.getElementById('editBonusLine').classList.toggle('hidden', editDayType !== 'full' || editWorkflow === 'Own Brand');
+        document.getElementById('editDurationBlock').classList.add('hidden');
+
+    } else if (billing === 'hourly') {
+        document.getElementById('editHourlyFields').classList.remove('hidden');
+
+        const isITS = editingClient?.name?.toLowerCase().includes('images that sell');
+        document.getElementById('editItsFields').classList.toggle('hidden', !isITS);
+        document.getElementById('editHourlyDescField').classList.toggle('hidden', isITS);
+
+        if (isITS) {
+            document.getElementById('editShootClientInput').value = entry.shoot_client || '';
+            editRole = entry.role || 'Photographer';
+            document.querySelectorAll('[data-editrole]').forEach(b => {
+                b.classList.toggle('active', b.dataset.editrole === editRole);
+            });
+        } else {
+            document.getElementById('editHourlyDesc').value = entry.description || '';
+        }
+
+        document.getElementById('editStartTime').value  = (entry.start_time  || '').substring(0, 5);
+        document.getElementById('editFinishTime').value = (entry.finish_time || '').substring(0, 5);
+        document.getElementById('editBreakMinutes').value = entry.break_minutes || 0;
+
+        document.getElementById('editBonusLine').classList.add('hidden');
+        document.getElementById('editDurationBlock').classList.remove('hidden');
+
+    } else { // manual
+        document.getElementById('editManualFields').classList.remove('hidden');
+        document.getElementById('editManualDesc').value   = entry.description || '';
+        document.getElementById('editManualAmount').value = entry.base_amount != null ? entry.base_amount : '';
+
+        editSuperOverride = (entry.super_amount > 0);
+        const superToggle = document.getElementById('editSuperToggle');
+        superToggle.checked = editSuperOverride;
+        document.getElementById('editSuperToggleLabel').textContent = editSuperOverride ? 'On' : 'Off';
+
+        document.getElementById('editBonusLine').classList.add('hidden');
+        document.getElementById('editDurationBlock').classList.add('hidden');
+    }
+
+    editRecalculate();
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
+    editingEntry  = null;
+    editingClient = null;
+}
+
+function setEditDayType(type) {
+    editDayType = type;
+    document.querySelectorAll('[data-editday]').forEach(b => {
+        b.classList.toggle('active', b.dataset.editday === type);
+    });
+    const wfSection = document.getElementById('editWorkflowSection');
+    if (type === 'full') {
+        wfSection.classList.remove('hidden');
+        setEditWorkflow(editWorkflow);
+    } else {
+        wfSection.classList.add('hidden');
+        document.getElementById('editBonusLine').classList.add('hidden');
+    }
+    editRecalculate();
+}
+
+function setEditWorkflow(wf) {
+    editWorkflow = wf;
+    document.querySelectorAll('[data-editwf]').forEach(b => {
+        b.classList.toggle('active', b.dataset.editwf === wf);
+    });
+    document.getElementById('editBrandField').classList.toggle('hidden', wf !== 'Own Brand');
+    document.getElementById('editSkuField').classList.toggle('hidden', wf === 'Own Brand');
+    document.getElementById('editBonusLine').classList.toggle('hidden', wf === 'Own Brand');
+    editRecalculate();
+}
+
+function setEditRole(role) {
+    editRole = role;
+    document.querySelectorAll('[data-editrole]').forEach(b => {
+        b.classList.toggle('active', b.dataset.editrole === role);
+    });
+    editRecalculate();
+}
+
+function adjustEditBreak(delta) {
+    const el = document.getElementById('editBreakMinutes');
+    el.value = (parseInt(el.value) || 0) + delta;
+    editRecalculate();
+}
+
+['editStartTime','editFinishTime','editBreakMinutes','editSkuInput','editManualAmount','editBrandInput']
+    .forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', editRecalculate);
+    });
+
+document.getElementById('editSuperToggle').addEventListener('change', function() {
+    editSuperOverride = this.checked;
+    document.getElementById('editSuperToggleLabel').textContent = editSuperOverride ? 'On' : 'Off';
+    editRecalculate();
+});
+
+function editRecalculate() {
+    if (!editingEntry) return;
+    const billing = editingEntry.billing_type_snapshot;
+    const client  = editingClient;
+    let result;
+
+    if (billing === 'day_rate' && client) {
+        const skus = parseInt(document.getElementById('editSkuInput').value) || null;
+        result = calcDayRate(client, editDayType, editDayType === 'full' ? editWorkflow : null, skus);
+        document.getElementById('editDisplayDuration').textContent = '';
+        document.getElementById('editBonusLine').classList.toggle('hidden',
+            editDayType !== 'full' || editWorkflow === 'Own Brand');
+
+    } else if (billing === 'hourly' && client) {
+        const start = document.getElementById('editStartTime').value;
+        const finish = document.getElementById('editFinishTime').value;
+        const brk   = parseInt(document.getElementById('editBreakMinutes').value) || 0;
+        result = calcHourly(client, start, finish, brk);
+        const totalMins = Math.round(result.hoursWorked * 60);
+        document.getElementById('editDisplayDuration').textContent =
+            `${Math.floor(totalMins / 60)}h ${totalMins % 60}m`;
+
+    } else if (billing === 'manual') {
+        const amount = parseFloat(document.getElementById('editManualAmount').value) || 0;
+        const superRate = client?.super_rate ?? 0.12;
+        result = calcManual(amount, editSuperOverride, superRate);
+
+    } else {
+        return;
+    }
+
+    if (result) {
+        document.getElementById('editDisplayTotal').textContent = fmt(result.total);
+        document.getElementById('editDisplayBase').textContent  = fmt(result.base);
+        document.getElementById('editDisplayBonus').textContent = '+' + fmt(result.bonus || 0);
+        document.getElementById('editDisplaySuper').textContent = '+' + fmt(result.superAmt || 0);
+        document.getElementById('editSuperLine').classList.toggle('hidden', (result.superAmt || 0) === 0);
+    }
+}
+
+function buildEditPayload() {
+    const entry   = editingEntry;
+    const client  = editingClient;
+    const billing = entry.billing_type_snapshot;
+    const date    = document.getElementById('editDate').value;
+    const base    = { date };
+
+    if (billing === 'day_rate') {
+        const skus   = parseInt(document.getElementById('editSkuInput').value) || null;
+        const brand  = document.getElementById('editBrandInput').value.trim() || null;
+        const result = calcDayRate(client, editDayType, editDayType === 'full' ? editWorkflow : null, skus);
+        return {
+            ...base,
+            day_type:      editDayType,
+            workflow_type: editDayType === 'full' ? editWorkflow : null,
+            brand:         editDayType === 'full' && editWorkflow === 'Own Brand' ? brand : null,
+            skus:          editDayType === 'full' && editWorkflow !== 'Own Brand' ? skus : null,
+            base_amount:   result.base,
+            bonus_amount:  result.bonus,
+            super_amount:  result.superAmt,
+            total_amount:  result.total,
+        };
+
+    } else if (billing === 'hourly') {
+        const start  = document.getElementById('editStartTime').value;
+        const finish = document.getElementById('editFinishTime').value;
+        const brk    = parseInt(document.getElementById('editBreakMinutes').value) || 0;
+        const result = calcHourly(client, start, finish, brk);
+        const isITS  = client?.name?.toLowerCase().includes('images that sell');
+        return {
+            ...base,
+            start_time:    start,
+            finish_time:   finish,
+            break_minutes: brk,
+            hours_worked:  result.hoursWorked,
+            shoot_client:  isITS ? document.getElementById('editShootClientInput').value.trim() || null : null,
+            role:          isITS ? editRole : null,
+            description:   !isITS ? document.getElementById('editHourlyDesc').value.trim() || null : null,
+            base_amount:   result.base,
+            bonus_amount:  0,
+            super_amount:  result.superAmt,
+            total_amount:  result.total,
+        };
+
+    } else { // manual
+        const amount = parseFloat(document.getElementById('editManualAmount').value) || 0;
+        const superRate = client?.super_rate ?? 0.12;
+        const result = calcManual(amount, editSuperOverride, superRate);
+        return {
+            ...base,
+            description:  document.getElementById('editManualDesc').value.trim() || null,
+            base_amount:  result.base,
+            bonus_amount: 0,
+            super_amount: result.superAmt,
+            total_amount: result.total,
+        };
+    }
+}
+
+async function saveEdit() {
+    const btn = document.getElementById('editSaveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    try {
+        const payload = buildEditPayload();
+        const { error } = await sb.from('entries').update(payload).eq('id', editingEntry.id);
+        if (error) throw error;
+        closeEditModal();
+        loadRecentEntries();
+    } catch (err) {
+        alert('Error saving entry: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+    }
+}
+
+async function deleteEntry() {
+    if (!confirm('Delete this entry? This cannot be undone.')) return;
+    try {
+        const { error } = await sb.from('entries').delete().eq('id', editingEntry.id);
+        if (error) throw error;
+        closeEditModal();
+        loadRecentEntries();
+    } catch (err) {
+        alert('Error deleting entry: ' + err.message);
+    }
 }
 
 // ─────────────────────────────────────────────
