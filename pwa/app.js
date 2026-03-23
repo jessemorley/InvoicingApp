@@ -73,8 +73,10 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('newEntryFab').addEventListener('click', () => {
-    newEntryWrap?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    document.getElementById('newClientInput')?.focus();
+    if (!newEntryWrap) return;
+    newEntryWrap.style.display = '';
+    document.getElementById('tabRecent').scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => document.getElementById('newClientInput')?.focus(), 300);
 });
 
 document.getElementById('signOutBtn').addEventListener('click', async () => {
@@ -609,13 +611,13 @@ async function loadRecentEntries() {
     appendNewEntryCard(list, cardIndex);
 }
 
-function appendNewEntryCard(list, cardIndex) {
+function appendNewEntryCard(list, _cardIndex) {
     const newWrap = document.createElement('div');
     newWrap.className = 'entry-card-wrap';
-    newWrap.style.animationDelay = `${cardIndex * 40 + 40}ms`;
-    newWrap.style.marginTop = '1.25rem';
+    newWrap.style.marginBottom = '1rem';
+    newWrap.style.display = 'none';
     newWrap.innerHTML = buildNewEntryFormHTML();
-    list.appendChild(newWrap);
+    list.prepend(newWrap);
     newEntryWrap = newWrap;
     wireNewEntryForm();
 }
@@ -632,7 +634,8 @@ function closeNewEntryCard() {
     newEntryRole           = 'Photographer';
     newEntrySuperOverride  = false;
 
-    // Re-render the card fresh
+    // Hide and re-render the card fresh
+    newEntryWrap.style.display = 'none';
     newEntryWrap.innerHTML = buildNewEntryFormHTML();
     wireNewEntryForm();
 }
