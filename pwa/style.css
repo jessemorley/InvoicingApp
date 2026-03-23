@@ -339,12 +339,12 @@
             top: 0; left: 0; right: 0;
             z-index: 50;
             pointer-events: none;
+            background: linear-gradient(to bottom, #F2F3F5 40%, transparent);
         }
         #entriesHeader * {
             pointer-events: auto;
         }
         #entriesHeaderTop {
-            background-color: #F2F3F5;
             padding: 24px 20px 8px 20px;
         }
         #headerTransitionZone { display: none; }
