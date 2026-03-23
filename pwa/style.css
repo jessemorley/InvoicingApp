@@ -334,7 +334,18 @@
             position: absolute;
             top: 0; left: 0; right: 0;
             z-index: 10;
-            background: linear-gradient(to bottom, #F2F3F5 55%, transparent);
+            background: linear-gradient(to bottom, #F2F3F5 68%, transparent);
+            pointer-events: none;
+        }
+        #entriesHeader::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 50%;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            mask-image: linear-gradient(to bottom, transparent, black);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black);
             pointer-events: none;
         }
         #entriesHeader * {
