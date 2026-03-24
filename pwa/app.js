@@ -1490,7 +1490,7 @@ async function loadInvoices() {
     const { data, error } = await sb
         .from('invoices')
         .select('id, invoice_number, status, issued_date, subtotal, clients(name), entries(date)')
-        .order('invoice_number', { ascending: false })
+        .order('issued_date', { ascending: false })
         .range(0, INVOICES_PAGE_SIZE - 1);
 
     if (error || !data?.length) {
@@ -1518,7 +1518,7 @@ async function loadMoreInvoices() {
     const { data, error } = await sb
         .from('invoices')
         .select('id, invoice_number, status, issued_date, subtotal, clients(name), entries(date)')
-        .order('invoice_number', { ascending: false })
+        .order('issued_date', { ascending: false })
         .range(from, to);
 
     if (error || !data?.length) {
@@ -1597,7 +1597,7 @@ function renderInvoices(data) {
             list.appendChild(grp);
         }
     } else {
-        // Chronological — flat list, newest first (data already ordered by invoice_number desc)
+        // Chronological — flat list, newest first (data already ordered by issued_date desc)
         const grp = document.createElement('div');
         grp.className = 'week-group';
         data.forEach((inv, i) => grp.appendChild(buildInvoiceCard(inv, i)));
