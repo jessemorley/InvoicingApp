@@ -1556,6 +1556,7 @@ function collapseInvoiceCard(wrap) {
 // ─────────────────────────────────────────────
 
 let businessDetails = null;
+let currentPreviewHTML = null;
 
 function fmtInvoiceCurrency(value) {
     return new Intl.NumberFormat('en-AU', {
@@ -1744,6 +1745,7 @@ function openInvoicePreviewById(id) {
 
 function openInvoicePreview(inv) {
     const html = buildInvoiceHTML(inv);
+    currentPreviewHTML = html;
     const overlay   = document.getElementById('invoicePreviewOverlay');
     const frame     = document.getElementById('invoicePreviewFrame');
     const scaleWrap = document.getElementById('invoicePreviewScaleWrap');
@@ -1797,7 +1799,10 @@ document.getElementById('invoicePreviewBack').addEventListener('click', () => {
 });
 
 document.getElementById('invoicePreviewPrint').addEventListener('click', () => {
-    document.getElementById('invoicePreviewFrame').contentWindow.print();
+    if (!currentPreviewHTML) return;
+    const blob = new Blob([currentPreviewHTML], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
 });
 
 function clientBadgeColor(name) {
