@@ -32,6 +32,10 @@ let newEntryDayType        = 'full';
 let newEntryWorkflow       = 'Apparel';
 let newEntryRole           = 'Photographer';
 
+// Entries lazy-load state
+let entriesOldestDate = null;  // earliest date fetched so far (Date object)
+let entriesAllLoaded  = false; // true once we've hit the beginning of history
+
 // ─────────────────────────────────────────────
 // AUTH
 // ─────────────────────────────────────────────
@@ -600,17 +604,34 @@ function resetForm() {
 // ─────────────────────────────────────────────
 // RECENT ENTRIES
 // ─────────────────────────────────────────────
+
+// Returns a YYYY-MM-DD string in local time
+function localDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+// Returns a YYYY-MM-DD string for `weeks` weeks before today
+function weeksAgoDateStr(weeks) {
+    const d = new Date();
+    d.setDate(d.getDate() - weeks * 7);
+    return localDateStr(d);
+}
+
 async function loadRecentEntries() {
+    entriesOldestDate = null;
+    entriesAllLoaded  = false;
     const list = document.getElementById('recentList');
     list.innerHTML = '<div class="spinner"></div>';
 
+    const fromDate = weeksAgoDateStr(4);
     const { data: rawData, error } = await sb
         .from('entries')
         .select('*, clients(name, billing_type), invoices(invoice_number, status)')
-        .order('date', { ascending: false })
-        .limit(25);
-
-    const data = rawData;
+        .gte('date', fromDate)
+        .order('date', { ascending: false });
 
     // Build latest invoice map for client picker
     clientLatestInvoiceMap = {};
@@ -622,12 +643,86 @@ async function loadRecentEntries() {
         }
     });
 
-    if (error || !data?.length) {
+    if (error || !rawData?.length) {
         list.innerHTML = '';
         appendNewEntryCard(list, 0);
         return;
     }
 
+    // Track the oldest date we've loaded so the next page starts before it
+    const oldest = rawData[rawData.length - 1].date;
+    entriesOldestDate = oldest;
+
+    list.innerHTML = '';
+    renderEntryWeeks(list, rawData, 0);
+    updateLoadMoreSentinel();
+    appendNewEntryCard(list, 0);
+}
+
+async function loadMoreEntries() {
+    if (entriesAllLoaded || !entriesOldestDate) return;
+
+    const sentinel = document.getElementById('entriesLoadMore');
+    if (sentinel) sentinel.innerHTML = '<div class="spinner" style="margin:16px auto;width:24px;height:24px;"></div>';
+
+    const toDate   = entriesOldestDate; // exclusive upper bound (we already have this date)
+    const fromDate = weeksAgoDateStr_before(toDate, 4);
+
+    const { data: rawData, error } = await sb
+        .from('entries')
+        .select('*, clients(name, billing_type), invoices(invoice_number, status)')
+        .gte('date', fromDate)
+        .lt('date', toDate)
+        .order('date', { ascending: false });
+
+    if (error || !rawData?.length) {
+        entriesAllLoaded = true;
+        updateLoadMoreSentinel();
+        return;
+    }
+
+    // Update latest invoice map with new entries
+    (rawData || []).forEach(entry => {
+        const name = entry.clients?.name;
+        const inv  = entry.invoices?.invoice_number;
+        if (name && inv && !clientLatestInvoiceMap[name]) {
+            clientLatestInvoiceMap[name] = inv;
+        }
+    });
+
+    entriesOldestDate = rawData[rawData.length - 1].date;
+
+    const list = document.getElementById('recentList');
+    const existingCardCount = list.querySelectorAll('.entry-card-wrap').length;
+    renderEntryWeeks(list, rawData, existingCardCount, /* beforeSentinel= */ true);
+    updateLoadMoreSentinel();
+}
+
+// Returns a YYYY-MM-DD string for `weeks` weeks before a given date string
+function weeksAgoDateStr_before(dateStr, weeks) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() - weeks * 7);
+    return localDateStr(date);
+}
+
+function updateLoadMoreSentinel() {
+    let sentinel = document.getElementById('entriesLoadMore');
+    if (!sentinel) {
+        sentinel = document.createElement('div');
+        sentinel.id = 'entriesLoadMore';
+        sentinel.style.cssText = 'text-align:center;padding:16px 0 8px;color:#999;font-size:13px;';
+        const list = document.getElementById('recentList');
+        list.appendChild(sentinel);
+    }
+    if (entriesAllLoaded) {
+        sentinel.textContent = '';
+    } else {
+        sentinel.innerHTML = '<div class="spinner" style="margin:0 auto;width:24px;height:24px;opacity:0.4;"></div>';
+    }
+}
+
+function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
     // Group entries by ISO week
     const weeks = [];
     const weekIndex = {};
@@ -641,17 +736,16 @@ async function loadRecentEntries() {
         weekIndex[key].entries.push(entry);
     });
 
-    list.innerHTML = '';
-    let cardIndex = 0;
+    const sentinel = document.getElementById('entriesLoadMore');
+    let cardIndex = startCardIndex;
     weeks.forEach(({ weekStart, entries }) => {
         // Week header
         const header = document.createElement('div');
         header.className = 'week-header';
         header.style.animation = `cardIn 0.3s ease both`;
-        header.style.animationDelay = `${cardIndex * 40}ms`;
+        header.style.animationDelay = `${Math.min(cardIndex, 6) * 40}ms`;
         const weekTotal = entries.reduce((sum, e) => sum + ((e.total_amount || 0) - (e.super_amount || 0)), 0);
         header.innerHTML = `<span>${formatWeekLabel(weekStart)}</span><span>${fmt(weekTotal)}</span>`;
-        list.appendChild(header);
 
         // Cards
         const group = document.createElement('div');
@@ -692,7 +786,7 @@ async function loadRecentEntries() {
 
             const wrap = document.createElement('div');
             wrap.className = 'entry-card-wrap';
-            wrap.style.animationDelay = `${cardIndex * 40}ms`;
+            wrap.style.animationDelay = `${Math.min(cardIndex, 6) * 40}ms`;
             cardIndex++;
 
             const detailPanel = document.createElement('div');
@@ -707,14 +801,18 @@ async function loadRecentEntries() {
                 el.addEventListener('click', () => openEntryCard(wrap, entry, true));
             }
             wrap.appendChild(el);
-
             wrap.appendChild(detailPanel);
             group.appendChild(wrap);
         });
-        list.appendChild(group);
-    });
 
-    appendNewEntryCard(list, cardIndex);
+        if (beforeSentinel && sentinel) {
+            list.insertBefore(header, sentinel);
+            list.insertBefore(group, sentinel);
+        } else {
+            list.appendChild(header);
+            list.appendChild(group);
+        }
+    });
 }
 
 function appendNewEntryCard(_list, _cardIndex) {
@@ -1222,6 +1320,27 @@ async function saveNewEntry() {
         }
         indicator.classList.remove('visible');
     });
+})();
+
+// ─────────────────────────────────────────────
+// INFINITE SCROLL — Entries
+// ─────────────────────────────────────────────
+let entriesScrollLoading = false;
+
+async function checkEntriesScroll() {
+    if (entriesScrollLoading || entriesAllLoaded) return;
+    const scroller = document.getElementById('tabRecent');
+    const distFromBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+    if (distFromBottom < 300) {
+        entriesScrollLoading = true;
+        await loadMoreEntries();
+        entriesScrollLoading = false;
+    }
+}
+
+(function() {
+    const scroller = document.getElementById('tabRecent');
+    scroller.addEventListener('scroll', checkEntriesScroll, { passive: true });
 })();
 
 // ─────────────────────────────────────────────
