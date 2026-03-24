@@ -1438,6 +1438,22 @@ async function checkEntriesScroll() {
 })();
 
 // ─────────────────────────────────────────────
+// INFINITE SCROLL — Invoices
+// ─────────────────────────────────────────────
+(function() {
+    const scroller = document.getElementById('invoicesScroll');
+    scroller.addEventListener('scroll', async () => {
+        if (invoicesScrollLoading || invoicesAllLoaded) return;
+        const distFromBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+        if (distFromBottom < 300) {
+            invoicesScrollLoading = true;
+            await loadMoreInvoices();
+            invoicesScrollLoading = false;
+        }
+    }, { passive: true });
+})();
+
+// ─────────────────────────────────────────────
 // VIEW SWITCHING
 // ─────────────────────────────────────────────
 function switchView(index) {
@@ -1460,31 +1476,93 @@ function switchView(index) {
 // ─────────────────────────────────────────────
 let expandedInvoiceWrap = null;
 
+let invoicesAllLoaded     = false;
+let invoicesScrollLoading = false;
+const INVOICES_PAGE_SIZE  = 12;
+
 async function loadInvoices() {
-    invoicesLoaded = true;
+    invoicesLoaded    = true;
+    invoicesAllLoaded = false;
+    invoicesCache     = [];
     const list = document.getElementById('invoicesList');
     list.innerHTML = '<div class="spinner"></div>';
 
     const { data, error } = await sb
         .from('invoices')
-        .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand)')
-        .order('invoice_number', { ascending: false });
+        .select('id, invoice_number, status, issued_date, subtotal, clients(name), entries(date)')
+        .order('invoice_number', { ascending: false })
+        .range(0, INVOICES_PAGE_SIZE - 1);
 
     if (error || !data?.length) {
         list.innerHTML = '<p class="text-gray-400 text-sm py-8 text-center">No invoices yet</p>';
         return;
     }
 
-    // Sort by latest entry date descending (newest invoice period first)
-    data.sort((a, b) => {
-        const aDate = (a.entries || []).map(e => e.date || '').filter(Boolean).sort().pop() || '';
-        const bDate = (b.entries || []).map(e => e.date || '').filter(Boolean).sort().pop() || '';
-        return bDate > aDate ? 1 : bDate < aDate ? -1 : 0;
-    });
+    if (data.length < INVOICES_PAGE_SIZE) invoicesAllLoaded = true;
 
     invoicesCache = data;
     updateSortBtnIcon();
-    renderInvoices(data);
+    renderInvoices(invoicesCache);
+    updateInvoicesLoadMoreSentinel();
+}
+
+async function loadMoreInvoices() {
+    if (invoicesAllLoaded) return;
+
+    const sentinel = document.getElementById('invoicesLoadMore');
+    if (sentinel) sentinel.innerHTML = '<div class="spinner" style="margin:16px auto;width:24px;height:24px;"></div>';
+
+    const from = invoicesCache.length;
+    const to   = from + INVOICES_PAGE_SIZE - 1;
+
+    const { data, error } = await sb
+        .from('invoices')
+        .select('id, invoice_number, status, issued_date, subtotal, clients(name), entries(date)')
+        .order('invoice_number', { ascending: false })
+        .range(from, to);
+
+    if (error || !data?.length) {
+        invoicesAllLoaded = true;
+        updateInvoicesLoadMoreSentinel();
+        return;
+    }
+
+    if (data.length < INVOICES_PAGE_SIZE) invoicesAllLoaded = true;
+
+    const startIndex = invoicesCache.length;
+    invoicesCache = [...invoicesCache, ...data];
+
+    // Append new cards directly — don't re-render (sort toggle operates on full cache)
+    const list = document.getElementById('invoicesList');
+    const sentinel2 = document.getElementById('invoicesLoadMore');
+    if (invoicesSortMode === 'chronological') {
+        const grp = list.querySelector('.week-group') || (() => {
+            const g = document.createElement('div');
+            g.className = 'week-group';
+            list.insertBefore(g, sentinel2);
+            return g;
+        })();
+        data.forEach((inv, i) => grp.appendChild(buildInvoiceCard(inv, startIndex + i)));
+    } else {
+        // In status mode, full re-render is simplest since groupings may change
+        renderInvoices(invoicesCache);
+    }
+
+    updateInvoicesLoadMoreSentinel();
+}
+
+function updateInvoicesLoadMoreSentinel() {
+    const list = document.getElementById('invoicesList');
+    let sentinel = document.getElementById('invoicesLoadMore');
+    if (!sentinel) {
+        sentinel = document.createElement('div');
+        sentinel.id = 'invoicesLoadMore';
+        sentinel.style.cssText = 'text-align:center;padding:16px 0 8px;';
+        list.appendChild(sentinel);
+    }
+    sentinel.innerHTML = invoicesAllLoaded
+        ? ''
+        : '<div class="spinner" style="margin:0 auto;width:24px;height:24px;opacity:0.4;"></div>';
 }
 
 function renderInvoices(data) {
@@ -1525,6 +1603,8 @@ function renderInvoices(data) {
         data.forEach((inv, i) => grp.appendChild(buildInvoiceCard(inv, i)));
         list.appendChild(grp);
     }
+
+    updateInvoicesLoadMoreSentinel();
 }
 
 // SVG for "tap to group by status" (funnel / decreasing lines)
@@ -1554,7 +1634,11 @@ function toggleInvoiceSort() {
 }());
 
 function invoiceSubtotal(inv) {
-    if (!inv.entries?.length) return 0;
+    // Use stored subtotal when entries haven't been loaded yet
+    if (inv.subtotal != null && !inv.entries?.some(e => e.total_amount != null)) {
+        return inv.subtotal;
+    }
+    if (!inv.entries?.length) return inv.subtotal || 0;
     return inv.entries.reduce((s, e) => s + ((e.total_amount || 0) - (e.super_amount || 0)), 0);
 }
 
@@ -1607,7 +1691,7 @@ function buildInvoiceCard(inv, index) {
     return wrap;
 }
 
-function toggleInvoiceCard(wrap, inv) {
+async function toggleInvoiceCard(wrap, inv) {
     if (expandedInvoiceWrap && expandedInvoiceWrap !== wrap) {
         collapseInvoiceCard(expandedInvoiceWrap);
     }
@@ -1620,6 +1704,24 @@ function toggleInvoiceCard(wrap, inv) {
     wrap.classList.add('expanded');
 
     const inner = wrap.querySelector('.invoice-detail-inner');
+
+    // If full entry data hasn't been loaded yet, fetch it now
+    const hasFullData = inv.entries?.some(e => e.total_amount != null);
+    if (!hasFullData) {
+        inner.innerHTML = '<div class="spinner" style="margin:16px auto;width:24px;height:24px;"></div>';
+        const { data: fullInv, error } = await sb
+            .from('invoices')
+            .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand)')
+            .eq('id', inv.id)
+            .single();
+        if (!error && fullInv) {
+            // Merge into cache so preview also works
+            const idx = invoicesCache.findIndex(i => i.id === inv.id);
+            if (idx !== -1) invoicesCache[idx] = fullInv;
+            Object.assign(inv, fullInv);
+        }
+    }
+
     const entries = inv.entries;
 
     if (!entries?.length) {
