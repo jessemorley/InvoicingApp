@@ -12,11 +12,18 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ─────────────────────────────────────────────
 let allClients              = [];
 let clientLatestInvoiceMap  = {};
+let clientInvoiceCountMap   = {};
 let workflowRates           = [];
 let selectedClient   = null;
 let currentDayType   = 'full';
 let currentWorkflow  = 'Apparel';
 let currentRole      = 'Photographer';
+
+// View navigation
+let currentViewIndex  = 0;
+let invoicesLoaded    = false;
+let invoicesSortMode  = 'chronological'; // 'chronological' | 'status'
+let invoicesCache     = [];
 
 // New entry card state
 let newEntryWrap           = null;
@@ -90,11 +97,21 @@ function closeClientPicker() {
     document.getElementById('overlayClientInput').value = '';
 }
 
+function clientDotColor(name) {
+    if (name.includes('ICONIC'))  return '#a855f7';
+    if (name.includes('Images'))  return '#3b82f6';
+    if (name.includes('JD'))      return '#f97316';
+    return '#9ca3af';
+}
+
 function renderOverlayClients(query) {
     const list = document.getElementById('overlayClientList');
-    const matches = query
+
+    let matches = query
         ? allClients.filter(c => c.name.toLowerCase().includes(query.toLowerCase()))
-        : allClients;
+        : [...allClients].sort((a, b) =>
+            (clientInvoiceCountMap[b.id] || 0) - (clientInvoiceCountMap[a.id] || 0)
+          );
 
     list.innerHTML = '';
 
@@ -112,17 +129,16 @@ function renderOverlayClients(query) {
     }
 
     matches.forEach(client => {
-        const invNum = clientLatestInvoiceMap[client.name] || null;
+        const count = clientInvoiceCountMap[client.id] || 0;
+        const subtitle = count > 0 ? `${count} ${count === 1 ? 'invoice' : 'invoices'}` : null;
+        const dotColor = clientDotColor(client.name);
         const row = document.createElement('button');
         row.style.cssText = 'display:flex; width:100%; box-sizing:border-box; align-items:center; text-align:left; background:none; border:none; border-bottom:1px solid #f3f4f6; padding:14px 24px; cursor:pointer; font-family:inherit;';
         row.innerHTML = `
-            <svg width="18" height="18" fill="none" stroke="#c7c7cc" stroke-width="1.75" viewBox="0 0 24 24" style="flex-shrink:0; margin-right:16px;">
-                <circle cx="12" cy="12" r="10"/>
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/>
-            </svg>
+            <div style="flex-shrink:0; width:10px; height:10px; border-radius:50%; background:${dotColor}; margin-right:16px;"></div>
             <div style="flex:1; min-width:0;">
                 <div style="font-size:17px; font-weight:600; color:#111827;">${client.name}</div>
-                ${invNum ? `<div style="font-size:13px; color:#8e8e93; margin-top:2px;">${invNum}</div>` : ''}
+                ${subtitle ? `<div style="font-size:13px; color:#8e8e93; margin-top:2px;">${subtitle}</div>` : ''}
             </div>
             <svg width="18" height="18" fill="none" stroke="#c7c7cc" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/>
@@ -161,15 +177,31 @@ document.getElementById('signOutBtn').addEventListener('click', async () => {
 // DATA LOADING
 // ─────────────────────────────────────────────
 async function loadData() {
-    const [{ data: clients }, { data: rates }] = await Promise.all([
+    const [{ data: clients }, { data: rates }, { data: invoices }] = await Promise.all([
         sb.from('clients').select('*').eq('is_active', true).order('name'),
-        sb.from('client_workflow_rates').select('*')
+        sb.from('client_workflow_rates').select('*'),
+        sb.from('invoices').select('client_id')
     ]);
     allClients   = clients || [];
     workflowRates = rates || [];
 
+    clientInvoiceCountMap = {};
+    (invoices || []).forEach(inv => {
+        if (inv.client_id) {
+            clientInvoiceCountMap[inv.client_id] = (clientInvoiceCountMap[inv.client_id] || 0) + 1;
+        }
+    });
+
+    // Mark invoices stale so the invoices view reloads on next visit
+    invoicesLoaded = false;
+
     setDefaultDate();
     loadRecentEntries();
+
+    // Reload invoices view if currently visible
+    if (currentViewIndex === 1) {
+        loadInvoices();
+    }
 }
 
 function setDefaultDate() {
@@ -717,18 +749,16 @@ function closeNewEntryCard() {
 function buildNewEntryFormHTML() {
     return `
     <div style="background:#fff; border-radius:1.75rem; padding:20px 24px; display:flex; flex-direction:column; gap:0;">
-        <!-- Client selector -->
-        <div id="newClientContainer" class="relative">
-            <div class="relative flex items-center">
-                <input type="text" id="newClientInput" placeholder="Client" autocomplete="off"
-                    class="input-field w-full rounded-xl px-4 py-3 text-[17px] placeholder-slate-400 pr-10 font-semibold" style="border-color: transparent !important;">
-                <button id="newClearClient" class="clear-btn absolute right-3 p-1 rounded-full bg-slate-200 text-slate-500">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+        <!-- Client chip -->
+        <div id="newClientContainer" class="flex items-center justify-between pb-2">
+            <div id="newClientChip"></div>
+            <button id="newClearClient" style="flex-shrink:0; cursor:pointer; border:none; background:none; padding:4px;">
+                <span style="display:flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#e5e7eb;">
+                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#6b7280" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
-                </button>
-            </div>
-            <div id="newAutocompleteList" style="position:fixed;background:rgba(255,255,255,0.98);backdrop-filter:blur(20px);border:1px solid rgba(0,0,0,0.06);border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.10);z-index:1000;overflow:hidden;display:none;"></div>
+                </span>
+            </button>
         </div>
 
         <!-- Billing fields (revealed after client select) -->
@@ -849,11 +879,9 @@ function buildNewEntryFormHTML() {
             <!-- SUMMARY -->
             <div class="summary-card bg-white">
                 <div class="flex justify-between items-end mb-2">
-                    <div>
+                    <div id="newDurationBlock" class="hidden">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Duration</p>
-                        <div id="newDurationBlock" class="hidden">
-                            <span id="newDisplayDuration" class="text-4xl font-black text-slate-900 leading-none">0h 0m</span>
-                        </div>
+                        <span id="newDisplayDuration" class="text-4xl font-black text-slate-900 leading-none">0h 0m</span>
                     </div>
                     <div class="text-right">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Subtotal</p>
@@ -943,11 +971,9 @@ function openNewEntryCardForClient(client) {
 
 function selectNewEntryClient(client) {
     newEntrySelectedClient = client;
-    const clientInput = document.getElementById('newClientInput');
-    clientInput.value    = client.name;
-    clientInput.disabled = true;
-    document.getElementById('newClientContainer').classList.add('has-client');
-    document.getElementById('newAutocompleteList').style.display = 'none';
+    const badgeColor = clientBadgeColor(client.name);
+    document.getElementById('newClientChip').innerHTML =
+        `<span class="client-badge ${badgeColor}" style="font-size:15px; padding:7px 14px; border-radius:10px;">${client.name}</span>`;
     showNewEntryFields(client);
 }
 
@@ -1157,29 +1183,29 @@ async function saveNewEntry() {
 }
 
 // ─────────────────────────────────────────────
-// PULL TO REFRESH
+// PULL TO REFRESH — Entries
 // ─────────────────────────────────────────────
 (function() {
-    const THRESHOLD = 110;  // px of pull needed to trigger
-    const MAX_PULL  = 130;  // px cap on drag
+    const THRESHOLD = 110;
+    const MAX_PULL  = 130;
     let startY = 0, pulling = false, triggered = false;
 
-    const scroller   = document.getElementById('tabRecent');
-    const indicator  = document.getElementById('pullIndicator');
+    const scroller  = document.getElementById('tabRecent');
+    const indicator = document.getElementById('pullIndicator');
 
     scroller.addEventListener('touchstart', e => {
         if (scroller.scrollTop > 5) return;
-        startY   = e.touches[0].clientY;
-        pulling  = true;
+        startY    = e.touches[0].clientY;
+        pulling   = true;
         triggered = false;
     }, { passive: true });
 
     scroller.addEventListener('touchmove', e => {
         if (!pulling) return;
+        const dx = Math.abs(e.touches[0].clientX - (e.touches[0].clientX)); // placeholder; direction handled by swipe handler
         const dy = Math.min(e.touches[0].clientY - startY, MAX_PULL);
         if (dy <= 10) return;
         indicator.classList.add('visible');
-        // Slightly rotate the spinner based on pull distance as a progress cue
         const progress = Math.min(dy / THRESHOLD, 1);
         document.getElementById('pullSpinner').style.transform = `rotate(${progress * 270}deg)`;
         if (dy >= THRESHOLD) triggered = true;
@@ -1189,13 +1215,335 @@ async function saveNewEntry() {
         if (!pulling) return;
         pulling = false;
         if (triggered) {
-            // Keep spinner spinning while refreshing
             document.getElementById('pullSpinner').style.transform = '';
             await loadRecentEntries();
         }
         indicator.classList.remove('visible');
     });
 })();
+
+// ─────────────────────────────────────────────
+// PULL TO REFRESH — Invoices
+// ─────────────────────────────────────────────
+(function() {
+    const THRESHOLD = 110;
+    const MAX_PULL  = 130;
+    let startY = 0, pulling = false, triggered = false;
+
+    const scroller  = document.getElementById('invoicesScroll');
+    const indicator = document.getElementById('invoicesPullIndicator');
+
+    scroller.addEventListener('touchstart', e => {
+        if (scroller.scrollTop > 5) return;
+        startY    = e.touches[0].clientY;
+        pulling   = true;
+        triggered = false;
+    }, { passive: true });
+
+    scroller.addEventListener('touchmove', e => {
+        if (!pulling) return;
+        const dy = Math.min(e.touches[0].clientY - startY, MAX_PULL);
+        if (dy <= 10) return;
+        indicator.classList.add('visible');
+        const progress = Math.min(dy / THRESHOLD, 1);
+        document.getElementById('invoicesPullSpinner').style.transform = `rotate(${progress * 270}deg)`;
+        if (dy >= THRESHOLD) triggered = true;
+    }, { passive: true });
+
+    scroller.addEventListener('touchend', async () => {
+        if (!pulling) return;
+        pulling = false;
+        if (triggered) {
+            document.getElementById('invoicesPullSpinner').style.transform = '';
+            invoicesLoaded = false;
+            await loadInvoices();
+        }
+        indicator.classList.remove('visible');
+    });
+})();
+
+// ─────────────────────────────────────────────
+// VIEW SWIPE GESTURE
+// ─────────────────────────────────────────────
+(function() {
+    let startX = 0, startY = 0;
+    let swipeDir = null; // null | 'h' | 'v'
+    let liveOffsetVw = 0;
+
+    const slider = document.getElementById('viewSlider');
+
+    slider.addEventListener('touchstart', e => {
+        startX   = e.touches[0].clientX;
+        startY   = e.touches[0].clientY;
+        swipeDir = null;
+        slider.style.transition = 'none';
+    }, { passive: true });
+
+    slider.addEventListener('touchmove', e => {
+        const dx = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
+
+        // Determine direction once we have enough movement
+        if (!swipeDir && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+            swipeDir = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+        }
+
+        if (swipeDir !== 'h') return;
+
+        e.preventDefault();
+
+        const baseVw    = currentViewIndex * -100;
+        const dragVw    = (dx / window.innerWidth) * 100;
+        const totalVw   = Math.max(-100, Math.min(0, baseVw + dragVw));
+        liveOffsetVw    = totalVw;
+        slider.style.transform = `translateX(${totalVw}vw)`;
+    }, { passive: false });
+
+    slider.addEventListener('touchend', () => {
+        if (swipeDir !== 'h') return;
+
+        slider.style.transition = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)';
+        const moved = liveOffsetVw - (currentViewIndex * -100);
+
+        if (moved < -28 && currentViewIndex < 1) {
+            switchView(1);
+        } else if (moved > 28 && currentViewIndex > 0) {
+            switchView(0);
+        } else {
+            // Snap back to current view
+            slider.style.transform = `translateX(${currentViewIndex * -100}vw)`;
+        }
+    });
+})();
+
+// ─────────────────────────────────────────────
+// VIEW SWITCHING
+// ─────────────────────────────────────────────
+function switchView(index) {
+    currentViewIndex = index;
+    const slider = document.getElementById('viewSlider');
+    slider.style.transition = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)';
+    slider.style.transform  = `translateX(${index * -100}vw)`;
+
+    document.getElementById('tabEntriesBtn').classList.toggle('active', index === 0);
+    document.getElementById('tabInvoicesBtn').classList.toggle('active', index === 1);
+    document.getElementById('newEntryFab').style.display = index === 0 ? 'flex' : 'none';
+
+    if (index === 1 && !invoicesLoaded) {
+        loadInvoices();
+    }
+}
+
+// ─────────────────────────────────────────────
+// INVOICES VIEW
+// ─────────────────────────────────────────────
+let expandedInvoiceWrap = null;
+
+async function loadInvoices() {
+    invoicesLoaded = true;
+    const list = document.getElementById('invoicesList');
+    list.innerHTML = '<div class="spinner"></div>';
+
+    const { data, error } = await sb
+        .from('invoices')
+        .select('*, clients(name), entries(id, date, description, total_amount, super_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot)')
+        .order('invoice_number', { ascending: false });
+
+    if (error || !data?.length) {
+        list.innerHTML = '<p class="text-gray-400 text-sm py-8 text-center">No invoices yet</p>';
+        return;
+    }
+
+    // Sort by latest entry date descending (newest invoice period first)
+    data.sort((a, b) => {
+        const aDate = (a.entries || []).map(e => e.date || '').filter(Boolean).sort().pop() || '';
+        const bDate = (b.entries || []).map(e => e.date || '').filter(Boolean).sort().pop() || '';
+        return bDate > aDate ? 1 : bDate < aDate ? -1 : 0;
+    });
+
+    invoicesCache = data;
+    updateSortBtnIcon();
+    renderInvoices(data);
+}
+
+function renderInvoices(data) {
+    const list = document.getElementById('invoicesList');
+    list.innerHTML = '';
+    expandedInvoiceWrap = null;
+
+    if (invoicesSortMode === 'status') {
+        const unpaid = data.filter(inv => inv.status !== 'paid');
+        const paid   = data.filter(inv => inv.status === 'paid');
+        let idx = 0;
+
+        if (unpaid.length) {
+            const hdr = document.createElement('div');
+            hdr.className = 'week-header';
+            hdr.innerHTML = `<span>Unpaid</span><span>${fmt(unpaid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
+            list.appendChild(hdr);
+            const grp = document.createElement('div');
+            grp.className = 'week-group';
+            unpaid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
+            list.appendChild(grp);
+        }
+
+        if (paid.length) {
+            const hdr = document.createElement('div');
+            hdr.className = 'week-header';
+            hdr.innerHTML = `<span>Paid</span><span>${fmt(paid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
+            list.appendChild(hdr);
+            const grp = document.createElement('div');
+            grp.className = 'week-group';
+            paid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
+            list.appendChild(grp);
+        }
+    } else {
+        // Chronological — flat list, newest first (data already ordered by invoice_number desc)
+        const grp = document.createElement('div');
+        grp.className = 'week-group';
+        data.forEach((inv, i) => grp.appendChild(buildInvoiceCard(inv, i)));
+        list.appendChild(grp);
+    }
+}
+
+// SVG for "tap to group by status" (funnel / decreasing lines)
+const ICON_GROUP = `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M11 18h2"/></svg>`;
+// SVG for "tap to show as flat list" (equal lines)
+const ICON_LIST  = `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>`;
+
+function updateSortBtnIcon() {
+    const btn = document.getElementById('invoiceSortBtn');
+    if (btn) btn.innerHTML = invoicesSortMode === 'chronological' ? ICON_GROUP : ICON_LIST;
+}
+
+function toggleInvoiceSort() {
+    invoicesSortMode = invoicesSortMode === 'chronological' ? 'status' : 'chronological';
+    updateSortBtnIcon();
+    // Defer re-render out of the touch event to avoid iOS tap debouncing
+    requestAnimationFrame(() => renderInvoices(invoicesCache));
+}
+
+// Stop touch propagation so the horizontal swipe handler on #viewSlider
+// never intercepts taps on this button and suppresses the click event.
+(function () {
+    const btn = document.getElementById('invoiceSortBtn');
+    btn.addEventListener('click', toggleInvoiceSort);
+    btn.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+    btn.addEventListener('touchend',   e => e.stopPropagation(), { passive: true });
+}());
+
+function invoiceSubtotal(inv) {
+    if (!inv.entries?.length) return 0;
+    return inv.entries.reduce((s, e) => s + ((e.total_amount || 0) - (e.super_amount || 0)), 0);
+}
+
+function invoiceDateRange(inv) {
+    if (!inv.entries?.length) return '';
+    const dates = inv.entries.map(e => e.date).filter(Boolean).sort();
+    if (!dates.length) return '';
+    const first = formatEntryDate(dates[0]);
+    const last  = formatEntryDate(dates[dates.length - 1]);
+    return first === last ? first : `${first} – ${last}`;
+}
+
+function buildInvoiceCard(inv, index) {
+    const clientName  = inv.clients?.name || 'Unknown';
+    const badgeColor  = clientBadgeColor(clientName);
+    const chipColor   = invoiceChipColors[inv.status] || 'bg-gray-100 text-gray-500';
+    const statusLabel = inv.status ? (inv.status.charAt(0).toUpperCase() + inv.status.slice(1)) : '';
+    const total       = fmt(invoiceSubtotal(inv));
+    const dateRange   = invoiceDateRange(inv);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'invoice-card-wrap';
+    wrap.style.animationDelay = `${index * 40}ms`;
+
+    const row = document.createElement('div');
+    row.className = 'invoice-row';
+    row.innerHTML = `
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1.5">
+                <span class="client-badge ${badgeColor}">${clientName}</span>
+                <span class="text-[15px] font-bold text-gray-800">${inv.invoice_number}</span>
+            </div>
+            ${dateRange ? `<p class="text-[13px] text-gray-400 truncate">${dateRange}</p>` : ''}
+        </div>
+        <div class="flex flex-col items-end gap-1 shrink-0">
+            <span class="invoice-chip ${chipColor}">${statusLabel}</span>
+            <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
+        </div>`;
+
+    const detailPanel = document.createElement('div');
+    detailPanel.className = 'invoice-detail-panel';
+    const detailInner = document.createElement('div');
+    detailInner.className = 'invoice-detail-inner';
+    detailPanel.appendChild(detailInner);
+
+    row.addEventListener('click', () => toggleInvoiceCard(wrap, inv));
+
+    wrap.appendChild(row);
+    wrap.appendChild(detailPanel);
+    return wrap;
+}
+
+function toggleInvoiceCard(wrap, inv) {
+    if (expandedInvoiceWrap && expandedInvoiceWrap !== wrap) {
+        collapseInvoiceCard(expandedInvoiceWrap);
+    }
+    if (wrap.classList.contains('expanded')) {
+        collapseInvoiceCard(wrap);
+        return;
+    }
+
+    expandedInvoiceWrap = wrap;
+    wrap.classList.add('expanded');
+
+    const inner = wrap.querySelector('.invoice-detail-inner');
+    const entries = inv.entries;
+
+    if (!entries?.length) {
+        inner.innerHTML = '<p class="text-gray-400 text-sm py-4 text-center">No entries linked</p>';
+        return;
+    }
+
+    const sorted = [...entries].sort((a, b) => a.date < b.date ? -1 : 1);
+    let html = '<div class="space-y-0 pt-3">';
+    sorted.forEach(e => {
+        const desc   = entryDescription(e);
+        const amount = fmt((e.total_amount || 0) - (e.super_amount || 0));
+        const date   = formatEntryDate(e.date);
+        html += `
+            <div class="flex justify-between items-center py-2.5 border-b border-slate-50">
+                <div class="flex-1 min-w-0 mr-4">
+                    <p class="text-[14px] font-semibold text-gray-800 truncate">${desc}</p>
+                    <p class="text-[11px] text-gray-400 mt-0.5">${date}</p>
+                </div>
+                <span class="text-[14px] font-bold text-gray-700 shrink-0">${amount}</span>
+            </div>`;
+    });
+
+    const subtotal = invoiceSubtotal(inv);
+    html += `
+        <div class="flex justify-between items-center pt-3 pb-1">
+            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total excl. super</span>
+            <span class="text-[16px] font-bold text-gray-900">${fmt(subtotal)}</span>
+        </div>
+    </div>`;
+
+    inner.innerHTML = html;
+}
+
+function collapseInvoiceCard(wrap) {
+    const row = wrap.querySelector('.invoice-row');
+    if (row) row.style.borderRadius = '14px 14px 0 0';
+    wrap.classList.remove('expanded');
+    setTimeout(() => {
+        if (row) row.style.borderRadius = '';
+        const inner = wrap.querySelector('.invoice-detail-inner');
+        if (inner) inner.innerHTML = '';
+    }, 400);
+    if (expandedInvoiceWrap === wrap) expandedInvoiceWrap = null;
+}
 
 function clientBadgeColor(name) {
     if (name.includes('ICONIC'))  return 'bg-purple-50 text-purple-500';

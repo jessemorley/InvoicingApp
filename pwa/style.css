@@ -1,4 +1,8 @@
-        :root { --accent: #007AFF; --build: "1bf001b"; }
+        :root { --accent: #007AFF; --build: "a3f92d1"; }
+
+        #overlayClientInput::placeholder {
+            color: #d1d5db;
+        }
 
         #entriesHeaderTop h1::after {
             content: var(--build);
@@ -22,6 +26,12 @@
         .screen { display: none; }
         .screen.active { display: flex; flex-direction: column; width: 100%; }
 
+        /* App shell — clip the slider when active */
+        #appShell.active {
+            height: 100dvh;
+            overflow: hidden;
+            position: relative;
+        }
 
         /* Inputs */
         .input-field {
@@ -276,7 +286,7 @@
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            padding: 16px 0 4px;
+            padding: 16px 0 0;
             margin-top: 4px;
             font-size: 11px;
             font-weight: 700;
@@ -291,12 +301,10 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            padding-top: 4px;
+            padding-top: 0;
         }
 
-        /* Expanded card */
-        .entry-card-wrap {
-        }
+        /* Expanded entry card */
         .entry-card-wrap.expanded .entry-row {
             border-radius: 14px 14px 0 0;
         }
@@ -313,6 +321,7 @@
         .entry-detail-inner {
             padding: 0.75rem 1rem 1rem;
         }
+
         /* Entries tab layout */
         #tabRecent {
             width: 100%;
@@ -363,4 +372,127 @@
         .workflow-btn.active {
             color: var(--accent);
             background: rgba(0,122,255,0.08);
+        }
+
+        /* ─────────────────────────────────────────────
+           VIEW SLIDER
+        ───────────────────────────────────────────── */
+        #viewSlider {
+            display: flex;
+            width: 200vw;
+            height: 100%;
+            /* transition added by JS after swipe ends */
+        }
+
+        .view-pane {
+            width: 100vw;
+            height: 100%;
+            flex-shrink: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Invoices scroll */
+        #invoicesScroll {
+            width: 100%;
+            height: 100dvh;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* ─────────────────────────────────────────────
+           TAB BAR
+        ───────────────────────────────────────────── */
+        #tabBar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            background: rgba(249,249,249,0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 0.5px solid rgba(0,0,0,0.12);
+            padding-bottom: env(safe-area-inset-bottom);
+            z-index: 100;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px 0 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #8e8e93;
+            transition: color 0.15s;
+        }
+        .tab-btn.active {
+            color: var(--accent);
+        }
+        .tab-btn span {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        /* Invoice sort toggle */
+        .invoice-sort-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3c3c43;
+            background: rgba(0,0,0,0.06);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+        .invoice-sort-btn:active {
+            background: rgba(0,0,0,0.14);
+        }
+
+        /* ─────────────────────────────────────────────
+           INVOICE CARDS
+        ───────────────────────────────────────────── */
+        .invoice-card-wrap {
+            animation: cardIn 0.3s ease both;
+        }
+
+        .invoice-row {
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: background 0.1s;
+        }
+        .invoice-row:active {
+            background: #f9fafb;
+        }
+        .invoice-card-wrap.expanded .invoice-row {
+            border-radius: 14px 14px 0 0;
+        }
+        .invoice-detail-panel {
+            background: #fff;
+            border-radius: 0 0 14px 14px;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+        }
+        .invoice-card-wrap.expanded .invoice-detail-panel {
+            max-height: 1400px;
+        }
+        .invoice-detail-inner {
+            padding: 0 1rem 1rem;
+            border-top: 1px solid #f0f0f0;
         }
