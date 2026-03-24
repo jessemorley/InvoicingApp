@@ -1656,8 +1656,8 @@ function buildInvoiceHTML(inv) {
 <head>
 <meta charset="utf-8">
 <style>
-  body { margin: 0; padding: 28px 42px; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; color: #000; line-height: 1.2; }
-  .page { width: 100%; background: white; }
+  body { margin: 0; padding: 0; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; color: #000; line-height: 1.2; }
+  .page { width: 794px; padding: 28px 42px; background: white; box-sizing: border-box; }
   .top-header { display: flex; justify-content: space-between; margin-bottom: 80px; }
   .address-block { font-size: 13.5px; }
   .address-block p { margin: 0 0 3px 0; }
