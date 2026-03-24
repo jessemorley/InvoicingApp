@@ -177,13 +177,15 @@ document.getElementById('signOutBtn').addEventListener('click', async () => {
 // DATA LOADING
 // ─────────────────────────────────────────────
 async function loadData() {
-    const [{ data: clients }, { data: rates }, { data: invoices }] = await Promise.all([
+    const [{ data: clients }, { data: rates }, { data: invoices }, { data: bizData }] = await Promise.all([
         sb.from('clients').select('*').eq('is_active', true).order('name'),
         sb.from('client_workflow_rates').select('*'),
-        sb.from('invoices').select('client_id')
+        sb.from('invoices').select('client_id'),
+        sb.from('business_details').select('*').single()
     ]);
     allClients   = clients || [];
     workflowRates = rates || [];
+    if (bizData) businessDetails = bizData;
 
     clientInvoiceCountMap = {};
     (invoices || []).forEach(inv => {
@@ -1553,13 +1555,7 @@ function collapseInvoiceCard(wrap) {
 // INVOICE HTML PREVIEW
 // ─────────────────────────────────────────────
 
-const PLACEHOLDER_BUSINESS = {
-    name: 'Jesse Morley Photography',
-    abn: '12 345 678 901',
-    address: '123 Example St, Sydney NSW 2000',
-    bsb: '123-456',
-    accountNumber: '12 345 678',
-};
+let businessDetails = null;
 
 function fmtInvoiceCurrency(value) {
     return new Intl.NumberFormat('en-AU', {
@@ -1650,6 +1646,11 @@ function buildInvoiceHTML(inv) {
     const clientLines = [client.name, client.email, client.address, client.suburb]
         .filter(Boolean).map(l => `<p>${l}</p>`).join('');
 
+    const biz = businessDetails || {};
+    const superMetaLines = paysSuper && biz.super_fund
+        ? `<p>${biz.super_fund}, Member ${biz.super_member_number}, ABN ${biz.super_fund_abn}</p><p>USI ${biz.super_usi}</p>`
+        : '';
+
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -1685,9 +1686,9 @@ function buildInvoiceHTML(inv) {
 <div class="page">
   <div class="top-header">
     <div class="address-block">
-      <p>${PLACEHOLDER_BUSINESS.name}</p>
-      <p>ABN ${PLACEHOLDER_BUSINESS.abn}</p>
-      <p>${PLACEHOLDER_BUSINESS.address}</p>
+      <p>${biz.business_name ?? ''}</p>
+      <p>ABN ${biz.abn ?? ''}</p>
+      <p>${biz.address ?? ''}</p>
     </div>
     <div class="address-block" style="text-align:right;">
       ${clientLines}
@@ -1700,7 +1701,8 @@ function buildInvoiceHTML(inv) {
       <p>Due ${dueStr}</p>
     </div>
     <div class="bank-block">
-      <p>BSB ${PLACEHOLDER_BUSINESS.bsb} Account Number ${PLACEHOLDER_BUSINESS.accountNumber}</p>
+      <p>BSB ${biz.bsb ?? ''} Account Number ${biz.account_number ?? ''}</p>
+      ${superMetaLines}
     </div>
   </div>
   <table>
