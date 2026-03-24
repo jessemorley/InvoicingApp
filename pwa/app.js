@@ -233,10 +233,7 @@ clientInput.addEventListener('input', () => {
 function selectClient(client) {
     selectedClient = client;
     clientInput.value    = client.name;
-    clientInput.readOnly = true;
-    clientInput.style.fontSize   = '20px';
-    clientInput.style.fontWeight = '700';
-    clientInput.style.color      = '#111827';
+    clientInput.disabled = true;
     clientContainer.classList.add('has-client');
     autocompleteList.style.display = 'none';
     document.getElementById('clientSection').classList.add('fields-open');
@@ -245,10 +242,7 @@ function selectClient(client) {
 
 document.getElementById('clearClient').addEventListener('click', () => {
     clientInput.value    = '';
-    clientInput.readOnly = false;
-    clientInput.style.fontSize   = '';
-    clientInput.style.fontWeight = '';
-    clientInput.style.color      = '';
+    clientInput.disabled = false;
     clientContainer.classList.remove('has-client');
     selectedClient = null;
     document.getElementById('entryFields').classList.remove('open');
@@ -565,10 +559,7 @@ function buildPayload() {
 
 function resetForm() {
     clientInput.value    = '';
-    clientInput.readOnly = false;
-    clientInput.style.fontSize   = '';
-    clientInput.style.fontWeight = '';
-    clientInput.style.color      = '';
+    clientInput.disabled = false;
     clientContainer.classList.remove('has-client');
     selectedClient     = null;
     currentDayType     = 'full';
@@ -744,18 +735,16 @@ function closeNewEntryCard() {
 function buildNewEntryFormHTML() {
     return `
     <div style="background:#fff; border-radius:1.75rem; padding:20px 24px; display:flex; flex-direction:column; gap:0;">
-        <!-- Client selector -->
-        <div id="newClientContainer" class="relative">
-            <div class="relative flex items-center">
-                <input type="text" id="newClientInput" placeholder="Client" autocomplete="off"
-                    class="input-field w-full rounded-xl px-4 py-3 text-[17px] placeholder-slate-400 pr-10 font-semibold" style="border-color: transparent !important;">
-                <button id="newClearClient" class="clear-btn absolute right-3 p-1 rounded-full bg-slate-200 text-slate-500">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+        <!-- Client chip -->
+        <div id="newClientContainer" class="flex items-center justify-between pb-2">
+            <div id="newClientChip"></div>
+            <button id="newClearClient" style="flex-shrink:0; cursor:pointer; border:none; background:none; padding:4px;">
+                <span style="display:flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#e5e7eb;">
+                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#6b7280" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
-                </button>
-            </div>
-            <div id="newAutocompleteList" style="position:fixed;background:rgba(255,255,255,0.98);backdrop-filter:blur(20px);border:1px solid rgba(0,0,0,0.06);border-radius:1rem;box-shadow:0 8px 32px rgba(0,0,0,0.10);z-index:1000;overflow:hidden;display:none;"></div>
+                </span>
+            </button>
         </div>
 
         <!-- Billing fields (revealed after client select) -->
@@ -970,14 +959,9 @@ function openNewEntryCardForClient(client) {
 
 function selectNewEntryClient(client) {
     newEntrySelectedClient = client;
-    const clientInput = document.getElementById('newClientInput');
-    clientInput.value    = client.name;
-    clientInput.readOnly = true;
-    clientInput.style.fontSize   = '20px';
-    clientInput.style.fontWeight = '700';
-    clientInput.style.color      = '#111827';
-    document.getElementById('newClientContainer').classList.add('has-client');
-    document.getElementById('newAutocompleteList').style.display = 'none';
+    const badgeColor = clientBadgeColor(client.name);
+    document.getElementById('newClientChip').innerHTML =
+        `<span class="client-badge ${badgeColor}" style="font-size:15px; padding:7px 14px; border-radius:10px;">${client.name}</span>`;
     showNewEntryFields(client);
 }
 
