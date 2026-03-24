@@ -1445,7 +1445,7 @@ async function checkEntriesScroll() {
     scroller.addEventListener('scroll', () => {
         if (invoicesAllLoaded) return;
         const distFromBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
-        if (distFromBottom < 600) loadMoreInvoices();
+        if (distFromBottom < 300) loadMoreInvoices();
     }, { passive: true });
 })();
 
