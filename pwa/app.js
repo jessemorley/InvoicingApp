@@ -1655,8 +1655,10 @@ function buildInvoiceHTML(inv) {
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
 <style>
   body { margin: 0; padding: 0; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; color: #000; line-height: 1.2; }
+  a { color: inherit; text-decoration: none; }
   .page { width: 794px; padding: 28px 42px; background: white; box-sizing: border-box; }
   .top-header { display: flex; justify-content: space-between; margin-bottom: 80px; }
   .address-block { font-size: 13.5px; }
