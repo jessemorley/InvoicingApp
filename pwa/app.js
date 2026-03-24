@@ -1667,7 +1667,7 @@ function buildInvoiceHTML(inv) {
   .bank-block { flex-grow: 1; }
   .bank-block p { margin: 0 0 4px 0; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 100px; }
-  th { text-align: left; padding: 10px 0; font-size: 13.5px; font-weight: normal; border-bottom: 1px solid #000; }
+  th { text-align: left; padding: 10px 0; font-size: 13.5px; font-weight: normal; }
   td { padding: 6px 0; vertical-align: top; font-size: 13.5px; }
   .col-date { width: 28%; }
   .col-item { width: 39%; }
@@ -1747,23 +1747,16 @@ function openInvoicePreview(inv) {
     const docWidth = 794;
     const scale = (window.innerWidth - 32) / docWidth; // 16px padding each side
 
-    frame.style.width  = docWidth + 'px';
-    frame.style.height = '1123px'; // initial A4 height
+    const docHeight = 1123;
 
-    scaleWrap.style.width          = docWidth + 'px';
-    scaleWrap.style.transform      = `scale(${scale})`;
-    scaleWrap.style.marginBottom   = Math.ceil(1123 * (scale - 1)) + 'px';
+    frame.style.width  = docWidth + 'px';
+    frame.style.height = docHeight + 'px';
+
+    scaleWrap.style.width        = docWidth + 'px';
+    scaleWrap.style.transform    = `scale(${scale})`;
+    scaleWrap.style.marginBottom = Math.ceil(docHeight * (scale - 1)) + 'px';
 
     frame.srcdoc = html;
-    frame.onload = () => {
-        try {
-            const h = frame.contentDocument?.documentElement?.scrollHeight;
-            if (h && h > 100) {
-                frame.style.height       = h + 'px';
-                scaleWrap.style.marginBottom = Math.ceil(h * (scale - 1)) + 'px';
-            }
-        } catch (e) {}
-    };
 
     overlay.style.display = 'block';
     overlay.scrollTop = 0;
