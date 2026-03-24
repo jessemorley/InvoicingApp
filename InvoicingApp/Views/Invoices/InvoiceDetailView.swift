@@ -51,13 +51,9 @@ struct InvoiceDetailView: View {
                 VStack(spacing: 0) {
                     HStack {
                         Text("Date").font(.caption.bold())
-                            .frame(width: 90, alignment: .leading)
+                            .frame(width: 110, alignment: .leading)
                         Text("Description").font(.caption.bold())
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        Text("Time").font(.caption.bold())
-                            .frame(width: 100, alignment: .leading)
-                        Text("Break").font(.caption.bold())
-                            .frame(width: 40, alignment: .trailing)
                         Text("Hours").font(.caption.bold())
                             .frame(width: 45, alignment: .trailing)
                         Text("Rate").font(.caption.bold())
@@ -72,14 +68,9 @@ struct InvoiceDetailView: View {
                     ForEach(vm.entries) { entry in
                         HStack {
                             Text(entryDateString(entry))
-                                .frame(width: 90, alignment: .leading)
+                                .frame(width: 110, alignment: .leading)
                             Text(entryDescriptionOnly(entry))
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .lineLimit(1)
-                            Text(entryTimeString(entry))
-                                .frame(width: 100, alignment: .leading)
-                            Text(entryBreakString(entry))
-                                .frame(width: 40, alignment: .trailing)
                             Text(entryHoursString(entry))
                                 .frame(width: 45, alignment: .trailing)
                             Text(entryRateString(entry))
@@ -88,6 +79,18 @@ struct InvoiceDetailView: View {
                                 .frame(width: 80, alignment: .trailing)
                         }
                         .padding(.vertical, 4)
+
+                        if entry.billingTypeSnapshot == .hourly,
+                           let start = entry.startTime, let finish = entry.finishTime {
+                            HStack {
+                                Text("").frame(width: 110)
+                                Text(entryTimeSubLine(start, finish, breakMinutes: entry.breakMinutes))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .padding(.bottom, 2)
+                        }
                     }
 
                     Divider()
@@ -222,18 +225,6 @@ struct InvoiceDetailView: View {
         }
     }
 
-    private func entryTimeString(_ entry: Entry) -> String {
-        guard entry.billingTypeSnapshot == .hourly,
-              let start = entry.startTime, let finish = entry.finishTime else { return "" }
-        return "\(formatTime(start)) – \(formatTime(finish))"
-    }
-
-    private func entryBreakString(_ entry: Entry) -> String {
-        guard entry.billingTypeSnapshot == .hourly,
-              let brk = entry.breakMinutes, brk > 0 else { return "" }
-        return "\(brk)"
-    }
-
     private func entryHoursString(_ entry: Entry) -> String {
         guard entry.billingTypeSnapshot == .hourly, let hours = entry.hoursWorked else { return "" }
         return "\(NSDecimalNumber(decimal: hours))"
@@ -242,7 +233,23 @@ struct InvoiceDetailView: View {
     private func entryRateString(_ entry: Entry) -> String {
         guard entry.billingTypeSnapshot == .hourly,
               let rate = vm.client?.rateHourly else { return "" }
-        return formatAmount(rate)
+        return formatRate(rate)
+    }
+
+    private func entryTimeSubLine(_ start: String, _ finish: String, breakMinutes: Int?) -> String {
+        var str = "\(formatTime(start)) – \(formatTime(finish))"
+        if let brk = breakMinutes, brk > 0 {
+            str += " (-\(brk)m)"
+        }
+        return str
+    }
+
+    private func formatRate(_ value: Decimal) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: value as NSDecimalNumber) ?? "\(value)"
     }
 
     private func formatAmount(_ value: Decimal) -> String {

@@ -99,11 +99,9 @@ final class PDFExportService {
             table { width: 100%; border-collapse: collapse; margin-bottom: 100px; }
             th { text-align: left; padding: 10px 0; font-size: 13.5px; font-weight: normal; }
             td { padding: 6px 0; vertical-align: top; font-size: 13.5px; }
-            .col-date   { width: 20%; }
-            .col-item   { width: 24%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 0; }
-            .col-time   { width: 15%; }
-            .col-break  { width: 7%;  text-align: right; }
-            .col-qty    { width: 8%;  text-align: right; }
+            .col-date   { width: 22%; }
+            .col-item   { width: 41%; }
+            .col-qty    { width: 9%;  text-align: right; }
             .col-rate   { width: 9%;  text-align: right; }
             .col-amount { width: 9%;  text-align: right; }
             .totals-section { display: flex; flex-direction: column; align-items: flex-end; font-size: 13.5px; }
@@ -144,8 +142,6 @@ final class PDFExportService {
                     <tr>
                         <th class="col-date">Item</th>
                         <th class="col-item"></th>
-                        <th class="col-time">Time</th>
-                        <th class="col-break">Break</th>
                         <th class="col-qty">Hours</th>
                         <th class="col-rate">Rate</th>
                         <th class="col-amount">Amount</th>
@@ -181,8 +177,6 @@ final class PDFExportService {
         for entry in sortedEntries {
             let dateStr = dayFormatter.string(from: entry.dateValue)
             let description: String
-            let time: String
-            let breakStr: String
             let hours: String
             let rate: String
             let amount: String
@@ -196,7 +190,7 @@ final class PDFExportService {
                 } else {
                     description = "Creative Assist"
                 }
-                time = ""; breakStr = ""; hours = ""
+                hours = ""
                 rate = formatAmount(entry.baseAmount)
                 amount = formatAmount(entry.baseAmount)
 
@@ -206,28 +200,31 @@ final class PDFExportService {
                 } else {
                     description = entry.description ?? ""
                 }
-                if let start = entry.startTime, let finish = entry.finishTime {
-                    time = "\(formatTime(start)) – \(formatTime(finish))"
-                } else {
-                    time = ""
-                }
-                breakStr = entry.breakMinutes.map { $0 > 0 ? "\($0)" : "" } ?? ""
                 hours = entry.hoursWorked.map { "\(NSDecimalNumber(decimal: $0))" } ?? ""
-                rate = formatAmount(client.rateHourly ?? 0)
+                rate = formatRate(client.rateHourly ?? 0)
                 amount = formatAmount(entry.baseAmount)
 
             case .manual:
                 description = entry.description ?? ""
-                time = ""; breakStr = ""; hours = ""
+                hours = ""
                 rate = ""
                 amount = formatAmount(entry.baseAmount)
             }
 
-            html += "<tr><td class=\"col-date\">\(dateStr)</td><td class=\"col-item\">\(description)</td><td class=\"col-time\">\(time)</td><td class=\"col-break\">\(breakStr)</td><td class=\"col-qty\">\(hours)</td><td class=\"col-rate\">\(rate)</td><td class=\"col-amount\">\(amount)</td></tr>\n"
+            html += "<tr><td class=\"col-date\">\(dateStr)</td><td class=\"col-item\">\(description)</td><td class=\"col-qty\">\(hours)</td><td class=\"col-rate\">\(rate)</td><td class=\"col-amount\">\(amount)</td></tr>\n"
 
             // SKU bonus sub-line
             if entry.bonusAmount > 0, let skus = entry.skus {
-                html += "<tr><td class=\"col-date\"></td><td class=\"col-item\">&nbsp;&nbsp;+ SKU bonus (\(skus) SKUs)</td><td class=\"col-time\"></td><td class=\"col-break\"></td><td class=\"col-qty\"></td><td class=\"col-rate\"></td><td class=\"col-amount\">\(formatAmount(entry.bonusAmount))</td></tr>\n"
+                html += "<tr><td class=\"col-date\"></td><td class=\"col-item\">&nbsp;&nbsp;+ SKU bonus (\(skus) SKUs)</td><td class=\"col-qty\"></td><td class=\"col-rate\"></td><td class=\"col-amount\">\(formatAmount(entry.bonusAmount))</td></tr>\n"
+            }
+
+            // Time/break sub-line for hourly entries
+            if entry.billingTypeSnapshot == .hourly, let start = entry.startTime, let finish = entry.finishTime {
+                var subLine = "\(formatTime(start)) – \(formatTime(finish))"
+                if let brk = entry.breakMinutes, brk > 0 {
+                    subLine += " (-\(brk)m)"
+                }
+                html += "<tr><td class=\"col-date\"></td><td class=\"col-item\" style=\"color:#666;font-size:0.88em\">\(subLine)</td><td class=\"col-qty\"></td><td class=\"col-rate\"></td><td class=\"col-amount\"></td></tr>\n"
             }
         }
 
@@ -244,6 +241,15 @@ final class PDFExportService {
     private func formatAmount(_ value: Decimal) -> String {
         let s = formatCurrency(value)
         return s.hasPrefix("$") ? String(s.dropFirst()) : s
+    }
+
+    private func formatRate(_ value: Decimal) -> String {
+        // Show whole numbers without decimals (e.g. 45 not 45.00)
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: value as NSDecimalNumber) ?? "\(value)"
     }
 
     private func abbreviateRole(_ role: String?) -> String {

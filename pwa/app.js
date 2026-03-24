@@ -1789,6 +1789,13 @@ function fmtInvoiceTime(t) {
     return `${parseInt(parts[0], 10)}:${parts[1]}`;
 }
 
+function fmtInvoiceRate(value) {
+    const n = parseFloat(value) || 0;
+    return new Intl.NumberFormat('en-AU', {
+        minimumFractionDigits: 0, maximumFractionDigits: 2,
+    }).format(n);
+}
+
 function formatInvoiceDate(dateStr) {
     if (!dateStr) return '';
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1812,7 +1819,7 @@ function buildInvoiceLineItemsHTML(inv) {
 
     for (const e of entries) {
         const dateStr = formatInvoiceEntryDate(e.date);
-        let description, time, breakStr, hours, rate, amount;
+        let description, hours, rate, amount;
 
         const type = (e.billing_type_snapshot || '').toLowerCase();
 
@@ -1824,7 +1831,7 @@ function buildInvoiceLineItemsHTML(inv) {
             } else {
                 description = 'Creative Assist';
             }
-            time = ''; breakStr = ''; hours = '';
+            hours = '';
             rate = fmtInvoiceAmount(e.base_amount);
             amount = fmtInvoiceAmount(e.base_amount);
         } else if (type === 'hourly' || (!type && e.hours_worked != null)) {
@@ -1833,26 +1840,28 @@ function buildInvoiceLineItemsHTML(inv) {
             } else {
                 description = e.description || '';
             }
-            time = (e.start_time && e.finish_time)
-                ? `${fmtInvoiceTime(e.start_time)} – ${fmtInvoiceTime(e.finish_time)}`
-                : '';
-            breakStr = e.break_minutes ? String(e.break_minutes) : '';
             hours = e.hours_worked != null ? String(e.hours_worked) : '';
             const rateHourly = parseFloat(client.rate_hourly) || 0;
-            rate = rateHourly ? fmtInvoiceAmount(rateHourly) : '';
+            rate = rateHourly ? fmtInvoiceRate(rateHourly) : '';
             amount = fmtInvoiceAmount(e.base_amount);
         } else {
             description = e.description || '';
-            time = ''; breakStr = ''; hours = '';
+            hours = '';
             rate = '';
             amount = fmtInvoiceAmount(e.base_amount);
         }
 
-        html += `<tr><td class="col-date">${dateStr}</td><td class="col-item">${description}</td><td class="col-time">${time}</td><td class="col-break">${breakStr}</td><td class="col-qty">${hours}</td><td class="col-rate">${rate}</td><td class="col-amount">${amount}</td></tr>\n`;
+        html += `<tr><td class="col-date">${dateStr}</td><td class="col-item">${description}</td><td class="col-qty">${hours}</td><td class="col-rate">${rate}</td><td class="col-amount">${amount}</td></tr>\n`;
 
         const bonus = parseFloat(e.bonus_amount) || 0;
         if (bonus > 0 && e.skus) {
-            html += `<tr><td class="col-date"></td><td class="col-item">&nbsp;&nbsp;+ SKU bonus (${e.skus} SKUs)</td><td class="col-time"></td><td class="col-break"></td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount">${fmtInvoiceAmount(bonus)}</td></tr>\n`;
+            html += `<tr><td class="col-date"></td><td class="col-item">&nbsp;&nbsp;+ SKU bonus (${e.skus} SKUs)</td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount">${fmtInvoiceAmount(bonus)}</td></tr>\n`;
+        }
+
+        if ((type === 'hourly' || (!type && e.hours_worked != null)) && e.start_time && e.finish_time) {
+            let subLine = `${fmtInvoiceTime(e.start_time)} – ${fmtInvoiceTime(e.finish_time)}`;
+            if (e.break_minutes) subLine += ` (-${e.break_minutes}m)`;
+            html += `<tr><td class="col-date"></td><td class="col-item" style="color:#666;font-size:0.88em">${subLine}</td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount"></td></tr>\n`;
         }
     }
 
@@ -1900,11 +1909,9 @@ function buildInvoiceHTML(inv) {
   table { width: 100%; border-collapse: collapse; margin-bottom: 100px; }
   th { text-align: left; padding: 10px 0; font-size: 13.5px; font-weight: normal; }
   td { padding: 6px 0; vertical-align: top; font-size: 13.5px; }
-  .col-date   { width: 20%; }
-  .col-item   { width: 24%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 0; }
-  .col-time   { width: 15%; }
-  .col-break  { width: 7%;  text-align: right; }
-  .col-qty    { width: 8%;  text-align: right; }
+  .col-date   { width: 22%; }
+  .col-item   { width: 41%; }
+  .col-qty    { width: 9%;  text-align: right; }
   .col-rate   { width: 9%;  text-align: right; }
   .col-amount { width: 9%;  text-align: right; }
   .totals-section { display: flex; flex-direction: column; align-items: flex-end; font-size: 13.5px; }
@@ -1942,8 +1949,6 @@ function buildInvoiceHTML(inv) {
       <tr>
         <th class="col-date">Item</th>
         <th class="col-item"></th>
-        <th class="col-time">Time</th>
-        <th class="col-break">Break</th>
         <th class="col-qty">Hours</th>
         <th class="col-rate">Rate</th>
         <th class="col-amount">Amount</th>
