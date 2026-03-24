@@ -1768,6 +1768,27 @@ function fmtInvoiceCurrency(value) {
     }).format(parseFloat(value) || 0);
 }
 
+function fmtInvoiceAmount(value) {
+    return new Intl.NumberFormat('en-AU', {
+        minimumFractionDigits: 2, maximumFractionDigits: 2,
+    }).format(parseFloat(value) || 0);
+}
+
+function abbreviateRole(role) {
+    if (!role) return '';
+    const r = role.toLowerCase();
+    if (r === 'photographer') return 'P';
+    if (r === 'operator') return 'O';
+    return role;
+}
+
+function fmtInvoiceTime(t) {
+    if (!t) return '';
+    const parts = t.substring(0, 5).split(':');
+    if (parts.length < 2) return t;
+    return `${parseInt(parts[0], 10)}:${parts[1]}`;
+}
+
 function formatInvoiceDate(dateStr) {
     if (!dateStr) return '';
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1791,7 +1812,7 @@ function buildInvoiceLineItemsHTML(inv) {
 
     for (const e of entries) {
         const dateStr = formatInvoiceEntryDate(e.date);
-        let description, qty, rate, amount;
+        let description, time, breakStr, hours, rate, amount;
 
         const type = (e.billing_type_snapshot || '').toLowerCase();
 
@@ -1803,41 +1824,35 @@ function buildInvoiceLineItemsHTML(inv) {
             } else {
                 description = 'Creative Assist';
             }
-            qty = '1';
-            rate = fmtInvoiceCurrency(e.base_amount);
-            amount = fmtInvoiceCurrency(e.base_amount);
+            time = ''; breakStr = ''; hours = '';
+            rate = fmtInvoiceAmount(e.base_amount);
+            amount = fmtInvoiceAmount(e.base_amount);
         } else if (type === 'hourly' || (!type && e.hours_worked != null)) {
-            const hoursStr = e.hours_worked ? `${e.hours_worked}h` : '';
             if (e.shoot_client) {
-                const role = e.role || 'Photographer';
-                description = `${e.shoot_client} (${role}) ${hoursStr}`.trim();
+                description = `${e.shoot_client} (${abbreviateRole(e.role || 'Photographer')})`;
             } else {
-                description = `${e.description || ''} ${hoursStr}`.trim();
+                description = e.description || '';
             }
-            qty = '1';
+            time = (e.start_time && e.finish_time)
+                ? `${fmtInvoiceTime(e.start_time)} – ${fmtInvoiceTime(e.finish_time)}`
+                : '';
+            breakStr = e.break_minutes ? String(e.break_minutes) : '';
+            hours = e.hours_worked != null ? String(e.hours_worked) : '';
             const rateHourly = parseFloat(client.rate_hourly) || 0;
-            rate = rateHourly ? fmtInvoiceCurrency(rateHourly) + '/hr' : '';
-            amount = fmtInvoiceCurrency(e.base_amount);
+            rate = rateHourly ? fmtInvoiceAmount(rateHourly) : '';
+            amount = fmtInvoiceAmount(e.base_amount);
         } else {
             description = e.description || '';
-            qty = '1';
+            time = ''; breakStr = ''; hours = '';
             rate = '';
-            amount = fmtInvoiceCurrency(e.base_amount);
+            amount = fmtInvoiceAmount(e.base_amount);
         }
 
-        html += `<tr><td class="col-date">${dateStr}</td><td class="col-item">${description}</td><td class="col-qty">${qty}</td><td class="col-rate">${rate}</td><td class="col-amount">${amount}</td></tr>\n`;
+        html += `<tr><td class="col-date">${dateStr}</td><td class="col-item">${description}</td><td class="col-time">${time}</td><td class="col-break">${breakStr}</td><td class="col-qty">${hours}</td><td class="col-rate">${rate}</td><td class="col-amount">${amount}</td></tr>\n`;
 
         const bonus = parseFloat(e.bonus_amount) || 0;
         if (bonus > 0 && e.skus) {
-            html += `<tr><td class="col-date"></td><td class="col-item">&nbsp;&nbsp;+ SKU bonus (${e.skus} SKUs)</td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount">${fmtInvoiceCurrency(bonus)}</td></tr>\n`;
-        }
-
-        if (type === 'hourly' && e.start_time && e.finish_time) {
-            const start = e.start_time.substring(0, 5).replace(/^0/, '');
-            const finish = e.finish_time.substring(0, 5).replace(/^0/, '');
-            let timeStr = `${start} – ${finish}`;
-            if (e.break_minutes) timeStr += `  (${e.break_minutes} min break)`;
-            html += `<tr><td class="col-date"></td><td class="col-item" style="color:#666;font-size:0.88em">&nbsp;&nbsp;${timeStr}</td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount"></td></tr>\n`;
+            html += `<tr><td class="col-date"></td><td class="col-item">&nbsp;&nbsp;+ SKU bonus (${e.skus} SKUs)</td><td class="col-time"></td><td class="col-break"></td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount">${fmtInvoiceAmount(bonus)}</td></tr>\n`;
         }
     }
 
@@ -1853,7 +1868,7 @@ function buildInvoiceHTML(inv) {
     const paysSuper = client.pays_super;
     const superRatePct = Math.round((parseFloat(client.super_rate) || 0) * 100);
     const superRow = paysSuper
-        ? `<div class="totals-row"><span class="label">Super (${superRatePct}%)</span><span class="value">${fmtInvoiceCurrency(inv.super_amount)}</span></div>`
+        ? `<div class="totals-row"><span class="label">Super (${superRatePct}%)</span><span class="value">${fmtInvoiceAmount(inv.super_amount)}</span></div>`
         : '';
 
     const clientLines = [client.name, client.email, client.address, client.suburb]
@@ -1885,11 +1900,13 @@ function buildInvoiceHTML(inv) {
   table { width: 100%; border-collapse: collapse; margin-bottom: 100px; }
   th { text-align: left; padding: 10px 0; font-size: 13.5px; font-weight: normal; }
   td { padding: 6px 0; vertical-align: top; font-size: 13.5px; }
-  .col-date { width: 28%; }
-  .col-item { width: 39%; }
-  .col-qty { width: 11%; text-align: right; }
-  .col-rate { width: 11%; text-align: right; }
-  .col-amount { width: 11%; text-align: right; }
+  .col-date   { width: 20%; }
+  .col-item   { width: 24%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 0; }
+  .col-time   { width: 15%; }
+  .col-break  { width: 7%;  text-align: right; }
+  .col-qty    { width: 8%;  text-align: right; }
+  .col-rate   { width: 9%;  text-align: right; }
+  .col-amount { width: 9%;  text-align: right; }
   .totals-section { display: flex; flex-direction: column; align-items: flex-end; font-size: 13.5px; }
   .totals-row { display: flex; justify-content: space-between; width: 100%; padding: 4px 0; }
   .totals-row.grand-total { margin-top: 40px; }
@@ -1925,7 +1942,9 @@ function buildInvoiceHTML(inv) {
       <tr>
         <th class="col-date">Item</th>
         <th class="col-item"></th>
-        <th class="col-qty">Qty</th>
+        <th class="col-time">Time</th>
+        <th class="col-break">Break</th>
+        <th class="col-qty">Hours</th>
         <th class="col-rate">Rate</th>
         <th class="col-amount">Amount</th>
       </tr>
@@ -1937,12 +1956,12 @@ function buildInvoiceHTML(inv) {
   <div class="totals-section">
     <div class="totals-row">
       <span class="label">Subtotal</span>
-      <span class="value">${fmtInvoiceCurrency(inv.subtotal)}</span>
+      <span class="value">${fmtInvoiceAmount(inv.subtotal)}</span>
     </div>
     ${superRow}
     <div class="totals-row grand-total">
       <span class="label">Total</span>
-      <span class="value">${fmtInvoiceCurrency(inv.total)}</span>
+      <span class="value">${fmtInvoiceAmount(inv.total)}</span>
     </div>
   </div>
 </div>
@@ -2039,7 +2058,7 @@ const invoiceChipColors = {
 
 function entryDescription(entry) {
     if (entry.description)  return entry.description;
-    if (entry.shoot_client) return entry.shoot_client + (entry.role ? ` · ${entry.role}` : '');
+    if (entry.shoot_client) return entry.shoot_client + (entry.role ? ` · ${abbreviateRole(entry.role)}` : '');
     if (entry.day_type)     return (entry.day_type === 'full' ? 'Full day' : 'Half day')
                                    + (entry.workflow_type ? ` · ${entry.workflow_type}` : '');
     if (entry.hours_worked) return `${entry.hours_worked}h`;

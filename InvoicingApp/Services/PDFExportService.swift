@@ -71,7 +71,7 @@ final class PDFExportService {
 
         let superRatePct = NSDecimalNumber(decimal: client.superRate * 100).intValue
         let superRow = client.paysSuper
-            ? "<div class=\"totals-row\"><span class=\"label\">Super (\(superRatePct)%)</span><span class=\"value\">\(formatCurrency(invoice.superAmount))</span></div>"
+            ? "<div class=\"totals-row\"><span class=\"label\">Super (\(superRatePct)%)</span><span class=\"value\">\(formatAmount(invoice.superAmount))</span></div>"
             : ""
 
         let superMetaLines = client.paysSuper ? """
@@ -99,11 +99,13 @@ final class PDFExportService {
             table { width: 100%; border-collapse: collapse; margin-bottom: 100px; }
             th { text-align: left; padding: 10px 0; font-size: 13.5px; font-weight: normal; }
             td { padding: 6px 0; vertical-align: top; font-size: 13.5px; }
-            .col-date { width: 28%; }
-            .col-item { width: 39%; }
-            .col-qty { width: 11%; text-align: right; }
-            .col-rate { width: 11%; text-align: right; }
-            .col-amount { width: 11%; text-align: right; }
+            .col-date   { width: 20%; }
+            .col-item   { width: 24%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 0; }
+            .col-time   { width: 15%; }
+            .col-break  { width: 7%;  text-align: right; }
+            .col-qty    { width: 8%;  text-align: right; }
+            .col-rate   { width: 9%;  text-align: right; }
+            .col-amount { width: 9%;  text-align: right; }
             .totals-section { display: flex; flex-direction: column; align-items: flex-end; font-size: 13.5px; }
             .totals-row { display: flex; justify-content: space-between; width: 100%; padding: 4px 0; }
             .totals-row.grand-total { margin-top: 40px; }
@@ -142,7 +144,9 @@ final class PDFExportService {
                     <tr>
                         <th class="col-date">Item</th>
                         <th class="col-item"></th>
-                        <th class="col-qty">Qty</th>
+                        <th class="col-time">Time</th>
+                        <th class="col-break">Break</th>
+                        <th class="col-qty">Hours</th>
                         <th class="col-rate">Rate</th>
                         <th class="col-amount">Amount</th>
                     </tr>
@@ -154,12 +158,12 @@ final class PDFExportService {
             <div class="totals-section">
                 <div class="totals-row">
                     <span class="label">Subtotal</span>
-                    <span class="value">\(formatCurrency(invoice.subtotal))</span>
+                    <span class="value">\(formatAmount(invoice.subtotal))</span>
                 </div>
                 \(superRow)
                 <div class="totals-row grand-total">
                     <span class="label">Total</span>
-                    <span class="value">\(formatCurrency(invoice.total))</span>
+                    <span class="value">\(formatAmount(invoice.total))</span>
                 </div>
             </div>
         </div>
@@ -177,10 +181,12 @@ final class PDFExportService {
         for entry in sortedEntries {
             let dateStr = dayFormatter.string(from: entry.dateValue)
             let description: String
+            let time: String
+            let breakStr: String
+            let hours: String
             let rate: String
             let amount: String
 
-            let qty: String
             switch entry.billingTypeSnapshot {
             case .dayRate:
                 if entry.workflowType == "Own Brand" {
@@ -190,43 +196,38 @@ final class PDFExportService {
                 } else {
                     description = "Creative Assist"
                 }
-                qty = "1"
-                rate = formatCurrency(entry.baseAmount)
-                amount = formatCurrency(entry.baseAmount)
+                time = ""; breakStr = ""; hours = ""
+                rate = formatAmount(entry.baseAmount)
+                amount = formatAmount(entry.baseAmount)
 
             case .hourly:
-                let hoursStr = entry.hoursWorked.map { "\(NSDecimalNumber(decimal: $0))h" } ?? ""
                 if let shootClient = entry.shootClient {
-                    let role = entry.role ?? "Photographer"
-                    description = "\(shootClient) (\(role)) \(hoursStr)"
+                    description = "\(shootClient) (\(abbreviateRole(entry.role)))"
                 } else {
-                    description = "\(entry.description ?? "") \(hoursStr)"
+                    description = entry.description ?? ""
                 }
-                qty = "1"
-                rate = formatCurrency(client.rateHourly ?? 0) + "/hr"
-                amount = formatCurrency(entry.baseAmount)
+                if let start = entry.startTime, let finish = entry.finishTime {
+                    time = "\(formatTime(start)) – \(formatTime(finish))"
+                } else {
+                    time = ""
+                }
+                breakStr = entry.breakMinutes.map { $0 > 0 ? "\($0)" : "" } ?? ""
+                hours = entry.hoursWorked.map { "\(NSDecimalNumber(decimal: $0))" } ?? ""
+                rate = formatAmount(client.rateHourly ?? 0)
+                amount = formatAmount(entry.baseAmount)
 
             case .manual:
                 description = entry.description ?? ""
-                qty = "1"
+                time = ""; breakStr = ""; hours = ""
                 rate = ""
-                amount = formatCurrency(entry.baseAmount)
+                amount = formatAmount(entry.baseAmount)
             }
 
-            html += "<tr><td class=\"col-date\">\(dateStr)</td><td class=\"col-item\">\(description)</td><td class=\"col-qty\">\(qty)</td><td class=\"col-rate\">\(rate)</td><td class=\"col-amount\">\(amount)</td></tr>\n"
+            html += "<tr><td class=\"col-date\">\(dateStr)</td><td class=\"col-item\">\(description)</td><td class=\"col-time\">\(time)</td><td class=\"col-break\">\(breakStr)</td><td class=\"col-qty\">\(hours)</td><td class=\"col-rate\">\(rate)</td><td class=\"col-amount\">\(amount)</td></tr>\n"
 
             // SKU bonus sub-line
             if entry.bonusAmount > 0, let skus = entry.skus {
-                html += "<tr><td class=\"col-date\"></td><td class=\"col-item\">&nbsp;&nbsp;+ SKU bonus (\(skus) SKUs)</td><td class=\"col-qty\"></td><td class=\"col-rate\"></td><td class=\"col-amount\">\(formatCurrency(entry.bonusAmount))</td></tr>\n"
-            }
-
-            // Hourly time sub-line
-            if entry.billingTypeSnapshot == .hourly, let start = entry.startTime, let finish = entry.finishTime {
-                var timeStr = "\(formatTime(start)) – \(formatTime(finish))"
-                if let brk = entry.breakMinutes, brk > 0 {
-                    timeStr += "  (\(brk) min break)"
-                }
-                html += "<tr><td class=\"col-date\"></td><td class=\"col-item\" style=\"color:#666;font-size:0.88em\">&nbsp;&nbsp;\(timeStr)</td><td class=\"col-qty\"></td><td class=\"col-rate\"></td><td class=\"col-amount\"></td></tr>\n"
+                html += "<tr><td class=\"col-date\"></td><td class=\"col-item\">&nbsp;&nbsp;+ SKU bonus (\(skus) SKUs)</td><td class=\"col-time\"></td><td class=\"col-break\"></td><td class=\"col-qty\"></td><td class=\"col-rate\"></td><td class=\"col-amount\">\(formatAmount(entry.bonusAmount))</td></tr>\n"
             }
         }
 
@@ -238,6 +239,19 @@ final class PDFExportService {
         let parts = t.split(separator: ":")
         guard parts.count >= 2, let hour = Int(parts[0]), let minute = Int(parts[1]) else { return t }
         return String(format: "%d:%02d", hour, minute)
+    }
+
+    private func formatAmount(_ value: Decimal) -> String {
+        let s = formatCurrency(value)
+        return s.hasPrefix("$") ? String(s.dropFirst()) : s
+    }
+
+    private func abbreviateRole(_ role: String?) -> String {
+        switch role?.lowercased() {
+        case "photographer": return "P"
+        case "operator":     return "O"
+        default:             return role ?? ""
+        }
     }
 
     private func formatCurrency(_ value: Decimal) -> String {

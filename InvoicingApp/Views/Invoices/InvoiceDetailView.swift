@@ -51,13 +51,19 @@ struct InvoiceDetailView: View {
                 VStack(spacing: 0) {
                     HStack {
                         Text("Date").font(.caption.bold())
-                            .frame(width: 110, alignment: .leading)
+                            .frame(width: 90, alignment: .leading)
                         Text("Description").font(.caption.bold())
                             .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("Time").font(.caption.bold())
+                            .frame(width: 100, alignment: .leading)
+                        Text("Break").font(.caption.bold())
+                            .frame(width: 40, alignment: .trailing)
                         Text("Hours").font(.caption.bold())
-                            .frame(width: 60, alignment: .trailing)
+                            .frame(width: 45, alignment: .trailing)
+                        Text("Rate").font(.caption.bold())
+                            .frame(width: 45, alignment: .trailing)
                         Text("Amount").font(.caption.bold())
-                            .frame(width: 100, alignment: .trailing)
+                            .frame(width: 80, alignment: .trailing)
                     }
                     .padding(.vertical, 8)
 
@@ -66,27 +72,22 @@ struct InvoiceDetailView: View {
                     ForEach(vm.entries) { entry in
                         HStack {
                             Text(entryDateString(entry))
-                                .frame(width: 110, alignment: .leading)
+                                .frame(width: 90, alignment: .leading)
                             Text(entryDescriptionOnly(entry))
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                                .lineLimit(1)
+                            Text(entryTimeString(entry))
+                                .frame(width: 100, alignment: .leading)
+                            Text(entryBreakString(entry))
+                                .frame(width: 40, alignment: .trailing)
                             Text(entryHoursString(entry))
-                                .frame(width: 60, alignment: .trailing)
-                            CurrencyText(amount: entry.baseAmount + entry.bonusAmount)
-                                .frame(width: 100, alignment: .trailing)
+                                .frame(width: 45, alignment: .trailing)
+                            Text(entryRateString(entry))
+                                .frame(width: 45, alignment: .trailing)
+                            Text(formatAmount(entry.baseAmount + entry.bonusAmount))
+                                .frame(width: 80, alignment: .trailing)
                         }
                         .padding(.vertical, 4)
-
-                        if entry.billingTypeSnapshot == .hourly,
-                           let start = entry.startTime, let finish = entry.finishTime {
-                            HStack {
-                                Text("").frame(width: 110)
-                                Text(formatTimeRange(start, finish, breakMinutes: entry.breakMinutes))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .padding(.bottom, 2)
-                        }
                     }
 
                     Divider()
@@ -96,23 +97,23 @@ struct InvoiceDetailView: View {
                         HStack {
                             Spacer()
                             Text("Subtotal")
-                            CurrencyText(amount: vm.invoice.subtotal)
-                                .frame(width: 100, alignment: .trailing)
+                            Text(formatAmount(vm.invoice.subtotal))
+                                .frame(width: 80, alignment: .trailing)
                         }
                         if vm.invoice.superAmount > 0 {
                             HStack {
                                 Spacer()
                                 Text("Super")
-                                CurrencyText(amount: vm.invoice.superAmount)
-                                    .frame(width: 100, alignment: .trailing)
+                                Text(formatAmount(vm.invoice.superAmount))
+                                    .frame(width: 80, alignment: .trailing)
                             }
                         }
                         HStack {
                             Spacer()
                             Text("Total").fontWeight(.bold)
-                            CurrencyText(amount: vm.invoice.total)
+                            Text(formatAmount(vm.invoice.total))
                                 .fontWeight(.bold)
-                                .frame(width: 100, alignment: .trailing)
+                                .frame(width: 80, alignment: .trailing)
                         }
                     }
                     .padding(.top, 8)
@@ -207,15 +208,13 @@ struct InvoiceDetailView: View {
         switch entry.billingTypeSnapshot {
         case .dayRate:
             if let workflow = entry.workflowType {
-                if workflow == "Own Brand" {
-                    return entry.brand ?? "Own Brand"
-                }
+                if workflow == "Own Brand" { return entry.brand ?? "Own Brand" }
                 return workflow
             }
             return "Creative Assist"
         case .hourly:
             if let shootClient = entry.shootClient {
-                return "\(shootClient) (\(entry.role ?? ""))"
+                return "\(shootClient) (\(abbreviateRole(entry.role)))"
             }
             return entry.description ?? ""
         case .manual:
@@ -223,17 +222,43 @@ struct InvoiceDetailView: View {
         }
     }
 
-    private func entryHoursString(_ entry: Entry) -> String {
-        guard entry.billingTypeSnapshot == .hourly, let hours = entry.hoursWorked else { return "" }
-        return "\(NSDecimalNumber(decimal: hours))h"
+    private func entryTimeString(_ entry: Entry) -> String {
+        guard entry.billingTypeSnapshot == .hourly,
+              let start = entry.startTime, let finish = entry.finishTime else { return "" }
+        return "\(formatTime(start)) – \(formatTime(finish))"
     }
 
-    private func formatTimeRange(_ start: String, _ finish: String, breakMinutes: Int?) -> String {
-        var str = "\(formatTime(start)) – \(formatTime(finish))"
-        if let brk = breakMinutes, brk > 0 {
-            str += "  (\(brk) min break)"
+    private func entryBreakString(_ entry: Entry) -> String {
+        guard entry.billingTypeSnapshot == .hourly,
+              let brk = entry.breakMinutes, brk > 0 else { return "" }
+        return "\(brk)"
+    }
+
+    private func entryHoursString(_ entry: Entry) -> String {
+        guard entry.billingTypeSnapshot == .hourly, let hours = entry.hoursWorked else { return "" }
+        return "\(NSDecimalNumber(decimal: hours))"
+    }
+
+    private func entryRateString(_ entry: Entry) -> String {
+        guard entry.billingTypeSnapshot == .hourly,
+              let rate = vm.client?.rateHourly else { return "" }
+        return formatAmount(rate)
+    }
+
+    private func formatAmount(_ value: Decimal) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: value as NSDecimalNumber) ?? "0.00"
+    }
+
+    private func abbreviateRole(_ role: String?) -> String {
+        switch role?.lowercased() {
+        case "photographer": return "P"
+        case "operator":     return "O"
+        default:             return role ?? ""
         }
-        return str
     }
 
     private func formatTime(_ t: String) -> String {
