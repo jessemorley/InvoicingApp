@@ -1,17 +1,7 @@
-        :root { --accent: #007AFF; --build: "a3f92d1"; }
+        :root { --accent: #007AFF; }
 
         #overlayClientInput::placeholder {
             color: #d1d5db;
-        }
-
-        #entriesHeaderTop h1::after {
-            content: var(--build);
-            font-size: 11px;
-            font-family: monospace;
-            color: #9ca3af;
-            margin-left: 8px;
-            font-weight: normal;
-            vertical-align: middle;
         }
 
         body {
