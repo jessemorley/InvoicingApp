@@ -1860,8 +1860,8 @@ function buildInvoiceLineItemsHTML(inv) {
 
         if ((type === 'hourly' || (!type && e.hours_worked != null)) && e.start_time && e.finish_time) {
             let subLine = `${fmtInvoiceTime(e.start_time)} – ${fmtInvoiceTime(e.finish_time)}`;
-            if (e.break_minutes) subLine += ` (-${e.break_minutes}m)`;
-            html += `<tr><td class="col-date"></td><td class="col-item" style="color:#666;font-size:0.88em">${subLine}</td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount"></td></tr>\n`;
+            if (e.break_minutes) subLine += ` (${e.break_minutes}m)`;
+            html += `<tr><td class="col-date"></td><td class="col-item" style="color:#555;font-size:0.75em;padding-top:0">${subLine}</td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount"></td></tr>\n`;
         }
     }
 
@@ -1910,9 +1910,9 @@ function buildInvoiceHTML(inv) {
   th { text-align: left; padding: 10px 0; font-size: 13.5px; font-weight: normal; }
   td { padding: 6px 0; vertical-align: top; font-size: 13.5px; }
   .col-date   { width: 22%; }
-  .col-item   { width: 41%; }
-  .col-qty    { width: 9%;  text-align: right; }
-  .col-rate   { width: 9%;  text-align: right; }
+  .col-item   { width: 37%; }
+  .col-qty    { width: 11%; text-align: right; }
+  .col-rate   { width: 11%; text-align: right; }
   .col-amount { width: 9%;  text-align: right; }
   .totals-section { display: flex; flex-direction: column; align-items: flex-end; font-size: 13.5px; }
   .totals-row { display: flex; justify-content: space-between; width: 100%; padding: 4px 0; }

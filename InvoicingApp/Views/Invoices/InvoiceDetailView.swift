@@ -239,7 +239,7 @@ struct InvoiceDetailView: View {
     private func entryTimeSubLine(_ start: String, _ finish: String, breakMinutes: Int?) -> String {
         var str = "\(formatTime(start)) – \(formatTime(finish))"
         if let brk = breakMinutes, brk > 0 {
-            str += " (-\(brk)m)"
+            str += " (\(brk)m)"
         }
         return str
     }
