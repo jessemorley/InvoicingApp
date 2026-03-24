@@ -303,17 +303,24 @@
     </button>
 
     <!-- Invoice Preview Overlay -->
-    <div id="invoicePreviewOverlay" style="display:none; position:fixed; inset:0; background:#1c1c1e; z-index:600; flex-direction:column;">
-        <div id="invoicePreviewHeader" style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; padding-top:calc(16px + env(safe-area-inset-top)); flex-shrink:0;">
-            <span style="font-size:17px; font-weight:600; color:#fff; letter-spacing:-0.3px;">Preview</span>
-            <button id="invoicePreviewClose" style="background:rgba(255,255,255,0.15); border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; flex-shrink:0;">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-        <div style="flex:1; overflow-y:auto; padding:0 16px calc(24px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling:touch;">
-            <iframe id="invoicePreviewFrame" srcdoc="" style="width:100%; border:none; border-radius:12px; display:block; background:#fff;" scrolling="no"></iframe>
+    <div id="invoicePreviewOverlay" style="display:none; position:fixed; inset:0; background:#1c1c1e; z-index:600; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+        <!-- Floating back button -->
+        <button id="invoicePreviewBack" style="position:fixed; top:calc(16px + env(safe-area-inset-top)); left:16px; z-index:610; width:40px; height:40px; border-radius:50%; background:rgba(30,30,30,0.7); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:none; cursor:pointer; color:#fff; display:flex; align-items:center; justify-content:center;">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </button>
+        <!-- Floating print button -->
+        <button id="invoicePreviewPrint" style="position:fixed; top:calc(16px + env(safe-area-inset-top)); right:16px; z-index:610; width:40px; height:40px; border-radius:50%; background:rgba(30,30,30,0.7); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:none; cursor:pointer; color:#fff; display:flex; align-items:center; justify-content:center;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z"/>
+            </svg>
+        </button>
+        <!-- Page content -->
+        <div id="invoicePreviewPageWrap" style="padding:calc(72px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom));">
+            <div id="invoicePreviewScaleWrap" style="transform-origin:top left; border-radius:3px; overflow:hidden; box-shadow:0 12px 48px rgba(0,0,0,0.5);">
+                <iframe id="invoicePreviewFrame" srcdoc="" style="border:none; display:block; background:#fff;" scrolling="no"></iframe>
+            </div>
         </div>
     </div>
 

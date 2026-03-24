@@ -1740,21 +1740,42 @@ function openInvoicePreviewById(id) {
 
 function openInvoicePreview(inv) {
     const html = buildInvoiceHTML(inv);
-    const frame = document.getElementById('invoicePreviewFrame');
-    frame.style.height = '1123px';
+    const overlay   = document.getElementById('invoicePreviewOverlay');
+    const frame     = document.getElementById('invoicePreviewFrame');
+    const scaleWrap = document.getElementById('invoicePreviewScaleWrap');
+
+    const docWidth = 794;
+    const scale = (window.innerWidth - 32) / docWidth; // 16px padding each side
+
+    frame.style.width  = docWidth + 'px';
+    frame.style.height = '1123px'; // initial A4 height
+
+    scaleWrap.style.width          = docWidth + 'px';
+    scaleWrap.style.transform      = `scale(${scale})`;
+    scaleWrap.style.marginBottom   = Math.ceil(1123 * (scale - 1)) + 'px';
+
     frame.srcdoc = html;
     frame.onload = () => {
         try {
-            const h = frame.contentDocument?.body?.scrollHeight;
-            if (h) frame.style.height = (h + 40) + 'px';
+            const h = frame.contentDocument?.documentElement?.scrollHeight;
+            if (h && h > 100) {
+                frame.style.height       = h + 'px';
+                scaleWrap.style.marginBottom = Math.ceil(h * (scale - 1)) + 'px';
+            }
         } catch (e) {}
     };
-    document.getElementById('invoicePreviewOverlay').style.display = 'flex';
+
+    overlay.style.display = 'block';
+    overlay.scrollTop = 0;
 }
 
-document.getElementById('invoicePreviewClose').addEventListener('click', () => {
+document.getElementById('invoicePreviewBack').addEventListener('click', () => {
     document.getElementById('invoicePreviewOverlay').style.display = 'none';
     document.getElementById('invoicePreviewFrame').srcdoc = '';
+});
+
+document.getElementById('invoicePreviewPrint').addEventListener('click', () => {
+    document.getElementById('invoicePreviewFrame').contentWindow.print();
 });
 
 function clientBadgeColor(name) {
