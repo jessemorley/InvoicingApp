@@ -1423,7 +1423,14 @@ function toggleInvoiceSort() {
     requestAnimationFrame(() => renderInvoices(invoicesCache));
 }
 
-document.getElementById('invoiceSortBtn').addEventListener('click', toggleInvoiceSort);
+// Stop touch propagation so the horizontal swipe handler on #viewSlider
+// never intercepts taps on this button and suppresses the click event.
+(function () {
+    const btn = document.getElementById('invoiceSortBtn');
+    btn.addEventListener('click', toggleInvoiceSort);
+    btn.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+    btn.addEventListener('touchend',   e => e.stopPropagation(), { passive: true });
+}());
 
 function invoiceSubtotal(inv) {
     if (!inv.entries?.length) return 0;
