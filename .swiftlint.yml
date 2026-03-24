@@ -1,0 +1,15 @@
+disabled_rules:
+  - identifier_name           # 'vm', 'f', 'n', 'x', 'y' are idiomatic in this codebase
+  - multiple_closures_with_trailing_closure
+
+opt_in_rules:
+  - force_unwrapping
+
+line_length:
+  warning: 160
+  error: 300
+  ignores_comments: true
+  ignores_urls: true
+
+excluded:
+  - InvoicingApp.xcodeproj

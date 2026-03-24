@@ -36,6 +36,10 @@ let newEntryRole           = 'Photographer';
 let entriesOldestDate = null;  // earliest date fetched so far (Date object)
 let entriesAllLoaded  = false; // true once we've hit the beginning of history
 
+// Invoice preview state
+let businessDetails    = null;
+let currentPreviewHTML = null;
+
 // ─────────────────────────────────────────────
 // AUTH
 // ─────────────────────────────────────────────
@@ -1302,7 +1306,6 @@ async function saveNewEntry() {
 
     scroller.addEventListener('touchmove', e => {
         if (!pulling) return;
-        const dx = Math.abs(e.touches[0].clientX - (e.touches[0].clientX)); // placeholder; direction handled by swipe handler
         const dy = Math.min(e.touches[0].clientY - startY, MAX_PULL);
         if (dy <= 10) return;
         indicator.classList.add('visible');
@@ -1472,9 +1475,8 @@ function switchView(index) {
 // ─────────────────────────────────────────────
 let expandedInvoiceWrap = null;
 
-let invoicesAllLoaded     = false;
-let invoicesScrollLoading = false;
-const INVOICES_PAGE_SIZE  = 18;
+let invoicesAllLoaded    = false;
+const INVOICES_PAGE_SIZE = 18;
 let invoicesRenderedCount = 0;
 
 async function loadInvoices() {
@@ -1759,14 +1761,6 @@ function collapseInvoiceCard(wrap) {
 // INVOICE HTML PREVIEW
 // ─────────────────────────────────────────────
 
-let businessDetails = null;
-let currentPreviewHTML = null;
-
-function fmtInvoiceCurrency(value) {
-    return new Intl.NumberFormat('en-AU', {
-        style: 'currency', currency: 'AUD', currencyDisplay: 'symbol',
-    }).format(parseFloat(value) || 0);
-}
 
 function fmtInvoiceAmount(value) {
     return new Intl.NumberFormat('en-AU', {
@@ -2181,7 +2175,6 @@ function openEntryCard(wrap, entry, readOnly = false) {
         const wfHidden     = editDayType !== 'full' ? 'hidden' : '';
         const brandHidden  = editWorkflow !== 'Own Brand' ? 'hidden' : '';
         const skuHidden    = editWorkflow === 'Own Brand' ? 'hidden' : '';
-        const bonusHidden  = (editDayType !== 'full' || editWorkflow === 'Own Brand') ? 'hidden' : '';
         html += `
         <div id="editDayRateFields" class="space-y-3">
             <div>

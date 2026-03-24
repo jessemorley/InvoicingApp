@@ -95,7 +95,7 @@ struct CalendarView: View {
     /// `nil` entries represent blank cells outside the current month.
     private var sixWeekGrid: [Date?] {
         let cal = Calendar.current
-        let range = cal.range(of: .day, in: .month, for: currentMonth)!
+        guard let range = cal.range(of: .day, in: .month, for: currentMonth) else { return [] }
         let firstDay = currentMonth
         // weekday: 1=Sun, 2=Mon... convert to Mon=0
         let firstWeekday = cal.component(.weekday, from: firstDay)
