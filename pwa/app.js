@@ -1744,10 +1744,9 @@ function openInvoicePreview(inv) {
     const frame     = document.getElementById('invoicePreviewFrame');
     const scaleWrap = document.getElementById('invoicePreviewScaleWrap');
 
-    const docWidth = 794;
-    const scale = (window.innerWidth - 32) / docWidth; // 16px padding each side
-
+    const docWidth  = 794;
     const docHeight = 1123;
+    const scale     = window.innerWidth / docWidth; // edge-to-edge, no padding
 
     frame.style.width  = docWidth + 'px';
     frame.style.height = docHeight + 'px';
@@ -1758,13 +1757,25 @@ function openInvoicePreview(inv) {
 
     frame.srcdoc = html;
 
-    overlay.style.display = 'block';
-    overlay.scrollTop = 0;
+    // Ensure starting off-screen, then slide in
+    overlay.style.transition = 'none';
+    overlay.style.transform  = 'translateX(100%)';
+    overlay.style.display    = 'block';
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            overlay.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+            overlay.style.transform  = 'translateX(0)';
+        });
+    });
 }
 
 document.getElementById('invoicePreviewBack').addEventListener('click', () => {
-    document.getElementById('invoicePreviewOverlay').style.display = 'none';
-    document.getElementById('invoicePreviewFrame').srcdoc = '';
+    const overlay = document.getElementById('invoicePreviewOverlay');
+    overlay.style.transform = 'translateX(100%)';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        document.getElementById('invoicePreviewFrame').srcdoc = '';
+    }, 350);
 });
 
 document.getElementById('invoicePreviewPrint').addEventListener('click', () => {
