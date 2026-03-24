@@ -1694,7 +1694,7 @@ async function toggleInvoiceCard(wrap, inv) {
         inner.innerHTML = '<div class="spinner" style="margin:16px auto;width:24px;height:24px;"></div>';
         const { data: fullInv, error } = await sb
             .from('invoices')
-            .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand)')
+            .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand, start_time, finish_time, break_minutes)')
             .eq('id', inv.id)
             .single();
         if (!error && fullInv) {
@@ -1830,6 +1830,14 @@ function buildInvoiceLineItemsHTML(inv) {
         const bonus = parseFloat(e.bonus_amount) || 0;
         if (bonus > 0 && e.skus) {
             html += `<tr><td class="col-date"></td><td class="col-item">&nbsp;&nbsp;+ SKU bonus (${e.skus} SKUs)</td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount">${fmtInvoiceCurrency(bonus)}</td></tr>\n`;
+        }
+
+        if (type === 'hourly' && e.start_time && e.finish_time) {
+            const start = e.start_time.substring(0, 5).replace(/^0/, '');
+            const finish = e.finish_time.substring(0, 5).replace(/^0/, '');
+            let timeStr = `${start} – ${finish}`;
+            if (e.break_minutes) timeStr += `  (${e.break_minutes} min break)`;
+            html += `<tr><td class="col-date"></td><td class="col-item" style="color:#666;font-size:0.88em">&nbsp;&nbsp;${timeStr}</td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount"></td></tr>\n`;
         }
     }
 

@@ -219,9 +219,25 @@ final class PDFExportService {
             if entry.bonusAmount > 0, let skus = entry.skus {
                 html += "<tr><td class=\"col-date\"></td><td class=\"col-item\">&nbsp;&nbsp;+ SKU bonus (\(skus) SKUs)</td><td class=\"col-qty\"></td><td class=\"col-rate\"></td><td class=\"col-amount\">\(formatCurrency(entry.bonusAmount))</td></tr>\n"
             }
+
+            // Hourly time sub-line
+            if entry.billingTypeSnapshot == .hourly, let start = entry.startTime, let finish = entry.finishTime {
+                var timeStr = "\(formatTime(start)) – \(formatTime(finish))"
+                if let brk = entry.breakMinutes, brk > 0 {
+                    timeStr += "  (\(brk) min break)"
+                }
+                html += "<tr><td class=\"col-date\"></td><td class=\"col-item\" style=\"color:#666;font-size:0.88em\">&nbsp;&nbsp;\(timeStr)</td><td class=\"col-qty\"></td><td class=\"col-rate\"></td><td class=\"col-amount\"></td></tr>\n"
+            }
         }
 
         return html
+    }
+
+    private func formatTime(_ t: String) -> String {
+        // t is "HH:mm:ss" or "HH:mm" — return "H:mm" without leading zero for hours
+        let parts = t.split(separator: ":")
+        guard parts.count >= 2, let hour = Int(parts[0]), let minute = Int(parts[1]) else { return t }
+        return String(format: "%d:%02d", hour, minute)
     }
 
     private func formatCurrency(_ value: Decimal) -> String {

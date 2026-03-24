@@ -75,6 +75,18 @@ struct InvoiceDetailView: View {
                                 .frame(width: 100, alignment: .trailing)
                         }
                         .padding(.vertical, 4)
+
+                        if entry.billingTypeSnapshot == .hourly,
+                           let start = entry.startTime, let finish = entry.finishTime {
+                            HStack {
+                                Text("").frame(width: 110)
+                                Text(formatTimeRange(start, finish, breakMinutes: entry.breakMinutes))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .padding(.bottom, 2)
+                        }
                     }
 
                     Divider()
@@ -214,5 +226,19 @@ struct InvoiceDetailView: View {
     private func entryHoursString(_ entry: Entry) -> String {
         guard entry.billingTypeSnapshot == .hourly, let hours = entry.hoursWorked else { return "" }
         return "\(NSDecimalNumber(decimal: hours))h"
+    }
+
+    private func formatTimeRange(_ start: String, _ finish: String, breakMinutes: Int?) -> String {
+        var str = "\(formatTime(start)) – \(formatTime(finish))"
+        if let brk = breakMinutes, brk > 0 {
+            str += "  (\(brk) min break)"
+        }
+        return str
+    }
+
+    private func formatTime(_ t: String) -> String {
+        let parts = t.split(separator: ":")
+        guard parts.count >= 2, let hour = Int(parts[0]), let minute = Int(parts[1]) else { return t }
+        return String(format: "%d:%02d", hour, minute)
     }
 }
