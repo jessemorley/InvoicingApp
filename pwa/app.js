@@ -1362,6 +1362,7 @@ async function loadInvoices() {
     });
 
     invoicesCache = data;
+    updateSortBtnIcon();
     renderInvoices(data);
 }
 
@@ -1405,12 +1406,24 @@ function renderInvoices(data) {
     }
 }
 
+// SVG for "tap to group by status" (funnel / decreasing lines)
+const ICON_GROUP = `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M11 18h2"/></svg>`;
+// SVG for "tap to show as flat list" (equal lines)
+const ICON_LIST  = `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>`;
+
+function updateSortBtnIcon() {
+    const btn = document.getElementById('invoiceSortBtn');
+    if (btn) btn.innerHTML = invoicesSortMode === 'chronological' ? ICON_GROUP : ICON_LIST;
+}
+
 function toggleInvoiceSort() {
     invoicesSortMode = invoicesSortMode === 'chronological' ? 'status' : 'chronological';
-    const btn = document.getElementById('invoiceSortBtn');
-    btn.textContent = invoicesSortMode === 'chronological' ? 'Group' : 'Ungroup';
-    renderInvoices(invoicesCache);
+    updateSortBtnIcon();
+    // Defer re-render out of the touch event to avoid iOS tap debouncing
+    requestAnimationFrame(() => renderInvoices(invoicesCache));
 }
+
+document.getElementById('invoiceSortBtn').addEventListener('click', toggleInvoiceSort);
 
 function invoiceSubtotal(inv) {
     if (!inv.entries?.length) return 0;
