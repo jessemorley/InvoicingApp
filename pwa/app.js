@@ -20,8 +20,10 @@ let currentWorkflow  = 'Apparel';
 let currentRole      = 'Photographer';
 
 // View navigation
-let currentViewIndex = 0;
-let invoicesLoaded   = false;
+let currentViewIndex  = 0;
+let invoicesLoaded    = false;
+let invoicesSortMode  = 'chronological'; // 'chronological' | 'status'
+let invoicesCache     = [];
 
 // New entry card state
 let newEntryWrap           = null;
@@ -1352,6 +1354,7 @@ async function loadInvoices() {
         return;
     }
 
+    invoicesCache = data;
     renderInvoices(data);
 }
 
@@ -1360,32 +1363,46 @@ function renderInvoices(data) {
     list.innerHTML = '';
     expandedInvoiceWrap = null;
 
-    const unpaid = data.filter(inv => inv.status !== 'paid');
-    const paid   = data.filter(inv => inv.status === 'paid');
+    if (invoicesSortMode === 'status') {
+        const unpaid = data.filter(inv => inv.status !== 'paid');
+        const paid   = data.filter(inv => inv.status === 'paid');
+        let idx = 0;
 
-    let idx = 0;
+        if (unpaid.length) {
+            const hdr = document.createElement('div');
+            hdr.className = 'week-header';
+            hdr.innerHTML = `<span>Unpaid</span><span>${fmt(unpaid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
+            list.appendChild(hdr);
+            const grp = document.createElement('div');
+            grp.className = 'week-group';
+            unpaid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
+            list.appendChild(grp);
+        }
 
-    if (unpaid.length) {
-        const hdr = document.createElement('div');
-        hdr.className = 'week-header';
-        hdr.innerHTML = `<span>Unpaid</span><span>${fmt(unpaid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
-        list.appendChild(hdr);
+        if (paid.length) {
+            const hdr = document.createElement('div');
+            hdr.className = 'week-header';
+            hdr.innerHTML = `<span>Paid</span><span>${fmt(paid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
+            list.appendChild(hdr);
+            const grp = document.createElement('div');
+            grp.className = 'week-group';
+            paid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
+            list.appendChild(grp);
+        }
+    } else {
+        // Chronological — flat list, newest first (data already ordered by invoice_number desc)
         const grp = document.createElement('div');
         grp.className = 'week-group';
-        unpaid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
+        data.forEach((inv, i) => grp.appendChild(buildInvoiceCard(inv, i)));
         list.appendChild(grp);
     }
+}
 
-    if (paid.length) {
-        const hdr = document.createElement('div');
-        hdr.className = 'week-header';
-        hdr.innerHTML = `<span>Paid</span><span>${fmt(paid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
-        list.appendChild(hdr);
-        const grp = document.createElement('div');
-        grp.className = 'week-group';
-        paid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
-        list.appendChild(grp);
-    }
+function toggleInvoiceSort() {
+    invoicesSortMode = invoicesSortMode === 'chronological' ? 'status' : 'chronological';
+    const btn = document.getElementById('invoiceSortBtn');
+    btn.textContent = invoicesSortMode === 'chronological' ? 'Group' : 'Ungroup';
+    renderInvoices(invoicesCache);
 }
 
 function invoiceSubtotal(inv) {
