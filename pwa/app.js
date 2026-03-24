@@ -233,7 +233,10 @@ clientInput.addEventListener('input', () => {
 function selectClient(client) {
     selectedClient = client;
     clientInput.value    = client.name;
-    clientInput.disabled = true;
+    clientInput.readOnly = true;
+    clientInput.style.fontSize   = '20px';
+    clientInput.style.fontWeight = '700';
+    clientInput.style.color      = '#111827';
     clientContainer.classList.add('has-client');
     autocompleteList.style.display = 'none';
     document.getElementById('clientSection').classList.add('fields-open');
@@ -242,7 +245,10 @@ function selectClient(client) {
 
 document.getElementById('clearClient').addEventListener('click', () => {
     clientInput.value    = '';
-    clientInput.disabled = false;
+    clientInput.readOnly = false;
+    clientInput.style.fontSize   = '';
+    clientInput.style.fontWeight = '';
+    clientInput.style.color      = '';
     clientContainer.classList.remove('has-client');
     selectedClient = null;
     document.getElementById('entryFields').classList.remove('open');
@@ -559,7 +565,10 @@ function buildPayload() {
 
 function resetForm() {
     clientInput.value    = '';
-    clientInput.disabled = false;
+    clientInput.readOnly = false;
+    clientInput.style.fontSize   = '';
+    clientInput.style.fontWeight = '';
+    clientInput.style.color      = '';
     clientContainer.classList.remove('has-client');
     selectedClient     = null;
     currentDayType     = 'full';
@@ -963,7 +972,10 @@ function selectNewEntryClient(client) {
     newEntrySelectedClient = client;
     const clientInput = document.getElementById('newClientInput');
     clientInput.value    = client.name;
-    clientInput.disabled = true;
+    clientInput.readOnly = true;
+    clientInput.style.fontSize   = '20px';
+    clientInput.style.fontWeight = '700';
+    clientInput.style.color      = '#111827';
     document.getElementById('newClientContainer').classList.add('has-client');
     document.getElementById('newAutocompleteList').style.display = 'none';
     showNewEntryFields(client);
