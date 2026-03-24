@@ -1743,21 +1743,28 @@ function openInvoicePreview(inv) {
     const overlay   = document.getElementById('invoicePreviewOverlay');
     const frame     = document.getElementById('invoicePreviewFrame');
     const scaleWrap = document.getElementById('invoicePreviewScaleWrap');
+    const slider    = document.getElementById('viewSlider');
 
     const docWidth  = 794;
     const docHeight = 1123;
-    const scale     = window.innerWidth / docWidth; // edge-to-edge, no padding
+    const scale     = window.innerWidth / docWidth;
+    const scaledH   = docHeight * scale;
+    const topOffset = Math.max(0, (window.innerHeight - scaledH) / 2);
 
     frame.style.width  = docWidth + 'px';
     frame.style.height = docHeight + 'px';
 
-    scaleWrap.style.width        = docWidth + 'px';
-    scaleWrap.style.transform    = `scale(${scale})`;
-    scaleWrap.style.marginBottom = Math.ceil(docHeight * (scale - 1)) + 'px';
+    scaleWrap.style.width     = docWidth + 'px';
+    scaleWrap.style.top       = topOffset + 'px';
+    scaleWrap.style.transform = `scale(${scale})`;
 
     frame.srcdoc = html;
 
-    // Ensure starting off-screen, then slide in
+    // Slide app content left (30vw parallax, matching tab-switch easing)
+    slider.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+    slider.style.transform  = 'translateX(-130vw)';
+
+    // Slide preview in from right
     overlay.style.transition = 'none';
     overlay.style.transform  = 'translateX(100%)';
     overlay.style.display    = 'block';
@@ -1771,7 +1778,14 @@ function openInvoicePreview(inv) {
 
 document.getElementById('invoicePreviewBack').addEventListener('click', () => {
     const overlay = document.getElementById('invoicePreviewOverlay');
+    const slider  = document.getElementById('viewSlider');
+
     overlay.style.transform = 'translateX(100%)';
+
+    // Restore app content
+    slider.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+    slider.style.transform  = 'translateX(-100vw)';
+
     setTimeout(() => {
         overlay.style.display = 'none';
         document.getElementById('invoicePreviewFrame').srcdoc = '';
