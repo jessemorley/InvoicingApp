@@ -1762,7 +1762,7 @@ function openInvoicePreview(inv) {
 
     // Slide app content left (30vw parallax, matching tab-switch easing)
     slider.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
-    slider.style.transform  = 'translateX(-130vw)';
+    slider.style.transform  = 'translateX(-200vw)';
 
     // Slide preview in from right
     overlay.style.transition = 'none';
