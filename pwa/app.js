@@ -1690,7 +1690,7 @@ function buildInvoiceHTML(inv) {
       <p>ABN ${biz.abn ?? ''}</p>
       <p>${biz.address ?? ''}</p>
     </div>
-    <div class="address-block" style="text-align:right;">
+    <div class="address-block">
       ${clientLines}
     </div>
   </div>
