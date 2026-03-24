@@ -1,7 +1,8 @@
 import Foundation
 
 struct ClientEntryGroup: Identifiable, Sendable {
-    let id: UUID
+    let id: String      // unique per client+week: "\(clientId)-year-week"
+    let clientId: UUID  // client ID (used for invoice generation)
     let client: Client
     var entries: [Entry]
     var isSelected: Bool = true
@@ -40,16 +41,22 @@ final class InvoiceGenerationService {
         let clients: [Client] = try await supabase.fetch(from: "clients")
         let clientMap = Dictionary(uniqueKeysWithValues: clients.map { ($0.id, $0) })
 
-        var groups: [UUID: ClientEntryGroup] = [:]
+        let calendar = Calendar.current
+        var groups: [String: ClientEntryGroup] = [:]
         for entry in entries {
             guard let client = clientMap[entry.clientId], client.isActive else { continue }
-            if groups[client.id] == nil {
-                groups[client.id] = ClientEntryGroup(id: client.id, client: client, entries: [])
+            let comps = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: entry.dateValue)
+            let key = "\(client.id)-\(comps.yearForWeekOfYear ?? 0)-\(comps.weekOfYear ?? 0)"
+            if groups[key] == nil {
+                groups[key] = ClientEntryGroup(id: key, clientId: client.id, client: client, entries: [])
             }
-            groups[client.id]?.entries.append(entry)
+            groups[key]?.entries.append(entry)
         }
 
-        return Array(groups.values).sorted { $0.client.name < $1.client.name }
+        return Array(groups.values).sorted {
+            if $0.client.name != $1.client.name { return $0.client.name < $1.client.name }
+            return ($0.entries.first?.date ?? "") < ($1.entries.first?.date ?? "")
+        }
     }
 
     func generateInvoices(for groups: [ClientEntryGroup]) async throws -> [Invoice] {

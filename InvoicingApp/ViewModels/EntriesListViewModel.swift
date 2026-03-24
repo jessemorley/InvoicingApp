@@ -164,7 +164,8 @@ final class EntriesListViewModel: ObservableObject {
         guard let client = clientMap[group.clientId] else { return }
         let service = InvoiceGenerationService()
         let entryGroup = ClientEntryGroup(
-            id: client.id,
+            id: group.id,
+            clientId: client.id,
             client: client,
             entries: group.entries
         )

@@ -56,7 +56,7 @@ struct EntriesListView: View {
                 HStack {
                     Image(systemName: "doc.text")
                         .foregroundStyle(.secondary)
-                    Text("\(vm.uninvoicedGroups.count) invoices · \(vm.uninvoicedEntryCount) entries uninvoiced")
+                    Text("\(vm.uninvoicedGroups.count) \(vm.uninvoicedGroups.count == 1 ? "invoice" : "invoices") · \(vm.uninvoicedEntryCount) \(vm.uninvoicedEntryCount == 1 ? "entry" : "entries") uninvoiced")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()

@@ -55,7 +55,7 @@ struct GenerateInvoicesSheetView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(group.client.name)
                                     .font(.headline)
-                                Text("\(group.entries.count) entries · \(group.dateRange)")
+                                Text("\(group.entries.count) \(group.entries.count == 1 ? "entry" : "entries") · \(group.dateRange)")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -73,7 +73,7 @@ struct GenerateInvoicesSheetView: View {
 
             HStack {
                 VStack(alignment: .leading) {
-                    Text("\(vm.selectedGroupCount) invoices · \(vm.selectedEntryCount) entries")
+                    Text("\(vm.selectedGroupCount) \(vm.selectedGroupCount == 1 ? "invoice" : "invoices") · \(vm.selectedEntryCount) \(vm.selectedEntryCount == 1 ? "entry" : "entries")")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
