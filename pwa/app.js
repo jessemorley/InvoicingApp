@@ -1346,7 +1346,7 @@ async function loadInvoices() {
 
     const { data, error } = await sb
         .from('invoices')
-        .select('*, clients(name), entries(id, date, description, total_amount, super_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot)')
+        .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand)')
         .order('invoice_number', { ascending: false });
 
     if (error || !data?.length) {
@@ -1528,7 +1528,11 @@ function toggleInvoiceCard(wrap, inv) {
             <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total excl. super</span>
             <span class="text-[16px] font-bold text-gray-900">${fmt(subtotal)}</span>
         </div>
-    </div>`;
+    </div>
+    <button onclick="openInvoicePreviewById('${inv.id}')" style="margin-top:12px; margin-bottom:4px; width:100%; padding:12px; background:#111827; color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Preview Invoice
+    </button>`;
 
     inner.innerHTML = html;
 }
@@ -1544,6 +1548,214 @@ function collapseInvoiceCard(wrap) {
     }, 400);
     if (expandedInvoiceWrap === wrap) expandedInvoiceWrap = null;
 }
+
+// ─────────────────────────────────────────────
+// INVOICE HTML PREVIEW
+// ─────────────────────────────────────────────
+
+const PLACEHOLDER_BUSINESS = {
+    name: 'Jesse Morley Photography',
+    abn: '12 345 678 901',
+    address: '123 Example St, Sydney NSW 2000',
+    bsb: '123-456',
+    accountNumber: '12 345 678',
+};
+
+function fmtInvoiceCurrency(value) {
+    return new Intl.NumberFormat('en-AU', {
+        style: 'currency', currency: 'AUD', currencyDisplay: 'symbol',
+    }).format(parseFloat(value) || 0);
+}
+
+function formatInvoiceDate(dateStr) {
+    if (!dateStr) return '';
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return `${months[m - 1]} ${d}, ${y}`;
+}
+
+function formatInvoiceEntryDate(dateStr) {
+    if (!dateStr) return '';
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    return `${days[date.getDay()]}, ${months[m - 1]} ${d}`;
+}
+
+function buildInvoiceLineItemsHTML(inv) {
+    const entries = [...(inv.entries || [])].sort((a, b) => a.date < b.date ? -1 : 1);
+    const client = inv.clients || {};
+    let html = '';
+
+    for (const e of entries) {
+        const dateStr = formatInvoiceEntryDate(e.date);
+        let description, qty, rate, amount;
+
+        const type = (e.billing_type_snapshot || '').toLowerCase();
+
+        if (type === 'day_rate' || (!type && e.day_type)) {
+            if (e.workflow_type === 'Own Brand') {
+                description = e.brand || 'Own Brand';
+            } else if (e.workflow_type) {
+                description = e.workflow_type;
+            } else {
+                description = 'Creative Assist';
+            }
+            qty = '1';
+            rate = fmtInvoiceCurrency(e.base_amount);
+            amount = fmtInvoiceCurrency(e.base_amount);
+        } else if (type === 'hourly' || (!type && e.hours_worked != null)) {
+            const hoursStr = e.hours_worked ? `${e.hours_worked}h` : '';
+            if (e.shoot_client) {
+                const role = e.role || 'Photographer';
+                description = `${e.shoot_client} (${role}) ${hoursStr}`.trim();
+            } else {
+                description = `${e.description || ''} ${hoursStr}`.trim();
+            }
+            qty = '1';
+            const rateHourly = parseFloat(client.rate_hourly) || 0;
+            rate = rateHourly ? fmtInvoiceCurrency(rateHourly) + '/hr' : '';
+            amount = fmtInvoiceCurrency(e.base_amount);
+        } else {
+            description = e.description || '';
+            qty = '1';
+            rate = '';
+            amount = fmtInvoiceCurrency(e.base_amount);
+        }
+
+        html += `<tr><td class="col-date">${dateStr}</td><td class="col-item">${description}</td><td class="col-qty">${qty}</td><td class="col-rate">${rate}</td><td class="col-amount">${amount}</td></tr>\n`;
+
+        const bonus = parseFloat(e.bonus_amount) || 0;
+        if (bonus > 0 && e.skus) {
+            html += `<tr><td class="col-date"></td><td class="col-item">&nbsp;&nbsp;+ SKU bonus (${e.skus} SKUs)</td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount">${fmtInvoiceCurrency(bonus)}</td></tr>\n`;
+        }
+    }
+
+    return html;
+}
+
+function buildInvoiceHTML(inv) {
+    const client = inv.clients || {};
+    const issuedStr = formatInvoiceDate(inv.issued_date);
+    const dueStr = formatInvoiceDate(inv.due_date);
+    const lineItems = buildInvoiceLineItemsHTML(inv);
+
+    const paysSuper = client.pays_super;
+    const superRatePct = Math.round((parseFloat(client.super_rate) || 0) * 100);
+    const superRow = paysSuper
+        ? `<div class="totals-row"><span class="label">Super (${superRatePct}%)</span><span class="value">${fmtInvoiceCurrency(inv.super_amount)}</span></div>`
+        : '';
+
+    const clientLines = [client.name, client.email, client.address, client.suburb]
+        .filter(Boolean).map(l => `<p>${l}</p>`).join('');
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; padding: 28px 42px; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; color: #000; line-height: 1.2; }
+  .page { width: 100%; background: white; }
+  .top-header { display: flex; justify-content: space-between; margin-bottom: 80px; }
+  .address-block { font-size: 13.5px; }
+  .address-block p { margin: 0 0 3px 0; }
+  .invoice-title { font-size: 52px; font-weight: 500; margin: 0 0 70px 0; letter-spacing: -1px; }
+  .meta-container { display: flex; margin-bottom: 120px; font-size: 13.5px; }
+  .dates-block { width: 28%; }
+  .dates-block p { margin: 0 0 4px 0; }
+  .bank-block { flex-grow: 1; }
+  .bank-block p { margin: 0 0 4px 0; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 100px; }
+  th { text-align: left; padding: 10px 0; font-size: 13.5px; font-weight: normal; border-bottom: 1px solid #000; }
+  td { padding: 6px 0; vertical-align: top; font-size: 13.5px; }
+  .col-date { width: 28%; }
+  .col-item { width: 39%; }
+  .col-qty { width: 11%; text-align: right; }
+  .col-rate { width: 11%; text-align: right; }
+  .col-amount { width: 11%; text-align: right; }
+  .totals-section { display: flex; flex-direction: column; align-items: flex-end; font-size: 13.5px; }
+  .totals-row { display: flex; justify-content: space-between; width: 100%; padding: 4px 0; }
+  .totals-row.grand-total { margin-top: 40px; }
+  .label { text-align: left; }
+  .value { text-align: right; width: 100px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top-header">
+    <div class="address-block">
+      <p>${PLACEHOLDER_BUSINESS.name}</p>
+      <p>ABN ${PLACEHOLDER_BUSINESS.abn}</p>
+      <p>${PLACEHOLDER_BUSINESS.address}</p>
+    </div>
+    <div class="address-block" style="text-align:right;">
+      ${clientLines}
+    </div>
+  </div>
+  <h1 class="invoice-title">Invoice ${inv.invoice_number}</h1>
+  <div class="meta-container">
+    <div class="dates-block">
+      <p>Issued ${issuedStr}</p>
+      <p>Due ${dueStr}</p>
+    </div>
+    <div class="bank-block">
+      <p>BSB ${PLACEHOLDER_BUSINESS.bsb} Account Number ${PLACEHOLDER_BUSINESS.accountNumber}</p>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-date">Item</th>
+        <th class="col-item"></th>
+        <th class="col-qty">Qty</th>
+        <th class="col-rate">Rate</th>
+        <th class="col-amount">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${lineItems}
+    </tbody>
+  </table>
+  <div class="totals-section">
+    <div class="totals-row">
+      <span class="label">Subtotal</span>
+      <span class="value">${fmtInvoiceCurrency(inv.subtotal)}</span>
+    </div>
+    ${superRow}
+    <div class="totals-row grand-total">
+      <span class="label">Total</span>
+      <span class="value">${fmtInvoiceCurrency(inv.total)}</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+function openInvoicePreviewById(id) {
+    const inv = invoicesCache.find(i => i.id === id);
+    if (inv) openInvoicePreview(inv);
+}
+
+function openInvoicePreview(inv) {
+    const html = buildInvoiceHTML(inv);
+    const frame = document.getElementById('invoicePreviewFrame');
+    frame.style.height = '1123px';
+    frame.srcdoc = html;
+    frame.onload = () => {
+        try {
+            const h = frame.contentDocument?.body?.scrollHeight;
+            if (h) frame.style.height = (h + 40) + 'px';
+        } catch (e) {}
+    };
+    document.getElementById('invoicePreviewOverlay').style.display = 'flex';
+}
+
+document.getElementById('invoicePreviewClose').addEventListener('click', () => {
+    document.getElementById('invoicePreviewOverlay').style.display = 'none';
+    document.getElementById('invoicePreviewFrame').srcdoc = '';
+});
 
 function clientBadgeColor(name) {
     if (name.includes('ICONIC'))  return 'bg-purple-50 text-purple-500';
