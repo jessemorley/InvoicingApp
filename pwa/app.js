@@ -1354,6 +1354,13 @@ async function loadInvoices() {
         return;
     }
 
+    // Sort by latest entry date descending (newest invoice period first)
+    data.sort((a, b) => {
+        const aDate = (a.entries || []).map(e => e.date || '').filter(Boolean).sort().pop() || '';
+        const bDate = (b.entries || []).map(e => e.date || '').filter(Boolean).sort().pop() || '';
+        return bDate > aDate ? 1 : bDate < aDate ? -1 : 0;
+    });
+
     invoicesCache = data;
     renderInvoices(data);
 }
