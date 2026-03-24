@@ -1445,7 +1445,7 @@ async function checkEntriesScroll() {
     scroller.addEventListener('scroll', async () => {
         if (invoicesScrollLoading || invoicesAllLoaded) return;
         const distFromBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
-        if (distFromBottom < 300) {
+        if (distFromBottom < 600) {
             invoicesScrollLoading = true;
             await loadMoreInvoices();
             invoicesScrollLoading = false;
@@ -1478,7 +1478,7 @@ let expandedInvoiceWrap = null;
 
 let invoicesAllLoaded     = false;
 let invoicesScrollLoading = false;
-const INVOICES_PAGE_SIZE  = 12;
+const INVOICES_PAGE_SIZE  = 18;
 
 async function loadInvoices() {
     invoicesLoaded    = true;
