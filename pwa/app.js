@@ -865,11 +865,9 @@ function buildNewEntryFormHTML() {
             <!-- SUMMARY -->
             <div class="summary-card bg-white">
                 <div class="flex justify-between items-end mb-2">
-                    <div>
+                    <div id="newDurationBlock" class="hidden">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Duration</p>
-                        <div id="newDurationBlock" class="hidden">
-                            <span id="newDisplayDuration" class="text-4xl font-black text-slate-900 leading-none">0h 0m</span>
-                        </div>
+                        <span id="newDisplayDuration" class="text-4xl font-black text-slate-900 leading-none">0h 0m</span>
                     </div>
                     <div class="text-right">
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Subtotal</p>
