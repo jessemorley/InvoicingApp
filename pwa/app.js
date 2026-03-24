@@ -1442,14 +1442,10 @@ async function checkEntriesScroll() {
 // ─────────────────────────────────────────────
 (function() {
     const scroller = document.getElementById('invoicesScroll');
-    scroller.addEventListener('scroll', async () => {
-        if (invoicesScrollLoading || invoicesAllLoaded) return;
+    scroller.addEventListener('scroll', () => {
+        if (invoicesAllLoaded) return;
         const distFromBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
-        if (distFromBottom < 600) {
-            invoicesScrollLoading = true;
-            await loadMoreInvoices();
-            invoicesScrollLoading = false;
-        }
+        if (distFromBottom < 600) loadMoreInvoices();
     }, { passive: true });
 })();
 
@@ -1479,75 +1475,57 @@ let expandedInvoiceWrap = null;
 let invoicesAllLoaded     = false;
 let invoicesScrollLoading = false;
 const INVOICES_PAGE_SIZE  = 18;
+let invoicesRenderedCount = 0;
 
 async function loadInvoices() {
-    invoicesLoaded    = true;
-    invoicesAllLoaded = false;
-    invoicesCache     = [];
+    invoicesLoaded        = true;
+    invoicesAllLoaded     = false;
+    invoicesCache         = [];
+    invoicesRenderedCount = 0;
     const list = document.getElementById('invoicesList');
     list.innerHTML = '<div class="spinner"></div>';
 
     const { data, error } = await sb
         .from('invoices')
         .select('id, invoice_number, status, issued_date, subtotal, clients(name), entries(date)')
-        .order('issued_date', { ascending: false })
-        .range(0, INVOICES_PAGE_SIZE - 1);
+        .order('issued_date', { ascending: false });
 
     if (error || !data?.length) {
         list.innerHTML = '<p class="text-gray-400 text-sm py-8 text-center">No invoices yet</p>';
         return;
     }
 
-    if (data.length < INVOICES_PAGE_SIZE) invoicesAllLoaded = true;
-
     invoicesCache = data;
     updateSortBtnIcon();
     renderInvoices(invoicesCache);
-    updateInvoicesLoadMoreSentinel();
 }
 
-async function loadMoreInvoices() {
+function loadMoreInvoices() {
     if (invoicesAllLoaded) return;
 
-    const sentinel = document.getElementById('invoicesLoadMore');
-    if (sentinel) sentinel.innerHTML = '<div class="spinner" style="margin:16px auto;width:24px;height:24px;"></div>';
+    const startIndex = invoicesRenderedCount;
+    const batch = invoicesCache.slice(startIndex, startIndex + INVOICES_PAGE_SIZE);
+    if (!batch.length) { invoicesAllLoaded = true; updateInvoicesLoadMoreSentinel(); return; }
 
-    const from = invoicesCache.length;
-    const to   = from + INVOICES_PAGE_SIZE - 1;
-
-    const { data, error } = await sb
-        .from('invoices')
-        .select('id, invoice_number, status, issued_date, subtotal, clients(name), entries(date)')
-        .order('issued_date', { ascending: false })
-        .range(from, to);
-
-    if (error || !data?.length) {
-        invoicesAllLoaded = true;
-        updateInvoicesLoadMoreSentinel();
-        return;
-    }
-
-    if (data.length < INVOICES_PAGE_SIZE) invoicesAllLoaded = true;
-
-    const startIndex = invoicesCache.length;
-    invoicesCache = [...invoicesCache, ...data];
-
-    // Append new cards directly — don't re-render (sort toggle operates on full cache)
     const list = document.getElementById('invoicesList');
-    const sentinel2 = document.getElementById('invoicesLoadMore');
+    const sentinel = document.getElementById('invoicesLoadMore');
+
     if (invoicesSortMode === 'chronological') {
         const grp = list.querySelector('.week-group') || (() => {
             const g = document.createElement('div');
             g.className = 'week-group';
-            list.insertBefore(g, sentinel2);
+            list.insertBefore(g, sentinel);
             return g;
         })();
-        data.forEach((inv, i) => grp.appendChild(buildInvoiceCard(inv, startIndex + i)));
+        batch.forEach((inv, i) => grp.appendChild(buildInvoiceCard(inv, startIndex + i)));
     } else {
-        // In status mode, full re-render is simplest since groupings may change
+        // Status mode — re-render from full cache, all groups always complete
         renderInvoices(invoicesCache);
+        return;
     }
 
+    invoicesRenderedCount += batch.length;
+    if (invoicesRenderedCount >= invoicesCache.length) invoicesAllLoaded = true;
     updateInvoicesLoadMoreSentinel();
 }
 
@@ -1597,11 +1575,14 @@ function renderInvoices(data) {
             list.appendChild(grp);
         }
     } else {
-        // Chronological — flat list, newest first (data already ordered by issued_date desc)
+        // Chronological — render first page only; scroll appends more from cache
+        const initial = data.slice(0, INVOICES_PAGE_SIZE);
         const grp = document.createElement('div');
         grp.className = 'week-group';
-        data.forEach((inv, i) => grp.appendChild(buildInvoiceCard(inv, i)));
+        initial.forEach((inv, i) => grp.appendChild(buildInvoiceCard(inv, i)));
         list.appendChild(grp);
+        invoicesRenderedCount = initial.length;
+        invoicesAllLoaded = invoicesRenderedCount >= data.length;
     }
 
     updateInvoicesLoadMoreSentinel();
@@ -1619,6 +1600,8 @@ function updateSortBtnIcon() {
 
 function toggleInvoiceSort() {
     invoicesSortMode = invoicesSortMode === 'chronological' ? 'status' : 'chronological';
+    invoicesRenderedCount = 0;
+    invoicesAllLoaded = false;
     updateSortBtnIcon();
     // Defer re-render out of the touch event to avoid iOS tap debouncing
     requestAnimationFrame(() => renderInvoices(invoicesCache));
