@@ -36,221 +36,266 @@
 <!-- ═══════════════════════════════════════════════
      MAIN APP SHELL (shown after login)
 ═══════════════════════════════════════════════ -->
-<div id="appShell" class="screen" style="min-height: 100dvh;">
+<div id="appShell" class="screen">
 
-    <!-- ── Log Entry Tab ── -->
-    <div id="tabLog" class="flex-1 overflow-y-auto pb-36 hidden" style="padding-top: env(safe-area-inset-top)">
-        <div class="max-w-md mx-auto px-5 pt-4">
+    <!-- ── View Slider ── -->
+    <div id="viewSlider">
 
-            <div id="clientSection">
+        <!-- ════ VIEW 0: ENTRIES ════ -->
+        <div id="viewEntries" class="view-pane">
 
-            <!-- Client selector -->
-            <div id="clientContainer" class="relative">
-                <div class="relative flex items-center">
-                    <input type="text" id="clientInput" placeholder="Client" autocomplete="off"
-                        class="input-field w-full rounded-2xl px-5 py-5 text-[17px] placeholder-slate-400 pr-12 font-medium">
-                    <button id="clearClient" class="clear-btn absolute right-4 p-1 rounded-full bg-slate-200 text-slate-500">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-                <div id="autocompleteList"></div>
-            </div>
+            <!-- Log Entry Tab (legacy, hidden) -->
+            <div id="tabLog" class="flex-1 overflow-y-auto pb-36 hidden" style="padding-top: env(safe-area-inset-top)">
+                <div class="max-w-md mx-auto px-5 pt-4">
 
-            <!-- Dependent fields (revealed after client select) -->
-            <div id="entryFields" class="reveal space-y-4 mt-6">
+                    <div id="clientSection">
 
-                <!-- Date -->
-                <div class="bg-white rounded-2xl px-5 py-3">
-                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Date</span>
-                    <input type="date" id="entryDate" class="bg-transparent w-full text-[17px] font-medium outline-none">
-                </div>
-
-                <!-- ── DAY RATE FIELDS ── -->
-                <div id="dayRateFields" class="hidden space-y-4">
-
-                    <!-- Day type segmented -->
-                    <div>
-                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Day Type</span>
-                        <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
-                            <button class="seg-btn active" data-day="full" onclick="setDayType('full')">Full Day</button>
-                            <button class="seg-btn" data-day="half" onclick="setDayType('half')">Half Day</button>
+                    <!-- Client selector -->
+                    <div id="clientContainer" class="relative">
+                        <div class="relative flex items-center">
+                            <input type="text" id="clientInput" placeholder="Client" autocomplete="off"
+                                class="input-field w-full rounded-2xl px-5 py-5 text-[17px] placeholder-slate-400 pr-12 font-medium">
+                            <button id="clearClient" class="clear-btn absolute right-4 p-1 rounded-full bg-slate-200 text-slate-500">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
                         </div>
+                        <div id="autocompleteList"></div>
                     </div>
 
-                    <!-- Workflow (full day only) -->
-                    <div id="workflowSection" class="reveal open space-y-4">
-                        <div>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Workflow</span>
-                            <div class="flex gap-2" id="workflowBtns">
-                                <button class="workflow-btn active" data-wf="Apparel" onclick="setWorkflow('Apparel')">Apparel</button>
-                                <button class="workflow-btn" data-wf="Product" onclick="setWorkflow('Product')">Product</button>
-                                <button class="workflow-btn" data-wf="Own Brand" onclick="setWorkflow('Own Brand')">Own Brand</button>
+                    <!-- Dependent fields (revealed after client select) -->
+                    <div id="entryFields" class="reveal space-y-4 mt-6">
+
+                        <!-- Date -->
+                        <div class="bg-white rounded-2xl px-5 py-3">
+                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Date</span>
+                            <input type="date" id="entryDate" class="bg-transparent w-full text-[17px] font-medium outline-none">
+                        </div>
+
+                        <!-- ── DAY RATE FIELDS ── -->
+                        <div id="dayRateFields" class="hidden space-y-4">
+
+                            <!-- Day type segmented -->
+                            <div>
+                                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Day Type</span>
+                                <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
+                                    <button class="seg-btn active" data-day="full" onclick="setDayType('full')">Full Day</button>
+                                    <button class="seg-btn" data-day="half" onclick="setDayType('half')">Half Day</button>
+                                </div>
+                            </div>
+
+                            <!-- Workflow (full day only) -->
+                            <div id="workflowSection" class="reveal open space-y-4">
+                                <div>
+                                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Workflow</span>
+                                    <div class="flex gap-2" id="workflowBtns">
+                                        <button class="workflow-btn active" data-wf="Apparel" onclick="setWorkflow('Apparel')">Apparel</button>
+                                        <button class="workflow-btn" data-wf="Product" onclick="setWorkflow('Product')">Product</button>
+                                        <button class="workflow-btn" data-wf="Own Brand" onclick="setWorkflow('Own Brand')">Own Brand</button>
+                                    </div>
+                                </div>
+
+                                <!-- Own Brand: brand name -->
+                                <div id="brandField" class="hidden">
+                                    <input type="text" id="brandInput" placeholder="Brand name"
+                                        class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium">
+                                </div>
+
+                                <!-- Apparel/Product: SKUs -->
+                                <div id="skuField" class="hidden">
+                                    <div class="bg-white rounded-2xl px-5 py-3">
+                                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">SKUs Shot</span>
+                                        <input type="number" id="skuInput" placeholder="0" min="0"
+                                            class="bg-transparent w-full text-[17px] font-medium outline-none">
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- ── HOURLY FIELDS ── -->
+                        <div id="hourlyFields" class="hidden space-y-4">
+
+                            <!-- ITS: Job + Role -->
+                            <div id="itsFields" class="hidden space-y-4">
+                                <div class="bg-white rounded-2xl px-5 py-3">
+                                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Job</span>
+                                    <input type="text" id="jobInput" class="bg-transparent w-full text-[17px] font-medium outline-none">
+                                </div>
+                                <div>
+                                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Role</span>
+                                    <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
+                                        <button class="seg-btn active" data-role="Photographer" onclick="setRole('Photographer')">Photographer</button>
+                                        <button class="seg-btn" data-role="Operator" onclick="setRole('Operator')">Operator</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Generic hourly: description -->
+                            <div id="hourlyDescField" class="hidden">
+                                <div class="bg-white rounded-2xl px-5 py-3">
+                                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Description</span>
+                                    <input type="text" id="hourlyDesc" class="bg-transparent w-full text-[17px] font-medium outline-none">
+                                </div>
+                            </div>
+
+                            <!-- Times -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-white rounded-2xl px-5 py-3">
+                                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Start</span>
+                                    <input type="time" id="startTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
+                                </div>
+                                <div class="bg-white rounded-2xl px-5 py-3">
+                                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">End</span>
+                                    <input type="time" id="finishTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
+                                </div>
+                            </div>
+
+                            <!-- Break -->
+                            <div class="bg-white p-5 rounded-2xl flex items-center justify-between">
+                                <div>
+                                    <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Break</span>
+                                    <div class="flex items-baseline gap-1">
+                                        <input type="number" id="breakMinutes" value="0" min="0" step="5"
+                                            class="bg-transparent border-none p-0 w-12 text-[17px] font-bold focus:ring-0 text-slate-800 outline-none">
+                                        <span class="text-slate-400 text-xs font-bold uppercase">min</span>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="adjustBreak(-15)" class="h-10 px-4 bg-white border border-gray-100 shadow-sm rounded-xl text-[13px] font-bold active:bg-gray-100 transition-all">-15</button>
+                                    <button onclick="adjustBreak(15)" class="h-10 px-4 bg-white border border-gray-100 shadow-sm rounded-xl text-[13px] font-bold active:bg-gray-100 transition-all">+15</button>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Own Brand: brand name -->
-                        <div id="brandField" class="hidden">
-                            <input type="text" id="brandInput" placeholder="Brand name"
-                                class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 font-medium">
-                        </div>
-
-                        <!-- Apparel/Product: SKUs -->
-                        <div id="skuField" class="hidden">
+                        <!-- ── MANUAL FIELDS ── -->
+                        <div id="manualFields" class="hidden space-y-4">
+                            <textarea id="manualDesc" rows="2" placeholder="Description"
+                                class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"></textarea>
                             <div class="bg-white rounded-2xl px-5 py-3">
-                                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">SKUs Shot</span>
-                                <input type="number" id="skuInput" placeholder="0" min="0"
+                                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Amount ($)</span>
+                                <input type="number" id="manualAmount" placeholder="0.00" step="0.01" min="0"
                                     class="bg-transparent w-full text-[17px] font-medium outline-none">
                             </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- ── HOURLY FIELDS ── -->
-                <div id="hourlyFields" class="hidden space-y-4">
-
-                    <!-- ITS: Job + Role -->
-                    <div id="itsFields" class="hidden space-y-4">
-                        <div class="bg-white rounded-2xl px-5 py-3">
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Job</span>
-                            <input type="text" id="jobInput" class="bg-transparent w-full text-[17px] font-medium outline-none">
-                        </div>
-                        <div>
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2 px-1">Role</span>
-                            <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
-                                <button class="seg-btn active" data-role="Photographer" onclick="setRole('Photographer')">Photographer</button>
-                                <button class="seg-btn" data-role="Operator" onclick="setRole('Operator')">Operator</button>
+                            <!-- Super toggle -->
+                            <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
+                                <div>
+                                    <p class="text-[15px] font-semibold text-slate-800">Include Super (12%)</p>
+                                    <p id="superToggleLabel" class="text-[12px] text-slate-400 mt-0.5">Off</p>
+                                </div>
+                                <label class="toggle-wrap">
+                                    <input type="checkbox" id="superToggle">
+                                    <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                                </label>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Generic hourly: description -->
-                    <div id="hourlyDescField" class="hidden">
-                        <div class="bg-white rounded-2xl px-5 py-3">
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Description</span>
-                            <input type="text" id="hourlyDesc" class="bg-transparent w-full text-[17px] font-medium outline-none">
-                        </div>
-                    </div>
-
-                    <!-- Times -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-white rounded-2xl px-5 py-3">
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Start</span>
-                            <input type="time" id="startTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
-                        </div>
-                        <div class="bg-white rounded-2xl px-5 py-3">
-                            <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">End</span>
-                            <input type="time" id="finishTime" class="bg-transparent w-full text-[17px] font-medium outline-none relative">
-                        </div>
-                    </div>
-
-                    <!-- Break -->
-                    <div class="bg-white p-5 rounded-2xl flex items-center justify-between">
-                        <div>
-                            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Break</span>
-                            <div class="flex items-baseline gap-1">
-                                <input type="number" id="breakMinutes" value="0" min="0" step="5"
-                                    class="bg-transparent border-none p-0 w-12 text-[17px] font-bold focus:ring-0 text-slate-800 outline-none">
-                                <span class="text-slate-400 text-xs font-bold uppercase">min</span>
+                        <!-- ── SUMMARY CARD ── -->
+                        <div class="summary-card p-6 bg-white">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Total</p>
+                                    <h2 id="displayTotal" class="text-4xl font-bold tracking-tight text-slate-900">$0.00</h2>
+                                </div>
+                                <div class="text-right" id="durationBlock">
+                                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Duration</p>
+                                    <p id="displayDuration" class="text-xl font-bold text-slate-700">0h 0m</p>
+                                </div>
+                            </div>
+                            <div class="space-y-1.5 pt-4 border-t border-slate-100">
+                                <div id="baseLine" class="flex justify-between items-center">
+                                    <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Base</span>
+                                    <span id="displayBase" class="text-[14px] font-bold text-slate-600">$0.00</span>
+                                </div>
+                                <div id="bonusLine" class="flex justify-between items-center hidden">
+                                    <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Bonus</span>
+                                    <span id="displayBonus" class="text-[14px] font-bold text-[#34c759]">+$0.00</span>
+                                </div>
+                                <div id="superLine" class="flex justify-between items-center">
+                                    <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Super (12%)</span>
+                                    <span id="displaySuper" class="text-[14px] font-bold text-[#007AFF]">+$0.00</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex gap-2">
-                            <button onclick="adjustBreak(-15)" class="h-10 px-4 bg-white border border-gray-100 shadow-sm rounded-xl text-[13px] font-bold active:bg-gray-100 transition-all">-15</button>
-                            <button onclick="adjustBreak(15)" class="h-10 px-4 bg-white border border-gray-100 shadow-sm rounded-xl text-[13px] font-bold active:bg-gray-100 transition-all">+15</button>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- ── MANUAL FIELDS ── -->
-                <div id="manualFields" class="hidden space-y-4">
-                    <textarea id="manualDesc" rows="2" placeholder="Description"
-                        class="input-field w-full rounded-2xl px-5 py-4 text-[17px] placeholder-slate-400 resize-none font-medium"></textarea>
-                    <div class="bg-white rounded-2xl px-5 py-3">
-                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Amount ($)</span>
-                        <input type="number" id="manualAmount" placeholder="0.00" step="0.01" min="0"
-                            class="bg-transparent w-full text-[17px] font-medium outline-none">
-                    </div>
-                    <!-- Super toggle -->
-                    <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
-                        <div>
-                            <p class="text-[15px] font-semibold text-slate-800">Include Super (12%)</p>
-                            <p id="superToggleLabel" class="text-[12px] text-slate-400 mt-0.5">Off</p>
+                        <!-- Save button -->
+                        <div class="pt-1 pb-2">
+                            <button id="saveBtn" class="btn-primary" disabled>Save Entry</button>
                         </div>
-                        <label class="toggle-wrap">
-                            <input type="checkbox" id="superToggle">
-                            <div class="toggle-track"><div class="toggle-thumb"></div></div>
-                        </label>
-                    </div>
-                </div>
 
-                <!-- ── SUMMARY CARD ── -->
-                <div class="summary-card p-6 bg-white">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Total</p>
-                            <h2 id="displayTotal" class="text-4xl font-bold tracking-tight text-slate-900">$0.00</h2>
-                        </div>
-                        <div class="text-right" id="durationBlock">
-                            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Duration</p>
-                            <p id="displayDuration" class="text-xl font-bold text-slate-700">0h 0m</p>
-                        </div>
                     </div>
-                    <div class="space-y-1.5 pt-4 border-t border-slate-100">
-                        <div id="baseLine" class="flex justify-between items-center">
-                            <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Base</span>
-                            <span id="displayBase" class="text-[14px] font-bold text-slate-600">$0.00</span>
-                        </div>
-                        <div id="bonusLine" class="flex justify-between items-center hidden">
-                            <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Bonus</span>
-                            <span id="displayBonus" class="text-[14px] font-bold text-[#34c759]">+$0.00</span>
-                        </div>
-                        <div id="superLine" class="flex justify-between items-center">
-                            <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wider">Super (12%)</span>
-                            <span id="displaySuper" class="text-[14px] font-bold text-[#007AFF]">+$0.00</span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Save button -->
-                <div class="pt-1 pb-2">
-                    <button id="saveBtn" class="btn-primary" disabled>Save Entry</button>
+                    </div><!-- /clientSection -->
                 </div>
-
             </div>
 
-            </div><!-- /clientSection -->
-        </div>
+            <!-- ── Recent Entries Tab ── -->
+            <div id="tabRecent">
+
+                <div id="entriesScroll">
+                    <div id="entriesInner" style="padding-top:env(safe-area-inset-top);">
+                        <div class="px-5">
+                            <div id="newEntrySlot"></div>
+                            <div id="entriesHeaderTop" class="flex justify-between items-center pt-6 pb-3">
+                                <h1 class="text-3xl font-extrabold text-gray-900">Entries</h1>
+                                <button id="signOutBtn" class="p-2 -mr-1 text-gray-400 active:text-gray-600 transition-colors bg-transparent border-none cursor-pointer">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="pullIndicator" class="pull-indicator"><div class="spinner" id="pullSpinner"></div></div>
+                            <div id="recentList" class="space-y-3 pb-36">
+                                <p class="text-gray-400 text-sm py-8 text-center">Loading entries...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /tabRecent -->
+
+        </div><!-- /viewEntries -->
+
+        <!-- ════ VIEW 1: INVOICES ════ -->
+        <div id="viewInvoices" class="view-pane">
+
+            <div id="invoicesScroll">
+                <div style="padding-top:env(safe-area-inset-top);">
+                    <div class="px-5">
+                        <div id="invoicesHeaderTop" class="flex items-center pt-6 pb-3">
+                            <h1 class="text-3xl font-extrabold text-gray-900">Invoices</h1>
+                        </div>
+                        <div id="invoicesPullIndicator" class="pull-indicator"><div class="spinner" id="invoicesPullSpinner"></div></div>
+                        <div id="invoicesList" class="space-y-3 pb-36">
+                            <p class="text-gray-400 text-sm py-8 text-center">Loading invoices...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /viewInvoices -->
+
+    </div><!-- /viewSlider -->
+
+    <!-- ── Tab Bar ── -->
+    <div id="tabBar">
+        <button id="tabEntriesBtn" class="tab-btn active" onclick="switchView(0)">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+            </svg>
+            <span>Entries</span>
+        </button>
+        <button id="tabInvoicesBtn" class="tab-btn" onclick="switchView(1)">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span>Invoices</span>
+        </button>
     </div>
 
-    <!-- ── Recent Entries Tab ── -->
-    <div id="tabRecent">
-
-        <div id="entriesScroll">
-            <div id="entriesInner" style="padding-top:env(safe-area-inset-top);">
-                <div class="px-5">
-                    <div id="newEntrySlot"></div>
-                    <div id="entriesHeaderTop" class="flex justify-between items-center pt-6 pb-3">
-                        <h1 class="text-3xl font-extrabold text-gray-900">Entries</h1>
-                        <button id="signOutBtn" class="p-2 -mr-1 text-gray-400 active:text-gray-600 transition-colors bg-transparent border-none cursor-pointer">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div id="pullIndicator" class="pull-indicator"><div class="spinner" id="pullSpinner"></div></div>
-                    <div id="recentList" class="space-y-3 pb-24">
-                        <p class="text-gray-400 text-sm py-8 text-center">Loading entries...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div><!-- /tabRecent -->
-
     <!-- FAB -->
-    <button id="newEntryFab" style="position:fixed; bottom:2rem; right:1.25rem; width:4rem; height:4rem; border-radius:50%; background:rgba(255,255,255,0.2); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1.5px solid rgba(255,255,255,0.4); color:#111827; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 16px rgba(0,0,0,0.12); cursor:pointer; z-index:200; transition:transform 0.15s;">
+    <button id="newEntryFab" style="position:fixed; bottom:calc(4.5rem + env(safe-area-inset-bottom)); right:1.25rem; width:4rem; height:4rem; border-radius:50%; background:rgba(255,255,255,0.2); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1.5px solid rgba(255,255,255,0.4); color:#111827; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 16px rgba(0,0,0,0.12); cursor:pointer; z-index:200; transition:transform 0.15s;">
         <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
         </svg>

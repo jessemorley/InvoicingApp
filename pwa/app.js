@@ -19,6 +19,10 @@ let currentDayType   = 'full';
 let currentWorkflow  = 'Apparel';
 let currentRole      = 'Photographer';
 
+// View navigation
+let currentViewIndex = 0;
+let invoicesLoaded   = false;
+
 // New entry card state
 let newEntryWrap           = null;
 let newEntrySelectedClient = null;
@@ -186,8 +190,16 @@ async function loadData() {
         }
     });
 
+    // Mark invoices stale so the invoices view reloads on next visit
+    invoicesLoaded = false;
+
     setDefaultDate();
     loadRecentEntries();
+
+    // Reload invoices view if currently visible
+    if (currentViewIndex === 1) {
+        loadInvoices();
+    }
 }
 
 function setDefaultDate() {
@@ -1169,29 +1181,29 @@ async function saveNewEntry() {
 }
 
 // ─────────────────────────────────────────────
-// PULL TO REFRESH
+// PULL TO REFRESH — Entries
 // ─────────────────────────────────────────────
 (function() {
-    const THRESHOLD = 110;  // px of pull needed to trigger
-    const MAX_PULL  = 130;  // px cap on drag
+    const THRESHOLD = 110;
+    const MAX_PULL  = 130;
     let startY = 0, pulling = false, triggered = false;
 
-    const scroller   = document.getElementById('tabRecent');
-    const indicator  = document.getElementById('pullIndicator');
+    const scroller  = document.getElementById('tabRecent');
+    const indicator = document.getElementById('pullIndicator');
 
     scroller.addEventListener('touchstart', e => {
         if (scroller.scrollTop > 5) return;
-        startY   = e.touches[0].clientY;
-        pulling  = true;
+        startY    = e.touches[0].clientY;
+        pulling   = true;
         triggered = false;
     }, { passive: true });
 
     scroller.addEventListener('touchmove', e => {
         if (!pulling) return;
+        const dx = Math.abs(e.touches[0].clientX - (e.touches[0].clientX)); // placeholder; direction handled by swipe handler
         const dy = Math.min(e.touches[0].clientY - startY, MAX_PULL);
         if (dy <= 10) return;
         indicator.classList.add('visible');
-        // Slightly rotate the spinner based on pull distance as a progress cue
         const progress = Math.min(dy / THRESHOLD, 1);
         document.getElementById('pullSpinner').style.transform = `rotate(${progress * 270}deg)`;
         if (dy >= THRESHOLD) triggered = true;
@@ -1201,13 +1213,293 @@ async function saveNewEntry() {
         if (!pulling) return;
         pulling = false;
         if (triggered) {
-            // Keep spinner spinning while refreshing
             document.getElementById('pullSpinner').style.transform = '';
             await loadRecentEntries();
         }
         indicator.classList.remove('visible');
     });
 })();
+
+// ─────────────────────────────────────────────
+// PULL TO REFRESH — Invoices
+// ─────────────────────────────────────────────
+(function() {
+    const THRESHOLD = 110;
+    const MAX_PULL  = 130;
+    let startY = 0, pulling = false, triggered = false;
+
+    const scroller  = document.getElementById('invoicesScroll');
+    const indicator = document.getElementById('invoicesPullIndicator');
+
+    scroller.addEventListener('touchstart', e => {
+        if (scroller.scrollTop > 5) return;
+        startY    = e.touches[0].clientY;
+        pulling   = true;
+        triggered = false;
+    }, { passive: true });
+
+    scroller.addEventListener('touchmove', e => {
+        if (!pulling) return;
+        const dy = Math.min(e.touches[0].clientY - startY, MAX_PULL);
+        if (dy <= 10) return;
+        indicator.classList.add('visible');
+        const progress = Math.min(dy / THRESHOLD, 1);
+        document.getElementById('invoicesPullSpinner').style.transform = `rotate(${progress * 270}deg)`;
+        if (dy >= THRESHOLD) triggered = true;
+    }, { passive: true });
+
+    scroller.addEventListener('touchend', async () => {
+        if (!pulling) return;
+        pulling = false;
+        if (triggered) {
+            document.getElementById('invoicesPullSpinner').style.transform = '';
+            invoicesLoaded = false;
+            await loadInvoices();
+        }
+        indicator.classList.remove('visible');
+    });
+})();
+
+// ─────────────────────────────────────────────
+// VIEW SWIPE GESTURE
+// ─────────────────────────────────────────────
+(function() {
+    let startX = 0, startY = 0;
+    let swipeDir = null; // null | 'h' | 'v'
+    let liveOffsetVw = 0;
+
+    const slider = document.getElementById('viewSlider');
+
+    slider.addEventListener('touchstart', e => {
+        startX   = e.touches[0].clientX;
+        startY   = e.touches[0].clientY;
+        swipeDir = null;
+        slider.style.transition = 'none';
+    }, { passive: true });
+
+    slider.addEventListener('touchmove', e => {
+        const dx = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
+
+        // Determine direction once we have enough movement
+        if (!swipeDir && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+            swipeDir = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+        }
+
+        if (swipeDir !== 'h') return;
+
+        e.preventDefault();
+
+        const baseVw    = currentViewIndex * -100;
+        const dragVw    = (dx / window.innerWidth) * 100;
+        const totalVw   = Math.max(-100, Math.min(0, baseVw + dragVw));
+        liveOffsetVw    = totalVw;
+        slider.style.transform = `translateX(${totalVw}vw)`;
+    }, { passive: false });
+
+    slider.addEventListener('touchend', () => {
+        if (swipeDir !== 'h') return;
+
+        slider.style.transition = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)';
+        const moved = liveOffsetVw - (currentViewIndex * -100);
+
+        if (moved < -28 && currentViewIndex < 1) {
+            switchView(1);
+        } else if (moved > 28 && currentViewIndex > 0) {
+            switchView(0);
+        } else {
+            // Snap back to current view
+            slider.style.transform = `translateX(${currentViewIndex * -100}vw)`;
+        }
+    });
+})();
+
+// ─────────────────────────────────────────────
+// VIEW SWITCHING
+// ─────────────────────────────────────────────
+function switchView(index) {
+    currentViewIndex = index;
+    const slider = document.getElementById('viewSlider');
+    slider.style.transition = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)';
+    slider.style.transform  = `translateX(${index * -100}vw)`;
+
+    document.getElementById('tabEntriesBtn').classList.toggle('active', index === 0);
+    document.getElementById('tabInvoicesBtn').classList.toggle('active', index === 1);
+    document.getElementById('newEntryFab').style.display = index === 0 ? 'flex' : 'none';
+
+    if (index === 1 && !invoicesLoaded) {
+        loadInvoices();
+    }
+}
+
+// ─────────────────────────────────────────────
+// INVOICES VIEW
+// ─────────────────────────────────────────────
+let expandedInvoiceWrap = null;
+
+async function loadInvoices() {
+    invoicesLoaded = true;
+    const list = document.getElementById('invoicesList');
+    list.innerHTML = '<div class="spinner"></div>';
+
+    const { data, error } = await sb
+        .from('invoices')
+        .select('*, clients(name), entries(id, date, description, total_amount, super_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot)')
+        .order('invoice_number', { ascending: false });
+
+    if (error || !data?.length) {
+        list.innerHTML = '<p class="text-gray-400 text-sm py-8 text-center">No invoices yet</p>';
+        return;
+    }
+
+    renderInvoices(data);
+}
+
+function renderInvoices(data) {
+    const list = document.getElementById('invoicesList');
+    list.innerHTML = '';
+    expandedInvoiceWrap = null;
+
+    const unpaid = data.filter(inv => inv.status !== 'paid');
+    const paid   = data.filter(inv => inv.status === 'paid');
+
+    let idx = 0;
+
+    if (unpaid.length) {
+        const hdr = document.createElement('div');
+        hdr.className = 'week-header';
+        hdr.innerHTML = `<span>Unpaid</span><span>${fmt(unpaid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
+        list.appendChild(hdr);
+        const grp = document.createElement('div');
+        grp.className = 'week-group';
+        unpaid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
+        list.appendChild(grp);
+    }
+
+    if (paid.length) {
+        const hdr = document.createElement('div');
+        hdr.className = 'week-header';
+        hdr.innerHTML = `<span>Paid</span><span>${fmt(paid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
+        list.appendChild(hdr);
+        const grp = document.createElement('div');
+        grp.className = 'week-group';
+        paid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
+        list.appendChild(grp);
+    }
+}
+
+function invoiceSubtotal(inv) {
+    if (!inv.entries?.length) return 0;
+    return inv.entries.reduce((s, e) => s + ((e.total_amount || 0) - (e.super_amount || 0)), 0);
+}
+
+function invoiceDateRange(inv) {
+    if (!inv.entries?.length) return '';
+    const dates = inv.entries.map(e => e.date).filter(Boolean).sort();
+    if (!dates.length) return '';
+    const first = formatEntryDate(dates[0]);
+    const last  = formatEntryDate(dates[dates.length - 1]);
+    return first === last ? first : `${first} – ${last}`;
+}
+
+function buildInvoiceCard(inv, index) {
+    const clientName  = inv.clients?.name || 'Unknown';
+    const badgeColor  = clientBadgeColor(clientName);
+    const chipColor   = invoiceChipColors[inv.status] || 'bg-gray-100 text-gray-500';
+    const statusLabel = inv.status ? (inv.status.charAt(0).toUpperCase() + inv.status.slice(1)) : '';
+    const total       = fmt(invoiceSubtotal(inv));
+    const dateRange   = invoiceDateRange(inv);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'invoice-card-wrap';
+    wrap.style.animationDelay = `${index * 40}ms`;
+
+    const row = document.createElement('div');
+    row.className = 'invoice-row';
+    row.innerHTML = `
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1.5">
+                <span class="client-badge ${badgeColor}">${clientName}</span>
+                <span class="text-[15px] font-bold text-gray-800">${inv.invoice_number}</span>
+            </div>
+            ${dateRange ? `<p class="text-[13px] text-gray-400 truncate">${dateRange}</p>` : ''}
+        </div>
+        <div class="flex flex-col items-end gap-1 shrink-0">
+            <span class="invoice-chip ${chipColor}">${statusLabel}</span>
+            <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
+        </div>`;
+
+    const detailPanel = document.createElement('div');
+    detailPanel.className = 'invoice-detail-panel';
+    const detailInner = document.createElement('div');
+    detailInner.className = 'invoice-detail-inner';
+    detailPanel.appendChild(detailInner);
+
+    row.addEventListener('click', () => toggleInvoiceCard(wrap, inv));
+
+    wrap.appendChild(row);
+    wrap.appendChild(detailPanel);
+    return wrap;
+}
+
+function toggleInvoiceCard(wrap, inv) {
+    if (expandedInvoiceWrap && expandedInvoiceWrap !== wrap) {
+        collapseInvoiceCard(expandedInvoiceWrap);
+    }
+    if (wrap.classList.contains('expanded')) {
+        collapseInvoiceCard(wrap);
+        return;
+    }
+
+    expandedInvoiceWrap = wrap;
+    wrap.classList.add('expanded');
+
+    const inner = wrap.querySelector('.invoice-detail-inner');
+    const entries = inv.entries;
+
+    if (!entries?.length) {
+        inner.innerHTML = '<p class="text-gray-400 text-sm py-4 text-center">No entries linked</p>';
+        return;
+    }
+
+    const sorted = [...entries].sort((a, b) => a.date < b.date ? -1 : 1);
+    let html = '<div class="space-y-0 pt-3">';
+    sorted.forEach(e => {
+        const desc   = entryDescription(e);
+        const amount = fmt((e.total_amount || 0) - (e.super_amount || 0));
+        const date   = formatEntryDate(e.date);
+        html += `
+            <div class="flex justify-between items-center py-2.5 border-b border-slate-50">
+                <div class="flex-1 min-w-0 mr-4">
+                    <p class="text-[14px] font-semibold text-gray-800 truncate">${desc}</p>
+                    <p class="text-[11px] text-gray-400 mt-0.5">${date}</p>
+                </div>
+                <span class="text-[14px] font-bold text-gray-700 shrink-0">${amount}</span>
+            </div>`;
+    });
+
+    const subtotal = invoiceSubtotal(inv);
+    html += `
+        <div class="flex justify-between items-center pt-3 pb-1">
+            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total excl. super</span>
+            <span class="text-[16px] font-bold text-gray-900">${fmt(subtotal)}</span>
+        </div>
+    </div>`;
+
+    inner.innerHTML = html;
+}
+
+function collapseInvoiceCard(wrap) {
+    const row = wrap.querySelector('.invoice-row');
+    if (row) row.style.borderRadius = '14px 14px 0 0';
+    wrap.classList.remove('expanded');
+    setTimeout(() => {
+        if (row) row.style.borderRadius = '';
+        const inner = wrap.querySelector('.invoice-detail-inner');
+        if (inner) inner.innerHTML = '';
+    }, 400);
+    if (expandedInvoiceWrap === wrap) expandedInvoiceWrap = null;
+}
 
 function clientBadgeColor(name) {
     if (name.includes('ICONIC'))  return 'bg-purple-50 text-purple-500';
