@@ -11,7 +11,7 @@ final class PDFExportService {
         let outputDir = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Documents/Invoices")
         try FileManager.default.createDirectory(at: outputDir, withIntermediateDirectories: true)
-        let outputURL = outputDir.appendingPathComponent("\(invoice.invoiceNumber).pdf")
+        let outputURL = outputDir.appendingPathComponent("\(settings.businessName) Invoice \(invoice.invoiceNumber).pdf")
 
         try await renderHTMLToPDF(html: html, outputURL: outputURL)
 
