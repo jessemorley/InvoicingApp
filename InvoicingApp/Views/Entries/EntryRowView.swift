@@ -61,7 +61,8 @@ struct EntryRowView: View {
             let hours = entry.hoursWorked.map { "\(NSDecimalNumber(decimal: $0))h" } ?? ""
             let label = entry.shootClient ?? entry.description ?? ""
             if let role = entry.role {
-                return "\(label) (\(role)) \(hours)"
+                let abbrev = role.lowercased() == "photographer" ? "P" : role.lowercased() == "operator" ? "O" : role
+                return "\(label) (\(abbrev)) \(hours)"
             }
             return "\(label) \(hours)"
         case .manual:
