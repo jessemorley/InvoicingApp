@@ -20,19 +20,15 @@
 
 ## Features
 - [ ] Export feature
-- [ ] App seems to be relying on network connection to pull all data from supabase as needed without a local caching system, making the interface sluggish and unusable without a network connection. Plan a system to solve this.
+- [ ] Local caching [text](references/caching-plan.md)
 - [ ] System that flags potential errors:
     - [ ] Invoice with dates from more than one week
     - [ ] Duplicate invoice numbers
     - [ ] More than one entry per date
 - [ ] Add line items to invoice (e.g. gear hire)
-- [ ] Client Settings — Currently per-client invoicing rules such as day rate vs hours, role, super, etc. are set in the app code, but ideally these variables would be set from within the client view in the app. That way it's consistent and transparent, and easier to manage moving forward.
-    - [ ] Write a plan summarising all the current differences between existing client invoicing rules and how these could be set with a consistent client options interface.
-    - [ ] Outline the changes that would need to happen to the database to make this possible.
-    - [ ] Confirm whether a database backup in some form would be advisable before beginning implementation.
 
 ## PWA
-- [ ] Lazy load entries on scroll
+- [ ] Bug: pull to refresh: two loaders appear when activated (the lower spinner indicating the feature and another above it indicating activation). Look at this function, correct and polish. 
 
 ---
 
