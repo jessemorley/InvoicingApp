@@ -1696,7 +1696,7 @@ async function toggleInvoiceCard(wrap, inv) {
         inner.innerHTML = '<div class="spinner" style="margin:16px auto;width:24px;height:24px;"></div>';
         const { data: fullInv, error } = await sb
             .from('invoices')
-            .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand, start_time, finish_time, break_minutes)')
+            .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly, entry_label), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand, start_time, finish_time, break_minutes)')
             .eq('id', inv.id)
             .single();
         if (!error && fullInv) {
@@ -1864,6 +1864,7 @@ function buildInvoiceHTML(inv) {
     const issuedStr = formatInvoiceDate(inv.issued_date);
     const dueStr = formatInvoiceDate(inv.due_date);
     const lineItems = buildInvoiceLineItemsHTML(inv);
+    const descriptionHeader = client.entry_label || 'Description';
 
     const paysSuper = client.pays_super;
     const superRatePct = Math.round((parseFloat(client.super_rate) || 0) * 100);
@@ -1939,7 +1940,7 @@ function buildInvoiceHTML(inv) {
     <thead>
       <tr>
         <th class="col-date">Item</th>
-        <th class="col-item"></th>
+        <th class="col-item">${descriptionHeader}</th>
         <th class="col-qty">Hours</th>
         <th class="col-rate">Rate</th>
         <th class="col-amount">Amount</th>

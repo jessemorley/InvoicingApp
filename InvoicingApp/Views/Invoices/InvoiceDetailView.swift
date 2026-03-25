@@ -52,7 +52,7 @@ struct InvoiceDetailView: View {
                     HStack {
                         Text("Date").font(.caption.bold())
                             .frame(width: 110, alignment: .leading)
-                        Text("Description").font(.caption.bold())
+                        Text(vm.client?.entryLabel ?? "Description").font(.caption.bold())
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Text("Hours").font(.caption.bold())
                             .frame(width: 45, alignment: .trailing)

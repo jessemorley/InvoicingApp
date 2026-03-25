@@ -68,6 +68,7 @@ final class PDFExportService {
         let dueStr = dateFormatter.string(from: invoice.dueDateValue)
 
         let lineItems = buildLineItems(entries: entries, client: client)
+        let descriptionHeader = client.entryLabel ?? "Description"
 
         let superRatePct = NSDecimalNumber(decimal: client.superRate * 100).intValue
         let superRow = client.paysSuper
@@ -141,7 +142,7 @@ final class PDFExportService {
                 <thead>
                     <tr>
                         <th class="col-date">Item</th>
-                        <th class="col-item"></th>
+                        <th class="col-item">\(descriptionHeader)</th>
                         <th class="col-qty">Hours</th>
                         <th class="col-rate">Rate</th>
                         <th class="col-amount">Amount</th>
