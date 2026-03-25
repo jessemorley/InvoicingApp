@@ -1829,11 +1829,8 @@ function buildInvoiceLineItemsHTML(inv) {
             rate = fmtInvoiceAmount(e.base_amount);
             amount = fmtInvoiceAmount(e.base_amount);
         } else if (type === 'hourly' || (!type && e.hours_worked != null)) {
-            if (e.shoot_client) {
-                description = `${e.shoot_client} (${abbreviateRole(e.role || 'Photographer')})`;
-            } else {
-                description = e.description || '';
-            }
+            const label = e.shoot_client || e.description || '';
+            description = e.role ? `${label} (${abbreviateRole(e.role)})` : label;
             hours = e.hours_worked != null ? String(e.hours_worked) : '';
             const rateHourly = parseFloat(client.rate_hourly) || 0;
             rate = rateHourly ? fmtInvoiceRate(rateHourly) : '';
@@ -2056,8 +2053,8 @@ const invoiceChipColors = {
 };
 
 function entryDescription(entry) {
-    if (entry.description)  return entry.description;
-    if (entry.shoot_client) return entry.shoot_client + (entry.role ? ` · ${abbreviateRole(entry.role)}` : '');
+    const label = entry.shoot_client || entry.description;
+    if (label) return label + (entry.role ? ` · ${abbreviateRole(entry.role)}` : '');
     if (entry.day_type)     return (entry.day_type === 'full' ? 'Full day' : 'Half day')
                                    + (entry.workflow_type ? ` · ${entry.workflow_type}` : '');
     if (entry.hours_worked) return `${entry.hours_worked}h`;

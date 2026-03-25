@@ -195,10 +195,11 @@ final class PDFExportService {
                 amount = formatAmount(entry.baseAmount)
 
             case .hourly:
-                if let shootClient = entry.shootClient {
-                    description = "\(shootClient) (\(abbreviateRole(entry.role)))"
+                let label = entry.shootClient ?? entry.description ?? ""
+                if let role = entry.role {
+                    description = "\(label) (\(abbreviateRole(role)))"
                 } else {
-                    description = entry.description ?? ""
+                    description = label
                 }
                 hours = entry.hoursWorked.map { "\(NSDecimalNumber(decimal: $0))" } ?? ""
                 rate = formatRate(client.rateHourly ?? 0)

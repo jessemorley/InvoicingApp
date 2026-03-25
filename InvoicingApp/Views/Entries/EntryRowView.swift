@@ -59,10 +59,11 @@ struct EntryRowView: View {
             return "\(dayStr) day"
         case .hourly:
             let hours = entry.hoursWorked.map { "\(NSDecimalNumber(decimal: $0))h" } ?? ""
-            if let shootClient = entry.shootClient {
-                return "\(shootClient) (\(entry.role ?? "")) \(hours)"
+            let label = entry.shootClient ?? entry.description ?? ""
+            if let role = entry.role {
+                return "\(label) (\(role)) \(hours)"
             }
-            return "\(entry.description ?? "") \(hours)"
+            return "\(label) \(hours)"
         case .manual:
             return entry.description ?? ""
         }

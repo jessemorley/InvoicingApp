@@ -216,10 +216,11 @@ struct InvoiceDetailView: View {
             }
             return "Creative Assist"
         case .hourly:
-            if let shootClient = entry.shootClient {
-                return "\(shootClient) (\(abbreviateRole(entry.role)))"
+            let label = entry.shootClient ?? entry.description ?? ""
+            if let role = entry.role {
+                return "\(label) (\(abbreviateRole(role)))"
             }
-            return entry.description ?? ""
+            return label
         case .manual:
             return entry.description ?? ""
         }
