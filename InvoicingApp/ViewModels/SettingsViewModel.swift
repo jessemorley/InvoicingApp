@@ -127,8 +127,6 @@ final class SettingsViewModel: ObservableObject {
     }
 
     func signOut() async {
-        // Close the Settings window before signing out
-        NSApp.windows.first(where: { $0.title == "Settings" })?.close()
         do {
             try await supabase.signOut()
         } catch {

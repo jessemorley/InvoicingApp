@@ -24,8 +24,12 @@ struct SettingsView: View {
                 }
         }
         .task { await vm.loadData() }
-        .onChange(of: supabase.currentEmail) { _, _ in
-            Task { await vm.loadData() }
+        .onChange(of: supabase.currentEmail) { _, newEmail in
+            if newEmail == nil {
+                NSApp.keyWindow?.close()
+            } else {
+                Task { await vm.loadData() }
+            }
         }
     }
 }
