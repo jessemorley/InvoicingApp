@@ -143,8 +143,10 @@ final class LogEntryViewModel: ObservableObject {
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
+        let userId = try? await supabase.currentUserId()
         let entry = Entry(
             id: editingEntry?.id ?? UUID(),
+            userId: editingEntry == nil ? userId : editingEntry?.userId,
             clientId: client.id,
             date: dateFormatter.string(from: date),
             invoiceId: editingEntry?.invoiceId,

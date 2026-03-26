@@ -264,6 +264,8 @@ final class ImportService {
     }
 
     func executeImport(data: ImportData) async throws -> ImportResult {
+        let userId = try await supabase.currentUserId()
+
         // Fetch clients
         let clients: [Client] = try await supabase.fetch(from: "clients")
         let clientMap = Dictionary(uniqueKeysWithValues: clients.map { ($0.name, $0) })
@@ -315,6 +317,7 @@ final class ImportService {
 
             let invoice = Invoice(
                 id: invoiceId,
+                userId: userId,
                 invoiceNumber: inv.invoiceNumber,
                 clientId: client.id,
                 issuedDate: issuedDate,
@@ -371,6 +374,7 @@ final class ImportService {
             entryIds.append(entryId)
             let entry = Entry(
                 id: entryId,
+                userId: userId,
                 clientId: client.id,
                 date: parsedEntry.date,
                 invoiceId: invoiceId,

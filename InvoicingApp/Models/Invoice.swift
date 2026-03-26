@@ -8,6 +8,7 @@ enum InvoiceStatus: String, Codable, CaseIterable, Sendable {
 
 struct Invoice: Codable, Identifiable, Hashable, Sendable {
     let id: UUID
+    var userId: UUID?
     var invoiceNumber: String
     var clientId: UUID
     var issuedDate: String
@@ -22,6 +23,7 @@ struct Invoice: Codable, Identifiable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case id, subtotal, total, status, notes
+        case userId = "user_id"
         case invoiceNumber = "invoice_number"
         case clientId = "client_id"
         case issuedDate = "issued_date"

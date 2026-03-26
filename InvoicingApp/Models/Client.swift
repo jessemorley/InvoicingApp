@@ -13,6 +13,7 @@ enum InvoiceFrequency: String, Codable, CaseIterable, Sendable {
 
 struct Client: Codable, Identifiable, Hashable, Sendable {
     let id: UUID
+    var userId: UUID?
     var name: String
     var billingType: BillingType
     var rateFullDay: Decimal?
@@ -37,6 +38,7 @@ struct Client: Codable, Identifiable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case id, name, address, suburb, email, abn, notes
+        case userId = "user_id"
         case billingType = "billing_type"
         case rateFullDay = "rate_full_day"
         case rateHalfDay = "rate_half_day"

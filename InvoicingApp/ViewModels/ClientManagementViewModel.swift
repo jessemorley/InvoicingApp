@@ -30,7 +30,9 @@ final class ClientManagementViewModel: ObservableObject {
     func saveClient(_ client: Client, isNew: Bool) async {
         do {
             if isNew {
-                try await supabase.insert(into: "clients", value: client)
+                var clientToInsert = client
+                clientToInsert.userId = try await supabase.currentUserId()
+                try await supabase.insert(into: "clients", value: clientToInsert)
                 clients.append(client)
             } else {
                 try await supabase.update(in: "clients", id: client.id, value: client)

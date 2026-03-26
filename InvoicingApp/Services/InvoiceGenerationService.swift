@@ -80,8 +80,10 @@ final class InvoiceGenerationService {
             let dueDate = Calendar.current.date(byAdding: .day, value: settings.dueDateOffsetDays, to: now) ?? now
             let weekEnd = group.client.invoiceFrequency == .weekly ? weekEndingDate(for: group.entries) : nil
 
+            let userId = try await supabase.currentUserId()
             let invoice = Invoice(
                 id: UUID(),
+                userId: userId,
                 invoiceNumber: invoiceNumber,
                 clientId: group.client.id,
                 issuedDate: Invoice.dateString(from: now),

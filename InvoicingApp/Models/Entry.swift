@@ -7,6 +7,7 @@ enum DayType: String, Codable, CaseIterable, Sendable {
 
 struct Entry: Codable, Identifiable, Sendable {
     let id: UUID
+    var userId: UUID?
     var clientId: UUID
     var date: String // "2026-03-21" — Supabase DATE column
     var invoiceId: UUID?
@@ -30,6 +31,7 @@ struct Entry: Codable, Identifiable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case id, date, skus, role, description, brand
+        case userId = "user_id"
         case clientId = "client_id"
         case invoiceId = "invoice_id"
         case billingTypeSnapshot = "billing_type_snapshot"
