@@ -2327,7 +2327,7 @@ function openEntryCard(wrap, entry, readOnly = false) {
         html += `
         <div class="space-y-2 pt-1">
             <button id="editSaveBtn" onclick="saveEdit()" class="btn-primary">Save Changes</button>
-            <button onclick="deleteEntry()" class="w-full py-3 rounded-xl text-[14px] font-bold text-red-500 bg-red-50 active:bg-red-100 transition-colors border-none cursor-pointer">Delete Entry</button>
+            <button onclick="deleteEntry()" class="w-full rounded-2xl text-[15px] font-bold text-red-500 bg-red-50 active:bg-red-100 transition-colors border-none cursor-pointer" style="padding: 18px 14px;">Delete Entry</button>
         </div>`;
     }
 

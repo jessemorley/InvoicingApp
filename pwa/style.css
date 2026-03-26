@@ -92,7 +92,7 @@
             border: none;
             cursor: pointer;
             transition: transform 0.1s, background 0.2s;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            box-shadow: none;
         }
         .btn-primary:active { transform: scale(0.98); }
         .btn-primary.success { background: #34c759; box-shadow: 0 4px 16px rgba(52,199,89,0.3); }
