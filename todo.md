@@ -1,9 +1,7 @@
 ## MacOS App
 
-### Settings Mess
-
-Settings window not closing on logout
-Clicking sign out changes account field from email address to "signed in"
+### Login page
+Immediate feedback on button press (login or signup) - maybe spinner
 
 ### Entries View
 - [ ] Add start finish and break times to list view where applicable
@@ -34,6 +32,9 @@ Clicking sign out changes account field from email address to "signed in"
 
 ## PWA
 - [ ] Bug: pull to refresh: two loaders appear when activated (the lower spinner indicating the feature and another above it indicating activation). Look at this function, correct and polish. 
+
+## App Name Ideas
+Docket, Daybook, Remit, Sole, Dayrate
 
 ---
 
