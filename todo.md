@@ -3,8 +3,7 @@
 ### Settings Mess
 
 Settings window not closing on logout
-Not sure that pushing update after every keystroke is necessary
-Settings window should close after logout is clicked
+Clicking sign out changes account field from email address to "signed in"
 
 ### Entries View
 - [ ] Add start finish and break times to list view where applicable

@@ -12,6 +12,7 @@ final class SettingsViewModel: ObservableObject {
 
     private let supabase = SupabaseService.shared
     private var saveTask: Task<Void, Never>?
+    private var businessDetailsSaveTask: Task<Void, Never>?
     private var businessDetailsUserId: UUID?
     private var loadedBusinessDetails: BusinessDetailsRecord?
 
@@ -95,27 +96,33 @@ final class SettingsViewModel: ObservableObject {
         }
     }
 
-    func saveBusinessDetails() async {
-        guard let userId = businessDetailsUserId else { return }
-        let updated = BusinessDetailsRecord(
-            userId: userId,
-            name: settings.name,
-            businessName: settings.businessName,
-            abn: settings.abn,
-            address: settings.address,
-            bsb: settings.bsb,
-            accountNumber: settings.accountNumber,
-            superFund: settings.superFund,
-            superMemberNumber: settings.superMemberNumber,
-            superFundAbn: settings.superFundAbn,
-            superUsi: settings.superUsi
-        )
-        guard updated != loadedBusinessDetails else { return }
-        do {
-            try await supabase.updateBusinessDetails(updated)
-            loadedBusinessDetails = updated
-        } catch {
-            errorMessage = error.localizedDescription
+    func saveBusinessDetails() {
+        businessDetailsSaveTask?.cancel()
+        businessDetailsSaveTask = Task {
+            try? await Task.sleep(for: .seconds(0.8))
+            guard !Task.isCancelled else { return }
+            guard let userId = businessDetailsUserId else { return }
+            let updated = BusinessDetailsRecord(
+                userId: userId,
+                name: settings.name,
+                businessName: settings.businessName,
+                abn: settings.abn,
+                address: settings.address,
+                bsb: settings.bsb,
+                accountNumber: settings.accountNumber,
+                superFund: settings.superFund,
+                superMemberNumber: settings.superMemberNumber,
+                superFundAbn: settings.superFundAbn,
+                superUsi: settings.superUsi
+            )
+            guard updated != loadedBusinessDetails else { return }
+            do {
+                try await supabase.updateBusinessDetails(updated)
+                loadedBusinessDetails = updated
+            } catch is CancellationError {
+            } catch {
+                errorMessage = error.localizedDescription
+            }
         }
     }
 

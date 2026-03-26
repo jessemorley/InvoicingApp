@@ -73,7 +73,7 @@ struct GeneralSettingsTab: View {
         .fixedSize(horizontal: false, vertical: true)
         .onChange(of: vm.settings) { _, _ in
             vm.autoSave()
-            Task { await vm.saveBusinessDetails() }
+            vm.saveBusinessDetails()
         }
         .onChange(of: vm.nextInvoiceNumber) { _, _ in vm.autoSave() }
     }
@@ -116,7 +116,7 @@ struct PersonalInfoTab: View {
         .fixedSize(horizontal: false, vertical: true)
         .onChange(of: vm.settings) { _, _ in
             vm.autoSave()
-            Task { await vm.saveBusinessDetails() }
+            vm.saveBusinessDetails()
         }
     }
 }
