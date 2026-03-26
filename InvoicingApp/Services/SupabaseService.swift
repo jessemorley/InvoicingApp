@@ -31,6 +31,11 @@ final class SupabaseService: ObservableObject {
     @Published var currentEmail: String?
     @Published var sessionChecked = false
 
+    /// Whether a cached session token exists in UserDefaults (synchronous check).
+    static var hasCachedSession: Bool {
+        UserDefaults.standard.data(forKey: "sb-cmbycqzjlwvydemaxrtb-auth-token") != nil
+    }
+
     private let client: SupabaseClient
 
     private init() {
@@ -45,6 +50,13 @@ final class SupabaseService: ObservableObject {
             )
         )
 
+        // Set auth state synchronously from cached token before any SwiftUI rendering
+        if Self.hasCachedSession {
+            isAuthenticated = true
+            sessionChecked = true
+        }
+
+        // Then validate/refresh asynchronously
         Task {
             for await (event, session) in client.auth.authStateChanges {
                 isAuthenticated = session != nil
