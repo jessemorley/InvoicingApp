@@ -8,22 +8,34 @@ struct InvoicingApp: App {
 
     var body: some Scene {
         Window("Login", id: "login") {
-            LoginView()
-                .task {
-                    if supabase.isAuthenticated {
-                        openWindow(id: "main")
-                        dismissWindow(id: "login")
+            Group {
+                if supabase.isAuthenticated {
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .controlSize(.large)
+                        Text("Logging in...")
+                            .foregroundStyle(.secondary)
                     }
+                    .frame(width: 420, height: 520)
+                } else {
+                    LoginView()
                 }
-                .onOpenURL { url in
-                    Task { await SupabaseService.shared.handleAuthCallback(url: url) }
+            }
+            .task {
+                if supabase.isAuthenticated {
+                    openWindow(id: "main")
+                    dismissWindow(id: "login")
                 }
-                .onChange(of: supabase.isAuthenticated) { _, isAuthenticated in
-                    if isAuthenticated {
-                        openWindow(id: "main")
-                        dismissWindow(id: "login")
-                    }
+            }
+            .onOpenURL { url in
+                Task { await SupabaseService.shared.handleAuthCallback(url: url) }
+            }
+            .onChange(of: supabase.isAuthenticated) { _, isAuthenticated in
+                if isAuthenticated {
+                    openWindow(id: "main")
+                    dismissWindow(id: "login")
                 }
+            }
         }
         .windowStyle(.titleBar)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
