@@ -1,24 +1,31 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @StateObject private var vm = SettingsViewModel()
+    @ObservedObject private var supabase = SupabaseService.shared
+
     var body: some View {
         TabView {
-            GeneralSettingsTab()
+            GeneralSettingsTab(vm: vm)
                 .tabItem {
                     Label("General", systemImage: "gear")
                 }
-            PersonalInfoTab()
+            PersonalInfoTab(vm: vm)
                 .tabItem {
                     Label("Personal Info", systemImage: "person")
                 }
-            LoginTab()
+            AccountTab(vm: vm)
                 .tabItem {
-                    Label("Login", systemImage: "key")
+                    Label("Account", systemImage: "person.crop.circle")
                 }
             ImportTab()
                 .tabItem {
                     Label("Import", systemImage: "square.and.arrow.down")
                 }
+        }
+        .task { await vm.loadData() }
+        .onChange(of: supabase.currentEmail) { _, _ in
+            Task { await vm.loadData() }
         }
     }
 }
@@ -26,7 +33,7 @@ struct SettingsView: View {
 // MARK: - General
 
 struct GeneralSettingsTab: View {
-    @StateObject private var vm = SettingsViewModel()
+    @ObservedObject var vm: SettingsViewModel
 
     var body: some View {
         Form {
@@ -64,16 +71,18 @@ struct GeneralSettingsTab: View {
         .textFieldStyle(.roundedBorder)
         .frame(width: 450)
         .fixedSize(horizontal: false, vertical: true)
-        .onChange(of: vm.settings) { _, _ in vm.autoSave() }
+        .onChange(of: vm.settings) { _, _ in
+            vm.autoSave()
+            Task { await vm.saveBusinessDetails() }
+        }
         .onChange(of: vm.nextInvoiceNumber) { _, _ in vm.autoSave() }
-        .task { await vm.loadNextNumber() }
     }
 }
 
 // MARK: - Personal Info
 
 struct PersonalInfoTab: View {
-    @StateObject private var vm = SettingsViewModel()
+    @ObservedObject var vm: SettingsViewModel
 
     var body: some View {
         Form {
@@ -105,48 +114,33 @@ struct PersonalInfoTab: View {
         .textFieldStyle(.roundedBorder)
         .frame(width: 450)
         .fixedSize(horizontal: false, vertical: true)
-        .onChange(of: vm.settings) { _, _ in vm.autoSave() }
+        .onChange(of: vm.settings) { _, _ in
+            vm.autoSave()
+            Task { await vm.saveBusinessDetails() }
+        }
     }
 }
 
-// MARK: - Login
+// MARK: - Account
 
-struct LoginTab: View {
-    @StateObject private var vm = SettingsViewModel()
-    @ObservedObject var supabaseService = SupabaseService.shared
+struct AccountTab: View {
+    @ObservedObject var vm: SettingsViewModel
+    @ObservedObject private var supabase = SupabaseService.shared
 
     var body: some View {
         Form {
-            Section("Supabase Connection") {
-                TextField("Supabase URL", text: $vm.supabaseURL)
-                SecureField("Anon Key", text: $vm.supabaseAnonKey)
-                Button("Save Connection") { vm.saveSupabaseConfig() }
-            }
-
-            Section("Authentication") {
-                if supabaseService.isAuthenticated {
-                    Label("Signed in", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                    Button("Sign Out") { Task { await vm.signOut() } }
-                } else {
-                    TextField("Email", text: $vm.email)
-                    SecureField("Password", text: $vm.password)
-                    Button("Sign In") { Task { await vm.signIn() } }
-                        .disabled(vm.isSigningIn)
-                }
-            }
-
-            if let success = vm.successMessage {
-                Label(success, systemImage: "checkmark.circle.fill")
+            Section("Account") {
+                Label(supabase.currentEmail ?? "Signed in", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
+                Button("Sign Out") { Task { await vm.signOut() } }
             }
+
             if let error = vm.errorMessage {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.red)
             }
         }
         .formStyle(.grouped)
-        .textFieldStyle(.roundedBorder)
         .frame(width: 450)
         .fixedSize(horizontal: false, vertical: true)
     }

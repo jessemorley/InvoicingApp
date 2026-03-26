@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		867578652F750BC600AF8BA1 /* InvoicingIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 867578642F750BC600AF8BA1 /* InvoicingIcon.icon */; };
+		867578672F75377A00AF8BA1 /* BusinessDetailsRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867578662F75377A00AF8BA1 /* BusinessDetailsRecord.swift */; };
+		867578692F75378B00AF8BA1 /* LoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867578682F75378B00AF8BA1 /* LoginViewModel.swift */; };
+		8675786D2F7537FE00AF8BA1 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8675786B2F7537FE00AF8BA1 /* LoginView.swift */; };
 		A10001001 /* InvoicingApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000001 /* InvoicingApp.swift */; };
 		A10001002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000002 /* ContentView.swift */; };
 		A10001003 /* Client.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000003 /* Client.swift */; };
@@ -59,6 +62,10 @@
 
 /* Begin PBXFileReference section */
 		867578642F750BC600AF8BA1 /* InvoicingIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = InvoicingIcon.icon; sourceTree = "<group>"; };
+		867578662F75377A00AF8BA1 /* BusinessDetailsRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BusinessDetailsRecord.swift; sourceTree = "<group>"; };
+		867578682F75378B00AF8BA1 /* LoginViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewModel.swift; sourceTree = "<group>"; };
+		8675786B2F7537FE00AF8BA1 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		8675786E2F753A7600AF8BA1 /* Invoicing-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Invoicing-Info.plist"; sourceTree = "<group>"; };
 		A10000001 /* InvoicingApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoicingApp.swift; sourceTree = "<group>"; };
 		A10000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A10000003 /* Client.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Client.swift; sourceTree = "<group>"; };
@@ -121,9 +128,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8675786C2F7537FE00AF8BA1 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				8675786B2F7537FE00AF8BA1 /* LoginView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
 		A10003000 = {
 			isa = PBXGroup;
 			children = (
+				8675786E2F753A7600AF8BA1 /* Invoicing-Info.plist */,
 				A10003001 /* InvoicingApp */,
 				A10003099 /* Products */,
 			);
@@ -147,6 +163,7 @@
 		A10003002 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				867578662F75377A00AF8BA1 /* BusinessDetailsRecord.swift */,
 				A10000003 /* Client.swift */,
 				A10000004 /* ClientWorkflowRate.swift */,
 				A10000005 /* Entry.swift */,
@@ -171,6 +188,7 @@
 		A10003004 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				867578682F75378B00AF8BA1 /* LoginViewModel.swift */,
 				A10000012 /* LogEntryViewModel.swift */,
 				A10000013 /* EntriesListViewModel.swift */,
 				A10000014 /* GenerateInvoicesViewModel.swift */,
@@ -186,6 +204,7 @@
 		A10003005 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				8675786C2F7537FE00AF8BA1 /* Auth */,
 				A10003006 /* LogEntry */,
 				A10003007 /* Entries */,
 				A10003008 /* Invoices */,
@@ -399,12 +418,15 @@
 				A10001025 /* CalendarView.swift in Sources */,
 				A10001026 /* CalendarDayCell.swift in Sources */,
 				A10001027 /* EntryDetailEditView.swift in Sources */,
+				867578692F75378B00AF8BA1 /* LoginViewModel.swift in Sources */,
 				A10009003 /* EntryInspectorView.swift in Sources */,
 				A10001028 /* GenerateInvoicesView.swift in Sources */,
+				8675786D2F7537FE00AF8BA1 /* LoginView.swift in Sources */,
 				A10001029 /* InvoiceDetailView.swift in Sources */,
 				A10001030 /* SummaryView.swift in Sources */,
 				A10001031 /* ClientListView.swift in Sources */,
 				A10001032 /* ClientEditView.swift in Sources */,
+				867578672F75377A00AF8BA1 /* BusinessDetailsRecord.swift in Sources */,
 				A10001033 /* WorkflowRateTableView.swift in Sources */,
 				A10001034 /* SettingsView.swift in Sources */,
 				A10001035 /* ClientPickerView.swift in Sources */,
@@ -561,6 +583,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Invoicing-Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -593,6 +616,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Invoicing-Info.plist";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (

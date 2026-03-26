@@ -1,43 +1,82 @@
 import Foundation
+import AppKit
 
 @MainActor
 final class SettingsViewModel: ObservableObject {
     @Published var settings: UserSettings
-    @Published var supabaseURL: String
-    @Published var supabaseAnonKey: String
-    @Published var email: String = ""
-    @Published var password: String = ""
     @Published var nextInvoiceNumber: Int = 0
-    private var loadedInvoiceNumber: Int = 0  // tracks what was fetched; 0 means not yet loaded
-    @Published var isSaving = false
-    @Published var isSigningIn = false
+    private var loadedInvoiceNumber: Int = 0
+    private var loadedInvoicePrefix: String = ""
+
     @Published var errorMessage: String?
-    @Published var successMessage: String?
 
     private let supabase = SupabaseService.shared
     private var saveTask: Task<Void, Never>?
+    private var businessDetailsUserId: UUID?
+    private var loadedBusinessDetails: BusinessDetailsRecord?
 
     init() {
         self.settings = UserSettings.load()
-        self.supabaseURL = UserDefaults.standard.string(forKey: "supabaseURL") ?? ""
-        self.supabaseAnonKey = UserDefaults.standard.string(forKey: "supabaseAnonKey") ?? ""
     }
 
-    func loadNextNumber() async {
+    func loadData() async {
+        // Reset state so previous user's data doesn't show during fetch
+        businessDetailsUserId = nil
+        loadedBusinessDetails = nil
+        loadedInvoicePrefix = ""
+        settings = UserSettings.load()
+
         do {
-            let lastNumber = try await supabase.fetchLastInvoiceNumber()
-            if lastNumber >= 0 {
-                nextInvoiceNumber = lastNumber + 1
+            let seq = try await supabase.fetchInvoiceSequence()
+            if seq.lastNumber >= 0 {
+                nextInvoiceNumber = seq.lastNumber + 1
                 loadedInvoiceNumber = nextInvoiceNumber
             }
-        } catch {
-            // Non-critical — field just won't populate
-        }
+            settings.invoicePrefix = seq.prefix
+            loadedInvoicePrefix = seq.prefix
+            settings.save()
+        } catch {}
+
         do {
             settings.includeSuperInTotals = try await supabase.fetchIncludeSuperInTotals()
             settings.save()
+        } catch {}
+
+        await syncBusinessDetailsFromSupabase()
+    }
+
+    private func syncBusinessDetailsFromSupabase() async {
+        do {
+            print("[SettingsVM] fetching business details...")
+            guard let record = try await supabase.fetchBusinessDetails() else {
+                print("[SettingsVM] no business details row found")
+                return
+            }
+
+            // Verify the fetched row belongs to the current session —
+            // guards against stale session returning the previous user's row
+            let currentUserId = try await supabase.currentUserId()
+            guard record.userId == currentUserId else {
+                print("[SettingsVM] userId mismatch — skipping stale fetch")
+                return
+            }
+
+            print("[SettingsVM] fetched: userId=\(record.userId) businessName='\(record.businessName)'")
+            businessDetailsUserId = record.userId
+            loadedBusinessDetails = record
+            settings.name = record.name
+            settings.businessName = record.businessName
+            settings.abn = record.abn
+            settings.address = record.address
+            settings.bsb = record.bsb
+            settings.accountNumber = record.accountNumber
+            settings.superFund = record.superFund
+            settings.superMemberNumber = record.superMemberNumber
+            settings.superFundAbn = record.superFundAbn
+            settings.superUsi = record.superUsi
+            settings.save()
         } catch {
-            // Non-critical — local value is used as fallback
+            print("[SettingsVM] fetch error: \(error)")
         }
     }
 
@@ -53,37 +92,50 @@ final class SettingsViewModel: ObservableObject {
                     try await supabase.updateLastInvoiceNumber(nextInvoiceNumber - 1)
                     loadedInvoiceNumber = nextInvoiceNumber
                 }
+                if settings.invoicePrefix != loadedInvoicePrefix {
+                    try await supabase.updateInvoicePrefix(settings.invoicePrefix)
+                    loadedInvoicePrefix = settings.invoicePrefix
+                }
                 try await supabase.updateIncludeSuperInTotals(settings.includeSuperInTotals)
+            } catch is CancellationError {
+                // Task was cancelled (e.g. window closed) — not an error
             } catch {
                 errorMessage = error.localizedDescription
             }
         }
     }
 
-    func saveSupabaseConfig() {
-        UserDefaults.standard.set(supabaseURL, forKey: "supabaseURL")
-        UserDefaults.standard.set(supabaseAnonKey, forKey: "supabaseAnonKey")
-        supabase.setupClient()
-        successMessage = "Supabase configuration saved"
-        Task {
-            try? await Task.sleep(for: .seconds(2))
-            successMessage = nil
+    func saveBusinessDetails() async {
+        guard let userId = businessDetailsUserId else { return }
+        let updated = BusinessDetailsRecord(
+            userId: userId,
+            name: settings.name,
+            businessName: settings.businessName,
+            abn: settings.abn,
+            address: settings.address,
+            bsb: settings.bsb,
+            accountNumber: settings.accountNumber,
+            superFund: settings.superFund,
+            superMemberNumber: settings.superMemberNumber,
+            superFundAbn: settings.superFundAbn,
+            superUsi: settings.superUsi
+        )
+        guard updated != loadedBusinessDetails else {
+            print("[SettingsVM] saveBusinessDetails: no change, skipping")
+            return
         }
-    }
-
-    func signIn() async {
-        isSigningIn = true
-        errorMessage = nil
+        print("[SettingsVM] saveBusinessDetails: pushing update businessName='\(updated.businessName)'")
         do {
-            try await supabase.signIn(email: email, password: password)
-            successMessage = "Signed in successfully"
+            try await supabase.updateBusinessDetails(updated)
+            loadedBusinessDetails = updated
         } catch {
             errorMessage = error.localizedDescription
         }
-        isSigningIn = false
     }
 
     func signOut() async {
+        // Close the Settings window before signing out
+        NSApp.windows.first(where: { $0.title == "Settings" })?.close()
         do {
             try await supabase.signOut()
         } catch {

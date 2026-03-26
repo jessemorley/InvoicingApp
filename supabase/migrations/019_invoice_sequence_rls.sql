@@ -1,0 +1,1 @@
+ALTER TABLE invoice_sequence ENABLE ROW LEVEL SECURITY;

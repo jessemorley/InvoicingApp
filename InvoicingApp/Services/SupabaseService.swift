@@ -18,28 +18,24 @@ private struct UserDefaultsAuthStorage: AuthLocalStorage, Sendable {
     }
 }
 
+private enum SupabaseConfig {
+    static let url = URL(string: "https://cmbycqzjlwvydemaxrtb.supabase.co")!
+    static let anonKey = "sb_publishable_UYYQBD6MkiRxpv7Z_-sIGA_riCDJQzD"
+}
+
 @MainActor
 final class SupabaseService: ObservableObject {
     static let shared = SupabaseService()
 
     @Published var isAuthenticated = false
+    @Published var currentEmail: String?
 
-    private var client: SupabaseClient?
+    private let client: SupabaseClient
 
     private init() {
-        setupClient()
-    }
-
-    func setupClient() {
-        let url = UserDefaults.standard.string(forKey: "supabaseURL") ?? ""
-        let key = UserDefaults.standard.string(forKey: "supabaseAnonKey") ?? ""
-        guard let supabaseURL = URL(string: url), !key.isEmpty else {
-            client = nil
-            return
-        }
         client = SupabaseClient(
-            supabaseURL: supabaseURL,
-            supabaseKey: key,
+            supabaseURL: SupabaseConfig.url,
+            supabaseKey: SupabaseConfig.anonKey,
             options: SupabaseClientOptions(
                 auth: .init(
                     storage: UserDefaultsAuthStorage(),
@@ -49,29 +45,43 @@ final class SupabaseService: ObservableObject {
         )
     }
 
-    var isConfigured: Bool { client != nil }
-
     // MARK: - Auth
 
     func signIn(email: String, password: String) async throws {
-        guard let client else { throw ServiceError.notConfigured }
-        _ = try await client.auth.signIn(email: email, password: password)
+        let session = try await client.auth.signIn(email: email, password: password)
         isAuthenticated = true
+        currentEmail = session.user.email
+    }
+
+    func signUp(email: String, password: String) async throws {
+        _ = try await client.auth.signUp(email: email, password: password)
+        // isAuthenticated remains false — user must confirm email then sign in
     }
 
     func signOut() async throws {
-        guard let client else { return }
         try await client.auth.signOut()
         isAuthenticated = false
+        currentEmail = nil
+        UserSettings.clearLocal()
     }
 
     func restoreSession() async {
-        guard let client else { return }
         do {
-            _ = try await client.auth.session
+            let session = try await client.auth.session
             isAuthenticated = true
+            currentEmail = session.user.email
         } catch {
             isAuthenticated = false
+        }
+    }
+
+    func handleAuthCallback(url: URL) async {
+        do {
+            let session = try await client.auth.session(from: url)
+            isAuthenticated = true
+            currentEmail = session.user.email
+        } catch {
+            print("Auth callback error: \(error)")
         }
     }
 
@@ -82,7 +92,6 @@ final class SupabaseService: ObservableObject {
         orderBy: String? = nil,
         ascending: Bool = true
     ) async throws -> [T] {
-        guard let client else { throw ServiceError.notConfigured }
         if let orderBy {
             return try await client.from(table)
                 .select()
@@ -106,7 +115,6 @@ final class SupabaseService: ObservableObject {
         orderBy: String? = nil,
         ascending: Bool = true
     ) async throws -> [T] {
-        guard let client else { throw ServiceError.notConfigured }
         if let orderBy {
             return try await client.from(table)
                 .select()
@@ -129,7 +137,6 @@ final class SupabaseService: ObservableObject {
         from table: String,
         id: UUID
     ) async throws -> T {
-        guard let client else { throw ServiceError.notConfigured }
         return try await client.from(table)
             .select()
             .eq("id", value: id.uuidString)
@@ -144,7 +151,6 @@ final class SupabaseService: ObservableObject {
         into table: String,
         value: T
     ) async throws {
-        guard let client else { throw ServiceError.notConfigured }
         try await client.from(table)
             .insert(value)
             .execute()
@@ -157,7 +163,6 @@ final class SupabaseService: ObservableObject {
         id: UUID,
         value: T
     ) async throws {
-        guard let client else { throw ServiceError.notConfigured }
         try await client.from(table)
             .update(value)
             .eq("id", value: id.uuidString)
@@ -167,7 +172,6 @@ final class SupabaseService: ObservableObject {
     // MARK: - Delete
 
     func delete(from table: String, id: UUID) async throws {
-        guard let client else { throw ServiceError.notConfigured }
         print("[DELETE] table=\(table) id=\(id.uuidString)")
         let response = try await client.from(table)
             .delete()
@@ -180,12 +184,9 @@ final class SupabaseService: ObservableObject {
     // MARK: - RPC
 
     func nextInvoiceNumber() async throws -> Int {
-        guard let client else { throw ServiceError.notConfigured }
-        // RPC returns a scalar integer — execute and parse from raw data
         let response = try await client.rpc("next_invoice_number").execute()
         let raw = String(data: response.data, encoding: .utf8) ?? ""
         print("[RPC] next_invoice_number raw: '\(raw)'")
-        // Supabase returns the scalar value directly, e.g. "171" or 171
         let cleaned = raw.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: CharacterSet(charactersIn: "\""))
         guard let number = Int(cleaned) else {
             throw ServiceError.rpcError("Could not parse invoice number from: \(raw)")
@@ -193,26 +194,38 @@ final class SupabaseService: ObservableObject {
         return number
     }
 
-    func fetchLastInvoiceNumber() async throws -> Int {
-        guard let client else { throw ServiceError.notConfigured }
-        struct Row: Decodable { let last_number: Int }
+    func fetchInvoiceSequence() async throws -> (lastNumber: Int, prefix: String) {
+        struct Row: Decodable { let last_number: Int; let invoice_prefix: String }
         let rows: [Row] = try await client.from("invoice_sequence").select().execute().value
         guard let row = rows.first else {
             throw ServiceError.rpcError("No invoice_sequence row found")
         }
-        return row.last_number
+        return (row.last_number, row.invoice_prefix)
+    }
+
+    func fetchLastInvoiceNumber() async throws -> Int {
+        try await fetchInvoiceSequence().lastNumber
     }
 
     func updateLastInvoiceNumber(_ number: Int) async throws {
-        guard let client else { throw ServiceError.notConfigured }
+        guard isAuthenticated else { return }
+        let uid = try await currentUserId()
         try await client.from("invoice_sequence")
             .update(["last_number": number])
-            .gte("last_number", value: 0)  // WHERE true equivalent — no primary key yet
+            .eq("user_id", value: uid.uuidString)
+            .execute()
+    }
+
+    func updateInvoicePrefix(_ prefix: String) async throws {
+        guard isAuthenticated else { return }
+        let uid = try await currentUserId()
+        try await client.from("invoice_sequence")
+            .update(["invoice_prefix": prefix])
+            .eq("user_id", value: uid.uuidString)
             .execute()
     }
 
     func fetchIncludeSuperInTotals() async throws -> Bool {
-        guard let client else { throw ServiceError.notConfigured }
         struct Row: Decodable { let includeSuperInTotals: Bool }
         let rows: [Row] = try await client.from("business_details")
             .select("include_super_in_totals")
@@ -222,17 +235,35 @@ final class SupabaseService: ObservableObject {
     }
 
     func updateIncludeSuperInTotals(_ value: Bool) async throws {
-        guard let client else { throw ServiceError.notConfigured }
+        guard isAuthenticated else { return }
         try await client.from("business_details")
             .update(["include_super_in_totals": value])
-            .gte("id", value: 0)
+            .eq("user_id", value: try await currentUserId())
+            .execute()
+    }
+
+    // MARK: - Business Details
+
+    func fetchBusinessDetails() async throws -> BusinessDetailsRecord? {
+        let rows: [BusinessDetailsRecord] = try await client
+            .from("business_details")
+            .select()
+            .execute()
+            .value
+        return rows.first
+    }
+
+    func updateBusinessDetails(_ record: BusinessDetailsRecord) async throws {
+        try await client
+            .from("business_details")
+            .update(record)
+            .eq("user_id", value: record.userId.uuidString)
             .execute()
     }
 
     // MARK: - Specialized Queries
 
     func fetchUninvoicedEntries() async throws -> [Entry] {
-        guard let client else { throw ServiceError.notConfigured }
         return try await client.from("entries")
             .select()
             .`is`("invoice_id", value: nil)
@@ -258,7 +289,6 @@ final class SupabaseService: ObservableObject {
     }
 
     func clearInvoiceId(forInvoiceId invoiceId: UUID) async throws {
-        guard let client else { throw ServiceError.notConfigured }
         try await client.from("entries")
             .update(InvoiceIdClear(invoiceId: nil))
             .eq("invoice_id", value: invoiceId.uuidString)
@@ -266,7 +296,6 @@ final class SupabaseService: ObservableObject {
     }
 
     func deleteEntriesByInvoiceId(_ invoiceId: UUID) async throws {
-        guard let client else { throw ServiceError.notConfigured }
         print("[DELETE ENTRIES] invoice_id=\(invoiceId.uuidString)")
         let response = try await client.from("entries")
             .delete()
@@ -277,7 +306,6 @@ final class SupabaseService: ObservableObject {
     }
 
     func updateEntries(ids: [UUID], invoiceId: UUID) async throws {
-        guard let client else { throw ServiceError.notConfigured }
         let payload = InvoiceIdUpdate(invoiceId: invoiceId)
         for id in ids {
             try await client.from("entries")
@@ -286,16 +314,21 @@ final class SupabaseService: ObservableObject {
                 .execute()
         }
     }
+
+    // MARK: - Helpers
+
+    func currentUserId() async throws -> UUID {
+        let session = try await client.auth.session
+        return session.user.id
+    }
 }
 
 enum ServiceError: LocalizedError {
-    case notConfigured
     case notAuthenticated
     case rpcError(String)
 
     var errorDescription: String? {
         switch self {
-        case .notConfigured: "Supabase is not configured. Please add your URL and API key in Settings."
         case .notAuthenticated: "You are not signed in. Please sign in first."
         case .rpcError(let msg): "RPC error: \(msg)"
         }

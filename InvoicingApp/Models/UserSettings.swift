@@ -14,24 +14,24 @@ struct UserSettings: Codable, Sendable, Equatable {
     var dueDateOffsetDays: Int
     var financialYearStartMonth: Int
     var markIssuedOnExport: Bool = true
-    var invoicePrefix: String = "JM"
+    var invoicePrefix: String = "INV"
     var includeSuperInTotals: Bool = true
 
     static let `default` = UserSettings(
-        name: "Jesse Morley",
-        businessName: "Jesse Morley Photography",
-        abn: "62 622 680 864",
-        address: "1 Scouller Street, Marrickville NSW 2204",
-        bsb: "313140",
-        accountNumber: "12239852",
-        superFund: "Smart Future Trust",
-        superMemberNumber: "192726",
-        superFundAbn: "68964712340",
-        superUsi: "68964712340019",
+        name: "",
+        businessName: "",
+        abn: "",
+        address: "",
+        bsb: "",
+        accountNumber: "",
+        superFund: "",
+        superMemberNumber: "",
+        superFundAbn: "",
+        superUsi: "",
         dueDateOffsetDays: 30,
         financialYearStartMonth: 7,
         markIssuedOnExport: true,
-        invoicePrefix: "JM",
+        invoicePrefix: "INV",
         includeSuperInTotals: true
     )
 
@@ -40,7 +40,7 @@ struct UserSettings: Codable, Sendable, Equatable {
         bsb: String, accountNumber: String,
         superFund: String, superMemberNumber: String, superFundAbn: String, superUsi: String,
         dueDateOffsetDays: Int, financialYearStartMonth: Int,
-        markIssuedOnExport: Bool = true, invoicePrefix: String = "JM",
+        markIssuedOnExport: Bool = true, invoicePrefix: String = "INV",
         includeSuperInTotals: Bool = true
     ) {
         self.name = name; self.businessName = businessName; self.abn = abn; self.address = address
@@ -67,7 +67,7 @@ struct UserSettings: Codable, Sendable, Equatable {
         dueDateOffsetDays = try container.decode(Int.self, forKey: .dueDateOffsetDays)
         financialYearStartMonth = try container.decode(Int.self, forKey: .financialYearStartMonth)
         markIssuedOnExport = try container.decodeIfPresent(Bool.self, forKey: .markIssuedOnExport) ?? true
-        invoicePrefix = try container.decodeIfPresent(String.self, forKey: .invoicePrefix) ?? "JM"
+        invoicePrefix = try container.decodeIfPresent(String.self, forKey: .invoicePrefix) ?? "INV"
         includeSuperInTotals = try container.decodeIfPresent(Bool.self, forKey: .includeSuperInTotals) ?? true
     }
 
@@ -77,6 +77,10 @@ struct UserSettings: Codable, Sendable, Equatable {
         if let data = try? JSONEncoder().encode(self) {
             UserDefaults.standard.set(data, forKey: Self.storageKey)
         }
+    }
+
+    static func clearLocal() {
+        UserDefaults.standard.removeObject(forKey: storageKey)
     }
 
     static func load() -> UserSettings {

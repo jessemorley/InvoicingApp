@@ -1,5 +1,11 @@
 ## MacOS App
 
+### Settings Mess
+
+Auth session missing on logout (message persisted after loggin in as Jesse)
+Not sure that pushing update after every keystroke is necessary
+Settings window should close after logout is clicked
+
 ### Entries View
 - [ ] Add start finish and break times to list view where applicable
 - [ ] Add option to add new client from client selection dropdown in entries creation view

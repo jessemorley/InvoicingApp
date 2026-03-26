@@ -9,6 +9,9 @@ struct InvoicingApp: App {
                 .task {
                     await SupabaseService.shared.restoreSession()
                 }
+                .onOpenURL { url in
+                    Task { await SupabaseService.shared.handleAuthCallback(url: url) }
+                }
         }
         .windowStyle(.titleBar)
         .defaultSize(width: 1100, height: 700)
