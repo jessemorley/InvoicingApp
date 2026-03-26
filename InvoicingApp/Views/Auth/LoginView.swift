@@ -66,5 +66,16 @@ struct LoginView: View {
                 .disabled(vm.isLoading)
         }
         .frame(width: 420, height: 520)
+        .modifier(HiddenToolbarBackgroundModifier())
+    }
+}
+
+private struct HiddenToolbarBackgroundModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(macOS 15, *) {
+            content.toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
+        } else {
+            content
+        }
     }
 }

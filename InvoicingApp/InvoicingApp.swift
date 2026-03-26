@@ -20,6 +20,8 @@ struct InvoicingApp: App {
                     }
                 }
         }
+        .windowStyle(.titleBar)
+        .windowToolbarStyle(.unifiedCompact(showsTitle: false))
         .windowResizability(.contentSize)
         .defaultSize(width: 420, height: 520)
 
