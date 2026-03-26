@@ -4,15 +4,7 @@ struct LoginView: View {
     @StateObject private var vm = LoginViewModel()
 
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Color(nsColor: .windowBackgroundColor), Color(nsColor: .controlBackgroundColor)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-
-            VStack(spacing: 28) {
+        VStack(spacing: 28) {
                 // App icon + title
                 VStack(spacing: 14) {
                     Image("AppIconImage")
@@ -72,15 +64,6 @@ struct LoginView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(vm.isLoading)
-            }
-            .padding(36)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(.white.opacity(0.12), lineWidth: 1)
-            )
-            .shadow(color: .black.opacity(0.15), radius: 24, x: 0, y: 8)
-            .padding(40)
         }
         .frame(width: 420, height: 520)
     }
