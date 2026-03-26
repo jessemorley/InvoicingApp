@@ -8,17 +8,28 @@ struct InvoicingApp: App {
 
     var body: some Scene {
         Window("Login", id: "login") {
-            LoginView()
-                .task { await SupabaseService.shared.restoreSession() }
-                .onOpenURL { url in
-                    Task { await SupabaseService.shared.handleAuthCallback(url: url) }
+            Group {
+                if supabase.sessionChecked && !supabase.isAuthenticated {
+                    LoginView()
+                } else {
+                    Color.clear
                 }
-                .onChange(of: supabase.isAuthenticated) { _, isAuthenticated in
-                    if isAuthenticated {
-                        openWindow(id: "main")
-                        dismissWindow(id: "login")
-                    }
+            }
+            .onOpenURL { url in
+                Task { await SupabaseService.shared.handleAuthCallback(url: url) }
+            }
+            .onChange(of: supabase.sessionChecked) { _, checked in
+                if checked && supabase.isAuthenticated {
+                    openWindow(id: "main")
+                    dismissWindow(id: "login")
                 }
+            }
+            .onChange(of: supabase.isAuthenticated) { _, isAuthenticated in
+                if isAuthenticated {
+                    openWindow(id: "main")
+                    dismissWindow(id: "login")
+                }
+            }
         }
         .windowStyle(.titleBar)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))

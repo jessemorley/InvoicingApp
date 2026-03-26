@@ -29,6 +29,7 @@ final class SupabaseService: ObservableObject {
 
     @Published var isAuthenticated = false
     @Published var currentEmail: String?
+    @Published var sessionChecked = false
 
     private let client: SupabaseClient
 
@@ -43,6 +44,17 @@ final class SupabaseService: ObservableObject {
                 )
             )
         )
+
+        Task {
+            for await (event, session) in client.auth.authStateChanges {
+                isAuthenticated = session != nil
+                currentEmail = session?.user.email
+                if event == .initialSession {
+                    sessionChecked = true
+                    break
+                }
+            }
+        }
     }
 
     // MARK: - Auth
