@@ -33,8 +33,11 @@ struct GeneralSettingsTab: View {
         Form {
             Section("Invoice Numbering") {
                 TextField("Prefix", text: $vm.settings.invoicePrefix)
-                Stepper("Next number: \(vm.nextInvoiceNumber)",
-                        value: $vm.nextInvoiceNumber, in: 1...99999)
+                LabeledContent("Next number") {
+                    TextField("", value: $vm.nextInvoiceNumber, format: .number)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 80)
+                }
                 LabeledContent("Next invoice") {
                     Text("\(vm.settings.invoicePrefix)\(vm.nextInvoiceNumber)")
                         .foregroundStyle(.secondary)

@@ -40,7 +40,9 @@ final class SettingsViewModel: ObservableObject {
         settings.save()
         Task {
             do {
-                try await supabase.updateLastInvoiceNumber(nextInvoiceNumber - 1)
+                if nextInvoiceNumber > 0 {
+                    try await supabase.updateLastInvoiceNumber(nextInvoiceNumber - 1)
+                }
                 try await supabase.updateIncludeSuperInTotals(settings.includeSuperInTotals)
             } catch {
                 errorMessage = error.localizedDescription
