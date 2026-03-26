@@ -8,6 +8,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var email: String = ""
     @Published var password: String = ""
     @Published var nextInvoiceNumber: Int = 0
+    private var loadedInvoiceNumber: Int = 0  // tracks what was fetched; 0 means not yet loaded
     @Published var isSaving = false
     @Published var isSigningIn = false
     @Published var errorMessage: String?
@@ -24,7 +25,10 @@ final class SettingsViewModel: ObservableObject {
     func loadNextNumber() async {
         do {
             let lastNumber = try await supabase.fetchLastInvoiceNumber()
-            nextInvoiceNumber = lastNumber + 1
+            if lastNumber >= 0 {
+                nextInvoiceNumber = lastNumber + 1
+                loadedInvoiceNumber = nextInvoiceNumber
+            }
         } catch {
             // Non-critical — field just won't populate
         }

@@ -1,0 +1,2 @@
+ALTER TABLE invoice_sequence ADD COLUMN id INTEGER NOT NULL DEFAULT 1 PRIMARY KEY;
+ALTER TABLE invoice_sequence ADD CONSTRAINT single_row CHECK (id = 1);

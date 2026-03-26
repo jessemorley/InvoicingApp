@@ -207,7 +207,7 @@ final class SupabaseService: ObservableObject {
         guard let client else { throw ServiceError.notConfigured }
         try await client.from("invoice_sequence")
             .update(["last_number": number])
-            .gte("last_number", value: 0)  // WHERE true equivalent
+            .gte("last_number", value: 0)  // WHERE true equivalent — no primary key yet
             .execute()
     }
 
