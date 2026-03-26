@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		867578652F750BC600AF8BA1 /* InvoicingIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 867578642F750BC600AF8BA1 /* InvoicingIcon.icon */; };
 		A10001001 /* InvoicingApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000001 /* InvoicingApp.swift */; };
 		A10001002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000002 /* ContentView.swift */; };
 		A10001003 /* Client.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000003 /* Client.swift */; };
@@ -34,7 +35,6 @@
 		A10001025 /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000025 /* CalendarView.swift */; };
 		A10001026 /* CalendarDayCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000026 /* CalendarDayCell.swift */; };
 		A10001027 /* EntryDetailEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000027 /* EntryDetailEditView.swift */; };
-		A10009003 /* EntryInspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10009002 /* EntryInspectorView.swift */; };
 		A10001028 /* GenerateInvoicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000028 /* GenerateInvoicesView.swift */; };
 		A10001029 /* InvoiceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000029 /* InvoiceDetailView.swift */; };
 		A10001030 /* SummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000030 /* SummaryView.swift */; };
@@ -54,9 +54,11 @@
 		A10001045 /* StatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000045 /* StatsView.swift */; };
 		A10001046 /* InvoiceInspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000046 /* InvoiceInspectorView.swift */; };
 		A10001099 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A10009001 /* Supabase */; };
+		A10009003 /* EntryInspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10009002 /* EntryInspectorView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		867578642F750BC600AF8BA1 /* InvoicingIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = InvoicingIcon.icon; sourceTree = "<group>"; };
 		A10000001 /* InvoicingApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoicingApp.swift; sourceTree = "<group>"; };
 		A10000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A10000003 /* Client.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Client.swift; sourceTree = "<group>"; };
@@ -84,7 +86,6 @@
 		A10000025 /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
 		A10000026 /* CalendarDayCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarDayCell.swift; sourceTree = "<group>"; };
 		A10000027 /* EntryDetailEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailEditView.swift; sourceTree = "<group>"; };
-		A10009002 /* EntryInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryInspectorView.swift; sourceTree = "<group>"; };
 		A10000028 /* GenerateInvoicesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerateInvoicesView.swift; sourceTree = "<group>"; };
 		A10000029 /* InvoiceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceDetailView.swift; sourceTree = "<group>"; };
 		A10000030 /* SummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
@@ -105,6 +106,7 @@
 		A10000045 /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
 		A10000046 /* InvoiceInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceInspectorView.swift; sourceTree = "<group>"; };
 		A10000050 /* InvoicingApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InvoicingApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10009002 /* EntryInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryInspectorView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -245,6 +247,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000040 /* Assets.xcassets */,
+				867578642F750BC600AF8BA1 /* InvoicingIcon.icon */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -256,14 +259,6 @@
 				A10000046 /* InvoiceInspectorView.swift */,
 			);
 			path = Summary;
-			sourceTree = "<group>";
-		};
-		A10003015 /* Stats */ = {
-			isa = PBXGroup;
-			children = (
-				A10000045 /* StatsView.swift */,
-			);
-			path = Stats;
 			sourceTree = "<group>";
 		};
 		A10003012 /* Clients */ = {
@@ -283,6 +278,14 @@
 				A10000044 /* ImportView.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		A10003015 /* Stats */ = {
+			isa = PBXGroup;
+			children = (
+				A10000045 /* StatsView.swift */,
+			);
+			path = Stats;
 			sourceTree = "<group>";
 		};
 		A10003099 /* Products */ = {
@@ -357,6 +360,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				867578652F750BC600AF8BA1 /* InvoicingIcon.icon in Resources */,
 				A10001040 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -542,8 +546,9 @@
 		A10006020 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = InvoicingIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = InvoicingApp/InvoicingApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -573,8 +578,9 @@
 		A10006021 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = InvoicingIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = InvoicingApp/InvoicingApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
