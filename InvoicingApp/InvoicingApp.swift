@@ -2,15 +2,35 @@ import SwiftUI
 
 @main
 struct InvoicingApp: App {
+    @ObservedObject private var supabase = SupabaseService.shared
+    @Environment(\.openWindow) private var openWindow
+    @Environment(\.dismissWindow) private var dismissWindow
+
     var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .frame(minWidth: 900, minHeight: 600)
-                .task {
-                    await SupabaseService.shared.restoreSession()
-                }
+        Window("Login", id: "login") {
+            LoginView()
+                .task { await SupabaseService.shared.restoreSession() }
                 .onOpenURL { url in
                     Task { await SupabaseService.shared.handleAuthCallback(url: url) }
+                }
+                .onChange(of: supabase.isAuthenticated) { _, isAuthenticated in
+                    if isAuthenticated {
+                        openWindow(id: "main")
+                        dismissWindow(id: "login")
+                    }
+                }
+        }
+        .windowResizability(.contentSize)
+        .defaultSize(width: 420, height: 520)
+
+        WindowGroup(id: "main") {
+            ContentView()
+                .frame(minWidth: 900, minHeight: 600)
+                .onChange(of: supabase.isAuthenticated) { _, isAuthenticated in
+                    if !isAuthenticated {
+                        openWindow(id: "login")
+                        dismissWindow(id: "main")
+                    }
                 }
         }
         .windowStyle(.titleBar)

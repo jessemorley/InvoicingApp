@@ -19,40 +19,35 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 }
 
 struct ContentView: View {
-    @ObservedObject private var supabase = SupabaseService.shared
     @State private var selection: SidebarItem? = .entries
 
     var body: some View {
-        if supabase.isAuthenticated {
-            NavigationSplitView {
-                List(SidebarItem.allCases, selection: $selection) { item in
-                    Label(item.rawValue, systemImage: item.icon)
-                        .tag(item)
-                }
-                .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-            } detail: {
-                switch selection {
-                case .entries:
-                    NavigationStack {
-                        EntriesListView(sidebarSelection: $selection)
-                    }
-                case .summary:
-                    NavigationStack {
-                        SummaryView()
-                    }
-                case .stats:
-                    StatsView()
-                case .clients:
-                    NavigationStack {
-                        ClientListView()
-                    }
-                case nil:
-                    Text("Select an item")
-                        .foregroundStyle(.secondary)
-                }
+        NavigationSplitView {
+            List(SidebarItem.allCases, selection: $selection) { item in
+                Label(item.rawValue, systemImage: item.icon)
+                    .tag(item)
             }
-        } else {
-            LoginView()
+            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
+        } detail: {
+            switch selection {
+            case .entries:
+                NavigationStack {
+                    EntriesListView(sidebarSelection: $selection)
+                }
+            case .summary:
+                NavigationStack {
+                    SummaryView()
+                }
+            case .stats:
+                StatsView()
+            case .clients:
+                NavigationStack {
+                    ClientListView()
+                }
+            case nil:
+                Text("Select an item")
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }
