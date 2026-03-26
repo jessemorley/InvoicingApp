@@ -105,7 +105,7 @@
 		A10000044 /* ImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportView.swift; sourceTree = "<group>"; };
 		A10000045 /* StatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsView.swift; sourceTree = "<group>"; };
 		A10000046 /* InvoiceInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoiceInspectorView.swift; sourceTree = "<group>"; };
-		A10000050 /* InvoicingApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InvoicingApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000050 /* Invoicing.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Invoicing.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10009002 /* EntryInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryInspectorView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -291,7 +291,7 @@
 		A10003099 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A10000050 /* InvoicingApp.app */,
+				A10000050 /* Invoicing.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -299,9 +299,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A10004001 /* InvoicingApp */ = {
+		A10004001 /* Invoicing */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A10006001 /* Build configuration list for PBXNativeTarget "InvoicingApp" */;
+			buildConfigurationList = A10006001 /* Build configuration list for PBXNativeTarget "Invoicing" */;
 			buildPhases = (
 				A10005001 /* Sources */,
 				A10002001 /* Frameworks */,
@@ -311,12 +311,12 @@
 			);
 			dependencies = (
 			);
-			name = InvoicingApp;
+			name = Invoicing;
 			packageProductDependencies = (
 				A10009001 /* Supabase */,
 			);
 			productName = InvoicingApp;
-			productReference = A10000050 /* InvoicingApp.app */;
+			productReference = A10000050 /* Invoicing.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -334,7 +334,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A10006003 /* Build configuration list for PBXProject "InvoicingApp" */;
+			buildConfigurationList = A10006003 /* Build configuration list for PBXProject "Invoicing" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -350,7 +350,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A10004001 /* InvoicingApp */,
+				A10004001 /* Invoicing */,
 			);
 		};
 /* End PBXProject section */
@@ -610,7 +610,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A10006001 /* Build configuration list for PBXNativeTarget "InvoicingApp" */ = {
+		A10006001 /* Build configuration list for PBXNativeTarget "Invoicing" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A10006020 /* Debug */,
@@ -619,7 +619,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A10006003 /* Build configuration list for PBXProject "InvoicingApp" */ = {
+		A10006003 /* Build configuration list for PBXProject "Invoicing" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A10006010 /* Debug */,

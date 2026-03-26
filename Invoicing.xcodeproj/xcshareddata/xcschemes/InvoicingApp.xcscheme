@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A10004001"
-               BuildableName = "InvoicingApp.app"
-               BlueprintName = "InvoicingApp"
-               ReferencedContainer = "container:InvoicingApp.xcodeproj">
+               BuildableName = "Invoicing.app"
+               BlueprintName = "Invoicing"
+               ReferencedContainer = "container:Invoicing.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A10004001"
-            BuildableName = "InvoicingApp.app"
-            BlueprintName = "InvoicingApp"
-            ReferencedContainer = "container:InvoicingApp.xcodeproj">
+            BuildableName = "Invoicing.app"
+            BlueprintName = "Invoicing"
+            ReferencedContainer = "container:Invoicing.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A10004001"
-            BuildableName = "InvoicingApp.app"
-            BlueprintName = "InvoicingApp"
-            ReferencedContainer = "container:InvoicingApp.xcodeproj">
+            BuildableName = "Invoicing.app"
+            BlueprintName = "Invoicing"
+            ReferencedContainer = "container:Invoicing.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
