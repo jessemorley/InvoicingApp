@@ -330,6 +330,13 @@
             padding: 40px 32px;
         }
 
+        .login-field {
+            border-color: #e2e8f0;
+        }
+        .login-field:focus {
+            border-color: var(--accent);
+        }
+
         input[type="time"]::-webkit-calendar-picker-indicator {
             background: transparent;
             bottom: 0; color: transparent; cursor: pointer;
