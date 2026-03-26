@@ -20,7 +20,6 @@ struct SettingsView: View {
                     Label("Import", systemImage: "square.and.arrow.down")
                 }
         }
-        .frame(width: 500, height: 400)
     }
 }
 
@@ -56,21 +55,17 @@ struct GeneralSettingsTab: View {
                 }
             }
 
-            Section {
-                Button("Save") { vm.saveSettings() }
-                    .buttonStyle(.borderedProminent)
-            }
-
-            if let success = vm.successMessage {
-                Label(success, systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-            }
             if let error = vm.errorMessage {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.red)
             }
         }
         .formStyle(.grouped)
+        .textFieldStyle(.roundedBorder)
+        .frame(width: 450)
+        .fixedSize(horizontal: false, vertical: true)
+        .onChange(of: vm.settings) { _, _ in vm.autoSave() }
+        .onChange(of: vm.nextInvoiceNumber) { _, _ in vm.autoSave() }
         .task { await vm.loadNextNumber() }
     }
 }
@@ -101,21 +96,16 @@ struct PersonalInfoTab: View {
                 TextField("USI", text: $vm.settings.superUsi)
             }
 
-            Section {
-                Button("Save") { vm.saveSettings() }
-                    .buttonStyle(.borderedProminent)
-            }
-
-            if let success = vm.successMessage {
-                Label(success, systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-            }
             if let error = vm.errorMessage {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.red)
             }
         }
         .formStyle(.grouped)
+        .textFieldStyle(.roundedBorder)
+        .frame(width: 450)
+        .fixedSize(horizontal: false, vertical: true)
+        .onChange(of: vm.settings) { _, _ in vm.autoSave() }
     }
 }
 
@@ -156,6 +146,9 @@ struct LoginTab: View {
             }
         }
         .formStyle(.grouped)
+        .textFieldStyle(.roundedBorder)
+        .frame(width: 450)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -171,6 +164,8 @@ struct ImportTab: View {
             }
         }
         .formStyle(.grouped)
+        .frame(width: 450)
+        .fixedSize(horizontal: false, vertical: true)
         .sheet(isPresented: $showImport) {
             ImportView()
         }

@@ -1,6 +1,6 @@
 import Foundation
 
-struct UserSettings: Codable, Sendable {
+struct UserSettings: Codable, Sendable, Equatable {
     var name: String
     var businessName: String
     var abn: String

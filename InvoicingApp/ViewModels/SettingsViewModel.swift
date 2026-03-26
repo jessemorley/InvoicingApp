@@ -15,6 +15,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var successMessage: String?
 
     private let supabase = SupabaseService.shared
+    private var saveTask: Task<Void, Never>?
 
     init() {
         self.settings = UserSettings.load()
@@ -40,21 +41,22 @@ final class SettingsViewModel: ObservableObject {
         }
     }
 
-    func saveSettings() {
+    func autoSave() {
         settings.save()
-        Task {
+
+        saveTask?.cancel()
+        saveTask = Task {
+            try? await Task.sleep(for: .seconds(0.8))
+            guard !Task.isCancelled else { return }
             do {
-                if nextInvoiceNumber > 0 {
+                if nextInvoiceNumber > 0 && nextInvoiceNumber != loadedInvoiceNumber {
                     try await supabase.updateLastInvoiceNumber(nextInvoiceNumber - 1)
+                    loadedInvoiceNumber = nextInvoiceNumber
                 }
                 try await supabase.updateIncludeSuperInTotals(settings.includeSuperInTotals)
             } catch {
                 errorMessage = error.localizedDescription
-                return
             }
-            successMessage = "Settings saved"
-            try? await Task.sleep(for: .seconds(2))
-            successMessage = nil
         }
     }
 

@@ -16,5 +16,6 @@ struct InvoicingApp: App {
         Settings {
             SettingsView()
         }
+        .windowResizability(.contentSize)
     }
 }
