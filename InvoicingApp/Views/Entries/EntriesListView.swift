@@ -277,7 +277,8 @@ struct EntriesListView: View {
         EntryRowView(
             entry: entry,
             client: vm.clientMap[entry.clientId],
-            showAmount: true
+            showAmount: true,
+            displayAmount: vm.displayAmount(for: entry)
         )
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button(role: .destructive) {

@@ -4,6 +4,7 @@ struct EntryRowView: View {
     let entry: Entry
     let client: Client?
     let showAmount: Bool
+    var displayAmount: Decimal? = nil
 
     private static let dateFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -41,7 +42,7 @@ struct EntryRowView: View {
             }
 
             if showAmount {
-                CurrencyText(amount: entry.totalAmount)
+                CurrencyText(amount: displayAmount ?? entry.totalAmount)
                     .font(.body.monospacedDigit())
                     .frame(width: 100, alignment: .trailing)
             }

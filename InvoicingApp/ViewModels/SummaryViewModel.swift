@@ -42,6 +42,7 @@ struct ClientInvoiceGroup: Identifiable {
 @MainActor
 final class SummaryViewModel: ObservableObject {
     private let supabase = SupabaseService.shared
+    private var includeSuperInTotals: Bool = UserSettings.load().includeSuperInTotals
 
     @Published var invoices: [Invoice] = []
     @Published var clients: [Client] = []
@@ -81,8 +82,12 @@ final class SummaryViewModel: ObservableObject {
         return Array(groupDict.values).sorted { $0.client.name < $1.client.name }
     }
 
+    func displayTotal(for invoice: Invoice) -> Decimal {
+        includeSuperInTotals ? invoice.total : invoice.total - invoice.superAmount
+    }
+
     var grossTotal: Decimal {
-        filteredInvoices.reduce(0) { $0 + $1.total }
+        filteredInvoices.reduce(0) { $0 + displayTotal(for: $1) }
     }
 
     var grossSuperTotal: Decimal {
@@ -90,7 +95,7 @@ final class SummaryViewModel: ObservableObject {
     }
 
     var outstandingTotal: Decimal {
-        filteredInvoices.filter { $0.status != .paid }.reduce(0) { $0 + $1.total }
+        filteredInvoices.filter { $0.status != .paid }.reduce(0) { $0 + displayTotal(for: $1) }
     }
 
     var clientBreakdowns: [ClientBreakdown] {

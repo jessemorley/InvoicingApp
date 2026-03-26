@@ -205,7 +205,7 @@ struct SummaryView: View {
                     .foregroundStyle(.tertiary)
                     .frame(width: 100, alignment: .trailing)
             }
-            CurrencyText(amount: invoice.total)
+            CurrencyText(amount: vm.displayTotal(for: invoice))
                 .font(.body.monospacedDigit())
                 .frame(width: 100, alignment: .trailing)
             StatusBadgeView(status: invoice.status)

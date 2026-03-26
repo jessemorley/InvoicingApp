@@ -211,6 +211,24 @@ final class SupabaseService: ObservableObject {
             .execute()
     }
 
+    func fetchIncludeSuperInTotals() async throws -> Bool {
+        guard let client else { throw ServiceError.notConfigured }
+        struct Row: Decodable { let includeSuperInTotals: Bool }
+        let rows: [Row] = try await client.from("business_details")
+            .select("include_super_in_totals")
+            .execute()
+            .value
+        return rows.first?.includeSuperInTotals ?? true
+    }
+
+    func updateIncludeSuperInTotals(_ value: Bool) async throws {
+        guard let client else { throw ServiceError.notConfigured }
+        try await client.from("business_details")
+            .update(["include_super_in_totals": value])
+            .gte("id", value: 0)
+            .execute()
+    }
+
     // MARK: - Specialized Queries
 
     func fetchUninvoicedEntries() async throws -> [Entry] {

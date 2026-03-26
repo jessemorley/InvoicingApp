@@ -42,6 +42,7 @@ struct GeneralSettingsTab: View {
             }
 
             Section("Preferences") {
+                Toggle("Include super in totals", isOn: $vm.settings.includeSuperInTotals)
                 Toggle("Mark invoice as issued when exported as PDF", isOn: $vm.settings.markIssuedOnExport)
                 Stepper("Due date offset: \(vm.settings.dueDateOffsetDays) days",
                         value: $vm.settings.dueDateOffsetDays, in: 7...90)

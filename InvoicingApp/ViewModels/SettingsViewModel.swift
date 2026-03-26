@@ -28,6 +28,12 @@ final class SettingsViewModel: ObservableObject {
         } catch {
             // Non-critical — field just won't populate
         }
+        do {
+            settings.includeSuperInTotals = try await supabase.fetchIncludeSuperInTotals()
+            settings.save()
+        } catch {
+            // Non-critical — local value is used as fallback
+        }
     }
 
     func saveSettings() {
@@ -35,6 +41,7 @@ final class SettingsViewModel: ObservableObject {
         Task {
             do {
                 try await supabase.updateLastInvoiceNumber(nextInvoiceNumber - 1)
+                try await supabase.updateIncludeSuperInTotals(settings.includeSuperInTotals)
             } catch {
                 errorMessage = error.localizedDescription
                 return

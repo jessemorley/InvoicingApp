@@ -9,6 +9,7 @@ enum EntriesViewMode: String, CaseIterable {
 @MainActor
 final class EntriesListViewModel: ObservableObject {
     private let supabase = SupabaseService.shared
+    private var includeSuperInTotals: Bool = UserSettings.load().includeSuperInTotals
 
     @Published var entries: [Entry] = []
     @Published var invoices: [Invoice] = []
@@ -28,7 +29,11 @@ final class EntriesListViewModel: ObservableObject {
     }
 
     var uninvoicedTotal: Decimal {
-        uninvoicedGroups.reduce(0) { $0 + $1.total }
+        uninvoicedGroups.reduce(0) { $0 + (includeSuperInTotals ? $1.total : $1.subtotal) }
+    }
+
+    func displayAmount(for entry: Entry) -> Decimal {
+        includeSuperInTotals ? entry.totalAmount : entry.baseAmount + entry.bonusAmount
     }
 
     var activeClients: [Client] {

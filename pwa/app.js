@@ -40,6 +40,15 @@ let entriesAllLoaded  = false; // true once we've hit the beginning of history
 let businessDetails    = null;
 let currentPreviewHTML = null;
 
+function includeSuperInTotals() {
+    return businessDetails?.include_super_in_totals ?? true;
+}
+
+function entryDisplayAmount(entry) {
+    const total = entry.total_amount || 0;
+    return includeSuperInTotals() ? total : total - (entry.super_amount || 0);
+}
+
 // ─────────────────────────────────────────────
 // AUTH
 // ─────────────────────────────────────────────
@@ -748,7 +757,7 @@ function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
         header.className = 'week-header';
         header.style.animation = `cardIn 0.3s ease both`;
         header.style.animationDelay = `${Math.min(cardIndex, 6) * 40}ms`;
-        const weekTotal = entries.reduce((sum, e) => sum + ((e.total_amount || 0) - (e.super_amount || 0)), 0);
+        const weekTotal = entries.reduce((sum, e) => sum + entryDisplayAmount(e), 0);
         header.innerHTML = `<span>${formatWeekLabel(weekStart)}</span><span>${fmt(weekTotal)}</span>`;
 
         // Cards
@@ -758,7 +767,7 @@ function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
             const clientName  = entry.clients?.name || 'Unknown';
             const badgeColor  = clientBadgeColor(clientName);
             const description = entryDescription(entry);
-            const total       = fmt((entry.total_amount || 0) - (entry.super_amount || 0));
+            const total       = fmt(entryDisplayAmount(entry));
             const inv         = entry.invoices;
             const isInvoiced  = !!entry.invoice_id;
 
@@ -1621,10 +1630,10 @@ function toggleInvoiceSort() {
 function invoiceSubtotal(inv) {
     // Use stored subtotal when entries haven't been loaded yet
     if (inv.subtotal != null && !inv.entries?.some(e => e.total_amount != null)) {
-        return inv.subtotal;
+        return includeSuperInTotals() ? inv.total || inv.subtotal : inv.subtotal;
     }
-    if (!inv.entries?.length) return inv.subtotal || 0;
-    return inv.entries.reduce((s, e) => s + ((e.total_amount || 0) - (e.super_amount || 0)), 0);
+    if (!inv.entries?.length) return includeSuperInTotals() ? inv.total || inv.subtotal || 0 : inv.subtotal || 0;
+    return inv.entries.reduce((s, e) => s + entryDisplayAmount(e), 0);
 }
 
 function invoiceDateRange(inv) {
@@ -1718,7 +1727,7 @@ async function toggleInvoiceCard(wrap, inv) {
     let html = '<div class="space-y-0 pt-3">';
     sorted.forEach(e => {
         const desc   = entryDescription(e);
-        const amount = fmt((e.total_amount || 0) - (e.super_amount || 0));
+        const amount = fmt(entryDisplayAmount(e));
         const date   = formatEntryDate(e.date);
         html += `
             <div class="flex justify-between items-center py-2.5 border-b border-slate-50">
