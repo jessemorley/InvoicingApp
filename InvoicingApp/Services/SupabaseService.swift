@@ -80,9 +80,7 @@ final class SupabaseService: ObservableObject {
             let session = try await client.auth.session(from: url)
             isAuthenticated = true
             currentEmail = session.user.email
-        } catch {
-            print("Auth callback error: \(error)")
-        }
+        } catch {}
     }
 
     // MARK: - Fetch (all rows, optional ordering)
@@ -172,13 +170,10 @@ final class SupabaseService: ObservableObject {
     // MARK: - Delete
 
     func delete(from table: String, id: UUID) async throws {
-        print("[DELETE] table=\(table) id=\(id.uuidString)")
-        let response = try await client.from(table)
+        try await client.from(table)
             .delete()
             .eq("id", value: id.uuidString)
             .execute()
-        let raw = String(data: response.data, encoding: .utf8) ?? ""
-        print("[DELETE] response: \(raw)")
     }
 
     // MARK: - RPC
@@ -186,7 +181,6 @@ final class SupabaseService: ObservableObject {
     func nextInvoiceNumber() async throws -> Int {
         let response = try await client.rpc("next_invoice_number").execute()
         let raw = String(data: response.data, encoding: .utf8) ?? ""
-        print("[RPC] next_invoice_number raw: '\(raw)'")
         let cleaned = raw.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: CharacterSet(charactersIn: "\""))
         guard let number = Int(cleaned) else {
             throw ServiceError.rpcError("Could not parse invoice number from: \(raw)")
@@ -296,13 +290,10 @@ final class SupabaseService: ObservableObject {
     }
 
     func deleteEntriesByInvoiceId(_ invoiceId: UUID) async throws {
-        print("[DELETE ENTRIES] invoice_id=\(invoiceId.uuidString)")
-        let response = try await client.from("entries")
+        try await client.from("entries")
             .delete()
             .eq("invoice_id", value: invoiceId.uuidString)
             .execute()
-        let raw = String(data: response.data, encoding: .utf8) ?? ""
-        print("[DELETE ENTRIES] response: \(raw)")
     }
 
     func updateEntries(ids: [UUID], invoiceId: UUID) async throws {

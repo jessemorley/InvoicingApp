@@ -47,21 +47,13 @@ final class SettingsViewModel: ObservableObject {
 
     private func syncBusinessDetailsFromSupabase() async {
         do {
-            print("[SettingsVM] fetching business details...")
-            guard let record = try await supabase.fetchBusinessDetails() else {
-                print("[SettingsVM] no business details row found")
-                return
-            }
+            guard let record = try await supabase.fetchBusinessDetails() else { return }
 
             // Verify the fetched row belongs to the current session —
             // guards against stale session returning the previous user's row
             let currentUserId = try await supabase.currentUserId()
-            guard record.userId == currentUserId else {
-                print("[SettingsVM] userId mismatch — skipping stale fetch")
-                return
-            }
+            guard record.userId == currentUserId else { return }
 
-            print("[SettingsVM] fetched: userId=\(record.userId) businessName='\(record.businessName)'")
             businessDetailsUserId = record.userId
             loadedBusinessDetails = record
             settings.name = record.name
@@ -75,9 +67,7 @@ final class SettingsViewModel: ObservableObject {
             settings.superFundAbn = record.superFundAbn
             settings.superUsi = record.superUsi
             settings.save()
-        } catch {
-            print("[SettingsVM] fetch error: \(error)")
-        }
+        } catch {}
     }
 
     func autoSave() {
@@ -120,11 +110,7 @@ final class SettingsViewModel: ObservableObject {
             superFundAbn: settings.superFundAbn,
             superUsi: settings.superUsi
         )
-        guard updated != loadedBusinessDetails else {
-            print("[SettingsVM] saveBusinessDetails: no change, skipping")
-            return
-        }
-        print("[SettingsVM] saveBusinessDetails: pushing update businessName='\(updated.businessName)'")
+        guard updated != loadedBusinessDetails else { return }
         do {
             try await supabase.updateBusinessDetails(updated)
             loadedBusinessDetails = updated

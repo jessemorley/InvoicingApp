@@ -2,7 +2,7 @@
 
 ### Settings Mess
 
-Auth session missing on logout (message persisted after loggin in as Jesse)
+Settings window not closing on logout
 Not sure that pushing update after every keystroke is necessary
 Settings window should close after logout is clicked
 
