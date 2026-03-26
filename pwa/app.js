@@ -40,6 +40,9 @@ let entriesAllLoaded  = false; // true once we've hit the beginning of history
 let businessDetails    = null;
 let currentPreviewHTML = null;
 
+// Authenticated user
+let currentUserId = null;
+
 function includeSuperInTotals() {
     return businessDetails?.include_super_in_totals ?? true;
 }
@@ -55,6 +58,7 @@ function entryDisplayAmount(entry) {
 async function init() {
     const { data: { session } } = await sb.auth.getSession();
     if (session) {
+        currentUserId = session.user.id;
         showApp();
         await loadData();
     } else {
@@ -82,7 +86,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     btn.textContent = 'Signing in…';
     errEl.classList.add('hidden');
 
-    const { error } = await sb.auth.signInWithPassword({ email, password });
+    const { data: signInData, error } = await sb.auth.signInWithPassword({ email, password });
     btn.disabled   = false;
     btn.textContent = 'Sign In';
 
@@ -90,6 +94,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
         errEl.textContent = error.message;
         errEl.classList.remove('hidden');
     } else {
+        currentUserId = signInData.session.user.id;
         showApp();
         await loadData();
     }
@@ -529,6 +534,7 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
 function buildPayload() {
     const date = document.getElementById('entryDate').value;
     const base = {
+        user_id: currentUserId,
         client_id: selectedClient.id,
         date,
         billing_type_snapshot: selectedClient.billing_type,
@@ -1215,6 +1221,7 @@ function buildNewEntryPayload() {
     const client = newEntrySelectedClient;
     const date   = document.getElementById('newEntryDate').value;
     const base   = {
+        user_id: currentUserId,
         client_id: client.id,
         date,
         billing_type_snapshot: client.billing_type,
