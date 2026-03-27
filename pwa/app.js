@@ -206,7 +206,13 @@ function renderOverlayClients(query) {
     });
 }
 
-document.getElementById('newEntryFab').addEventListener('click', openClientPicker);
+document.getElementById('newEntryFab').addEventListener('click', () => {
+    if (window.innerWidth >= 768) {
+        Entries.openNewEntryDesktop(allClients, clientInvoiceCountMap);
+    } else {
+        openClientPicker();
+    }
+});
 document.getElementById('overlayClientInput').addEventListener('input', e => {
     const val = e.target.value.trim();
     renderOverlayClients(val);
@@ -222,7 +228,13 @@ document.getElementById('overlayInputClear').addEventListener('click', () => {
 document.getElementById('overlayCancel').addEventListener('click', closeClientPicker);
 
 // Entries module requests picker re-open (e.g. clear client button)
-document.addEventListener('entries:openClientPicker', openClientPicker);
+document.addEventListener('entries:openClientPicker', () => {
+    if (window.innerWidth >= 768) {
+        Entries.openNewEntryDesktop(allClients, clientInvoiceCountMap);
+    } else {
+        openClientPicker();
+    }
+});
 
 // After invoice generation: reload entries + mark invoices stale + re-scan
 document.addEventListener('generate:done', async () => {

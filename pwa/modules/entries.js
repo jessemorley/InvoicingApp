@@ -5,7 +5,7 @@
 import {
     fmt, localDateStr, weeksAgoDateStr, weeksAgoDateStr_before,
     formatEntryDate, formatEntryDateParts, isoWeekKey, isoWeekStart,
-    formatWeekLabel, clientBadgeColor, clientDowColor, entryDescription,
+    formatWeekLabel, clientBadgeColor, clientDowColor, clientDotColor, entryDescription,
     calcDayRate, calcHourly, calcManual,
 } from './utils.js';
 
@@ -378,9 +378,12 @@ export function closeNewEntryCard() {
     wireNewEntryForm();
 }
 
-function buildNewEntryFormHTML() {
+function buildNewEntryFormHTML(desktop = false) {
+    const wrapStyle = desktop
+        ? 'padding:0 20px 20px; display:flex; flex-direction:column; gap:0;'
+        : 'background:#fff; border-radius:1.75rem; padding:20px 24px; display:flex; flex-direction:column; gap:0;';
     return `
-    <div style="background:#fff; border-radius:1.75rem; padding:20px 24px; display:flex; flex-direction:column; gap:0;">
+    <div style="${wrapStyle}">
         <!-- Client chip -->
         <div id="newClientContainer" class="flex items-center justify-between pb-2">
             <div id="newClientChip"></div>
@@ -586,9 +589,123 @@ function wireNewEntryForm() {
 }
 
 export function openNewEntryCardForClient(client) {
+    if (_isDesktop()) {
+        _openNewEntryDesktopWithClient(client);
+        return;
+    }
     if (!newEntryWrap) return;
     newEntryWrap.style.display = '';
     document.getElementById('entriesScroll').scrollTo({ top: 0, behavior: 'smooth' });
+    selectNewEntryClient(client);
+}
+
+// ── Desktop: new entry in detail panel ───────
+
+export function openNewEntryDesktop(allClients, clientInvoiceCountMap) {
+    const panel = document.getElementById('detailPanel');
+    if (!panel) return;
+
+    const sorted = [...allClients].sort((a, b) =>
+        (clientInvoiceCountMap[b.id] || 0) - (clientInvoiceCountMap[a.id] || 0)
+    );
+
+    function renderPicker(query) {
+        const matches = query
+            ? sorted.filter(c => c.name.toLowerCase().includes(query.toLowerCase()))
+            : sorted;
+
+        let rows = matches.map(c => {
+            const dotColor = clientDotColor(c.name);
+            const count = clientInvoiceCountMap[c.id] || 0;
+            const subtitle = count > 0 ? `<div style="font-size:13px; color:#8e8e93; margin-top:2px;">${count} ${count === 1 ? 'invoice' : 'invoices'}</div>` : '';
+            return `<button class="desktop-client-picker-row" data-client-id="${c.id}"
+                style="display:flex; width:100%; box-sizing:border-box; align-items:center; text-align:left;
+                       background:none; border:none; border-bottom:1px solid #f3f4f6; padding:14px 20px;
+                       cursor:pointer; font-family:inherit;">
+                <div style="flex-shrink:0; width:10px; height:10px; border-radius:50%; background:${dotColor}; margin-right:14px;"></div>
+                <div style="flex:1; min-width:0;">
+                    <div style="font-size:15px; font-weight:600; color:#111827;">${c.name}</div>
+                    ${subtitle}
+                </div>
+                <svg width="16" height="16" fill="none" stroke="#c7c7cc" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/>
+                </svg>
+            </button>`;
+        }).join('');
+
+        panel.querySelector('#desktopClientPickerList').innerHTML = rows || `<div style="padding:40px 20px; text-align:center; color:#9ca3af;">No clients found</div>`;
+
+        panel.querySelectorAll('.desktop-client-picker-row').forEach(btn => {
+            const client = allClients.find(c => c.id === btn.dataset.clientId);
+            if (client) btn.addEventListener('click', () => _openNewEntryDesktopWithClient(client));
+        });
+    }
+
+    panel.innerHTML = `
+        <div style="display:flex; flex-direction:column; height:100%;">
+            <div style="padding:20px 20px 12px; border-bottom:1px solid #f3f4f6; flex-shrink:0;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                    <h3 style="font-size:15px; font-weight:700; color:#111827; margin:0;">New Entry</h3>
+                    <button id="desktopNewEntryClose" style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <input id="desktopClientSearch" type="text" placeholder="Search clients…"
+                    style="width:100%; box-sizing:border-box; background:#f3f4f6; border:none; border-radius:10px;
+                           padding:10px 14px; font-size:14px; outline:none; color:#111827;">
+            </div>
+            <div id="desktopClientPickerList" style="flex:1; overflow-y:auto;"></div>
+        </div>`;
+
+    panel.classList.add('open');
+
+    panel.querySelector('#desktopNewEntryClose').addEventListener('click', () => {
+        panel.classList.remove('open');
+        panel.innerHTML = '';
+    });
+
+    const searchInput = panel.querySelector('#desktopClientSearch');
+    renderPicker('');
+    searchInput.focus();
+    searchInput.addEventListener('input', e => renderPicker(e.target.value.trim()));
+}
+
+function _openNewEntryDesktopWithClient(client) {
+    const panel = document.getElementById('detailPanel');
+    if (!panel) return;
+
+    // Clear the hidden mobile newEntryWrap so IDs don't duplicate
+    const slot = document.getElementById('newEntrySlot');
+    if (slot) slot.innerHTML = '';
+    newEntryWrap = null;
+
+    panel.innerHTML = `
+        <div id="desktopNewEntryWrap" style="overflow-y:auto; height:100%; box-sizing:border-box;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:20px 20px 12px;">
+                <h3 style="font-size:15px; font-weight:700; color:#111827; margin:0;">New Entry</h3>
+                <button id="desktopNewEntryClose" style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            ${buildNewEntryFormHTML(true)}
+        </div>`;
+
+    panel.classList.add('open');
+
+    // Point newEntryWrap at the panel container so wireNewEntryForm can find buttons
+    newEntryWrap = panel.querySelector('#desktopNewEntryWrap');
+
+    panel.querySelector('#desktopNewEntryClose').addEventListener('click', () => {
+        panel.classList.remove('open');
+        panel.innerHTML = '';
+        newEntrySelectedClient = null;
+        newEntryWrap = null;
+        // Rebuild mobile form
+        appendNewEntryCard(null, 0);
+    });
+
+    // Wire form — document.getElementById finds elements in panel since slot is empty
+    wireNewEntryForm();
     selectNewEntryClient(client);
 }
 
