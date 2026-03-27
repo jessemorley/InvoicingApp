@@ -135,10 +135,9 @@ function _closeClientForm() {
         const panel = document.getElementById('detailPanel');
         if (panel) { panel.classList.remove('open'); panel.innerHTML = ''; }
         document.querySelectorAll('.client-selected').forEach(el => el.classList.remove('client-selected'));
-    } else {
-        clientsLoaded = false;
-        _fetchAndRender();
     }
+    clientsLoaded = false;
+    _fetchAndRender();
 }
 
 function _renderClientForm(client) {
@@ -297,9 +296,13 @@ function _renderClientForm(client) {
             </button>
         </div>
 
-        <!-- Save -->
+        <!-- Save / Delete -->
         <div class="pt-2 pb-2 space-y-2">
             <button id="cfSaveBtn" class="btn-primary">Save Client</button>
+            ${!isNew ? `
+            <button id="cfDeleteBtn" style="width:100%;padding:12px;background:transparent;color:#ef4444;border:1.5px solid #fecaca;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:-0.2px;">
+                Delete Client
+            </button>` : ''}
         </div>
         </div>
     </div>`;
@@ -349,6 +352,10 @@ function _renderClientForm(client) {
 
     // Save
     document.getElementById('cfSaveBtn').addEventListener('click', _saveClient);
+
+    // Delete (edit only)
+    const deleteBtn = document.getElementById('cfDeleteBtn');
+    if (deleteBtn) deleteBtn.addEventListener('click', () => _openClientDeleteSheet(client));
 }
 
 function _renderWorkflowRates() {
@@ -477,6 +484,82 @@ function _openWorkflowRateForm(rate) {
     });
 }
 
+async function _openClientDeleteSheet(client) {
+    const [{ count: entryCount }, { count: invoiceCount }] = await Promise.all([
+        sb.from('entries').select('id', { count: 'exact', head: true }).eq('client_id', client.id),
+        sb.from('invoices').select('id', { count: 'exact', head: true }).eq('client_id', client.id),
+    ]);
+
+    const hasData = (entryCount || 0) > 0 || (invoiceCount || 0) > 0;
+    if (!hasData) {
+        await _deleteClient(client, false);
+        return;
+    }
+
+    const parts = [];
+    if (entryCount)  parts.push(`${entryCount} ${entryCount === 1 ? 'Entry' : 'Entries'}`);
+    if (invoiceCount) parts.push(`${invoiceCount} ${invoiceCount === 1 ? 'Invoice' : 'Invoices'}`);
+    const summary = parts.join(' and ');
+
+    const existing = document.getElementById('clientDeleteSheet');
+    if (existing) existing.remove();
+
+    const sheet = document.createElement('div');
+    sheet.id = 'clientDeleteSheet';
+    sheet.style.cssText = 'position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;justify-content:flex-end;';
+    sheet.innerHTML = `
+        <div id="clientDeleteBackdrop" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s;"></div>
+        <div id="clientDeletePanel" style="position:relative;background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 40px;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);">
+            <p style="font-size:13px;font-weight:600;color:#9ca3af;text-align:center;margin:0 0 4px;letter-spacing:0.05em;text-transform:uppercase;">Delete ${_esc(client.name)}</p>
+            <p style="font-size:14px;color:#374151;text-align:center;margin:0 0 16px;">Client has ${summary}.</p>
+            <button id="deleteClientAndData" style="width:100%;padding:14px;margin-bottom:10px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;font-size:15px;font-weight:600;color:#ef4444;cursor:pointer;font-family:inherit;">
+                Delete
+            </button>
+            <button id="deleteClientCancel" style="width:100%;padding:14px;background:#f9fafb;border:none;border-radius:12px;font-size:15px;font-weight:600;color:#6b7280;cursor:pointer;font-family:inherit;">
+                Cancel
+            </button>
+        </div>`;
+
+    document.body.appendChild(sheet);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.getElementById('clientDeleteBackdrop').style.opacity = '1';
+        document.getElementById('clientDeletePanel').style.transform = 'translateY(0)';
+    }));
+
+    const close = () => {
+        document.getElementById('clientDeleteBackdrop').style.opacity = '0';
+        document.getElementById('clientDeletePanel').style.transform = 'translateY(100%)';
+        setTimeout(() => sheet.remove(), 300);
+    };
+
+    document.getElementById('clientDeleteBackdrop').addEventListener('click', close);
+    document.getElementById('deleteClientCancel').addEventListener('click', close);
+    document.getElementById('deleteClientAndData').addEventListener('click', async () => {
+        close();
+        await _deleteClient(client, true);
+    });
+}
+
+async function _deleteClient(client, deleteData = false) {
+    try {
+        if (deleteData) {
+            const { data: invoices } = await sb.from('invoices').select('id').eq('client_id', client.id);
+            if (invoices?.length) {
+                await sb.from('entries').delete().in('invoice_id', invoices.map(i => i.id));
+            }
+            await sb.from('entries').delete().eq('client_id', client.id);
+            await sb.from('invoices').delete().eq('client_id', client.id);
+        }
+        await sb.from('client_workflow_rates').delete().eq('client_id', client.id);
+        await sb.from('clients').delete().eq('id', client.id);
+
+        document.dispatchEvent(new CustomEvent('clients:saved'));
+        _closeClientForm();
+    } catch (err) {
+        alert('Error deleting client: ' + err.message);
+    }
+}
+
 async function _saveClient() {
     const btn = document.getElementById('cfSaveBtn');
     btn.disabled = true;
@@ -492,9 +575,9 @@ async function _saveClient() {
         pays_super:       document.getElementById('cfPaysSuper').checked,
         super_rate:       parseFloat(document.getElementById('cfSuperRate').value) || 0.12,
         invoice_frequency:invoiceFrequency,
-        email:            document.getElementById('cfEmail').value.trim() || null,
-        address:          document.getElementById('cfAddress').value.trim() || null,
-        suburb:           document.getElementById('cfSuburb').value.trim() || null,
+        email:            document.getElementById('cfEmail').value.trim() || '',
+        address:          document.getElementById('cfAddress').value.trim() || '',
+        suburb:           document.getElementById('cfSuburb').value.trim() || '',
         abn:              document.getElementById('cfAbn').value.trim() || null,
         is_active:        isNewClient ? true : document.getElementById('cfIsActive').checked,
     };
@@ -522,8 +605,6 @@ async function _saveClient() {
         // Refresh list and mark app-level clients stale
         document.dispatchEvent(new CustomEvent('clients:saved'));
         _closeClientForm();
-        clientsLoaded = false;
-        await _fetchAndRender();
     } catch (err) {
         alert('Error saving client: ' + err.message);
         btn.disabled = false;
