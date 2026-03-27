@@ -84,17 +84,17 @@ function _renderCalendar() {
     <div style="margin-bottom:16px;">
         <h2 style="font-size:22px; font-weight:800; color:#111827; margin:0;">${monthNames[currentMonth]} ${currentYear}</h2>
     </div>
-    <div style="display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:minmax(90px,1fr); gap:1px; background:#e5e7eb; border-radius:12px; overflow:hidden;">`;
+    <div style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:auto repeat(6,minmax(90px,1fr)); gap:1px; background:#e5e7eb; border-radius:12px; overflow:hidden;">`;
 
     // Day-of-week header row (Sat/Sun columns slightly dimmer)
     dayHeaders.forEach((d, i) => {
         const isWknd = i >= 5;
-        html += `<div style="background:${isWknd ? '#f3f4f5' : '#f9fafb'}; text-align:center; padding:6px 0; font-size:10px; font-weight:700; color:${isWknd ? '#b0b7c3' : '#9ca3af'}; text-transform:uppercase;">${d}</div>`;
+        html += `<div style="background:${isWknd ? '#f7f7f8' : '#fff'}; text-align:center; padding:6px 0; font-size:10px; font-weight:700; color:${isWknd ? '#b0b7c3' : '#9ca3af'}; text-transform:uppercase;">${d}</div>`;
     });
 
     // Empty cells before first day
     for (let i = 0; i < startDow; i++) {
-        html += `<div style="background:#fafafa;"></div>`;
+        html += `<div style="background:#f7f7f8;"></div>`;
     }
 
     const { businessDetails } = getState();
@@ -144,7 +144,7 @@ function _renderCalendar() {
     const remainder  = totalCells % 7;
     if (remainder !== 0) {
         for (let i = 0; i < 7 - remainder; i++) {
-            html += `<div style="background:#fafafa;"></div>`;
+            html += `<div style="background:#f7f7f8;"></div>`;
         }
     }
 
