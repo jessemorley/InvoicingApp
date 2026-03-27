@@ -1357,15 +1357,10 @@ async function deleteEntryEntry() {
 
 export function initScrollHandlers() {
     // View mode toggle
-    document.getElementById('entriesViewToggle')?.addEventListener('click', e => {
-        const btn = e.target.closest('[data-entriesview]');
-        if (!btn) return;
-        const mode = btn.dataset.entriesview;
+    document.getElementById('entriesViewToggle')?.addEventListener('change', e => {
+        const mode = e.target.value;
         if (mode === entriesViewMode) return;
         entriesViewMode = mode;
-        document.querySelectorAll('#entriesViewToggle .seg-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.entriesview === mode);
-        });
         // Re-render from cache without refetch
         if (entriesRawCache.length) {
             const list = document.getElementById('recentList');

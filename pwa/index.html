@@ -287,11 +287,14 @@
                             <div id="newEntrySlot"></div>
                             <div id="entriesHeaderTop" class="flex justify-between items-center pt-6 pb-3">
                                 <h1 class="text-3xl font-extrabold text-gray-900">Entries</h1>
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <div class="seg-ctrl" id="entriesViewToggle" style="grid-template-columns:1fr 1fr; width:auto;">
-                                        <button class="seg-btn active" data-entriesview="client-week" style="font-size:13px; padding:6px 14px;">By Client</button>
-                                        <button class="seg-btn" data-entriesview="week" style="font-size:13px; padding:6px 14px;">By Week</button>
-                                    </div>
+                                <div style="display:flex; align-items:center; gap:6px; color:#9ca3af;">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h10M4 14h6"/>
+                                    </svg>
+                                    <select id="entriesViewToggle" style="font-size:13px; font-weight:600; color:#374151; background:transparent; border:none; outline:none; font-family:inherit; cursor:pointer; padding:0;">
+                                        <option value="client-week">By Client</option>
+                                        <option value="week">By Week</option>
+                                    </select>
                                 </div>
                             </div>
                             <div id="generateBar" class="mb-3" style="display:none;"></div>
