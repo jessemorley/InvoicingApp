@@ -289,22 +289,26 @@
         .week-group {
             display: flex;
             flex-direction: column;
-            gap: 0;
+            gap: 12px;
             padding-top: 0;
+        }
+        /* Connected card style only for entry groups */
+        #recentList .week-group {
+            gap: 0;
             border-radius: 14px;
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        .week-group .entry-card-wrap:not(:last-child) .entry-row {
+        #recentList .week-group .entry-card-wrap:not(:last-child) .entry-row {
             border-bottom: 1px solid #f0f0f0;
         }
-        .week-group .entry-card-wrap:first-child .entry-row {
+        #recentList .week-group .entry-card-wrap:first-child .entry-row {
             border-radius: 14px 14px 0 0;
         }
-        .week-group .entry-card-wrap:last-child .entry-row {
+        #recentList .week-group .entry-card-wrap:last-child .entry-row {
             border-radius: 0 0 14px 14px;
         }
-        .week-group .entry-card-wrap:first-child:last-child .entry-row {
+        #recentList .week-group .entry-card-wrap:first-child:last-child .entry-row {
             border-radius: 14px;
         }
 

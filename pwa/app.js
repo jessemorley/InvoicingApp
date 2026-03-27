@@ -103,7 +103,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     }
 });
 
-document.getElementById('signOutBtn').addEventListener('click', async () => {
+document.getElementById('signOutBtn')?.addEventListener('click', async () => {
     await sb.auth.signOut();
     showLogin();
 });
