@@ -84,12 +84,12 @@ function _renderCalendar() {
     <div style="margin-bottom:16px; padding:0 20px;">
         <h2 style="font-size:22px; font-weight:800; color:#111827; margin:0;">${monthNames[currentMonth]} ${currentYear}</h2>
     </div>
-    <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:auto repeat(6,auto); gap:1px; background:#e5e7eb; overflow:hidden;">`;
+    <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:auto repeat(6,1fr); flex:1; overflow:hidden;">`;
 
     // Day-of-week header row (Sat/Sun columns slightly dimmer)
     dayHeaders.forEach((d, i) => {
         const isWknd = i >= 5;
-        html += `<div style="background:${isWknd ? '#f7f7f8' : '#fff'}; text-align:center; padding:6px 0; font-size:10px; font-weight:700; color:${isWknd ? '#b0b7c3' : '#9ca3af'}; text-transform:uppercase; min-width:0; overflow:hidden;">${d}</div>`;
+        html += `<div style="background:#fff; text-align:center; padding:6px 0; font-size:10px; font-weight:700; color:${isWknd ? '#b0b7c3' : '#9ca3af'}; text-transform:uppercase; min-width:0; overflow:hidden;">${d}</div>`;
     });
 
     // Empty cells before first day
@@ -123,7 +123,7 @@ function _renderCalendar() {
             const total  = e.total_amount || 0;
             const amount = fmt(includeSuperInTotals ? total : total - (e.super_amount || 0));
             entriesHtml += `
-            <div class="cal-entry-pill" style="margin-top:2px; padding:3px 5px; border-radius:6px; background:${bg}; min-width:0; overflow:hidden;">
+            <div class="cal-entry-pill" style="margin-top:2px; padding:2px 3px; border-radius:6px; background:${bg}; min-width:0; overflow:hidden;">
                 <div style="font-size:10px; font-weight:700; color:${text}; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${clientName}</div>
                 <span class="cal-inv-chip-wrap">${invChip}</span>
             </div>
@@ -137,7 +137,7 @@ function _renderCalendar() {
         });
 
         html += `
-            <div class="cal-day-cell" data-date="${dateStr}" style="background:${isWeekend ? '#f7f7f8' : '#fff'}; padding:4px 3px; cursor:${dayEntries.length ? 'pointer' : 'default'}; min-width:0; overflow:hidden;">
+            <div class="cal-day-cell" data-date="${dateStr}" style="background:#fff; padding:4px 3px; cursor:${dayEntries.length ? 'pointer' : 'default'}; min-width:0; overflow:hidden;">
             <div style="font-size:12px; font-weight:${isToday ? '800' : '600'}; color:${isToday ? '#2563eb' : isWeekend ? '#6b7280' : '#111827'}; ${isToday ? 'background:#eff6ff; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center;' : ''}">${day}</div>
             ${entriesHtml}
         </div>`;

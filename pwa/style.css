@@ -543,7 +543,7 @@
             .cal-entry-pill { display: none !important; }
             .cal-entry-pill-desktop { display: block !important; }
             .cal-entry-desc { display: block; }
-            .cal-grid { grid-template-rows: auto repeat(6, minmax(50px, 1fr)) !important; }
+            .cal-grid { grid-template-rows: auto repeat(6, minmax(50px, 1fr)) !important; flex: none !important; }
             .cal-day-cell { padding: 6px 5px !important; }
             /* App shell becomes a row */
             #appShell.active {

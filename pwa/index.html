@@ -332,9 +332,9 @@
 
         <!-- ════ VIEW 2: CALENDAR ════ -->
         <div id="viewCalendar" class="view-pane">
-            <div id="calendarScroll" style="width:100%; height:100dvh; overflow-y:auto; overflow-x:hidden;">
-                <div style="padding-top:env(safe-area-inset-top);">
-                    <div>
+            <div id="calendarScroll" style="width:100%; height:100dvh; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column;">
+                <div style="padding-top:env(safe-area-inset-top); display:flex; flex-direction:column; flex:1;">
+                    <div style="display:flex; flex-direction:column; flex:1;">
                         <div class="px-5 flex justify-between items-center pt-6 pb-3">
                             <h1 class="text-3xl font-extrabold text-gray-900">Calendar</h1>
                             <div class="flex gap-2">
@@ -346,7 +346,7 @@
                                 </button>
                             </div>
                         </div>
-                        <div id="calendarInner" class="pb-36"></div>
+                        <div id="calendarInner" style="flex:1; display:flex; flex-direction:column; padding-bottom:env(safe-area-inset-bottom);"></div>
                     </div>
                 </div>
             </div>
