@@ -73,8 +73,10 @@ function _renderBar() {
     const bar = document.getElementById('generateBar');
     if (!bar) return;
 
-    const count    = uninvoicedGroups.length;
-    const selected = uninvoicedGroups.filter(g => g.selected).length;
+    const count      = uninvoicedGroups.length;
+    const entryCount = uninvoicedGroups.reduce((s, g) => s + g.entries.length, 0);
+    const selected   = uninvoicedGroups.filter(g => g.selected).length;
+    const label      = `${count} invoice${count !== 1 ? 's' : ''} · ${entryCount} ${entryCount === 1 ? 'entry' : 'entries'}`;
 
     if (!barExpanded) {
         bar.innerHTML = `
@@ -85,7 +87,7 @@ function _renderBar() {
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                 </span>
-                <span style="font-size:14px; font-weight:700; color:#111827;">${count} group${count !== 1 ? 's' : ''} ready to invoice</span>
+                <span style="font-size:14px; font-weight:700; color:#111827;">${label}</span>
             </div>
             <svg width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="2.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
@@ -124,7 +126,7 @@ function _renderBar() {
     bar.innerHTML = `
     <div style="background:#fff; border-radius:16px; box-shadow:0 1px 4px rgba(0,0,0,0.08); overflow:hidden;">
         <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid #f3f4f6; cursor:pointer;" id="genBarHeader">
-            <span style="font-size:14px; font-weight:700; color:#111827;">${count} group${count !== 1 ? 's' : ''} ready to invoice</span>
+            <span style="font-size:14px; font-weight:700; color:#111827;">${label}</span>
             <svg width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="2.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
             </svg>
