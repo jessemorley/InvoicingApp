@@ -89,7 +89,7 @@ function _renderCalendar() {
     // Day-of-week header row (Sat/Sun columns slightly dimmer)
     dayHeaders.forEach((d, i) => {
         const isWknd = i >= 5;
-        html += `<div style="background:${isWknd ? '#f7f7f8' : '#fff'}; text-align:center; padding:6px 0; font-size:10px; font-weight:700; color:${isWknd ? '#b0b7c3' : '#9ca3af'}; text-transform:uppercase;">${d}</div>`;
+        html += `<div style="background:${isWknd ? '#f7f7f8' : '#fff'}; text-align:center; padding:6px 0; font-size:10px; font-weight:700; color:${isWknd ? '#b0b7c3' : '#9ca3af'}; text-transform:uppercase; min-width:0; overflow:hidden;">${d}</div>`;
     });
 
     // Empty cells before first day
@@ -128,12 +128,12 @@ function _renderCalendar() {
                     <span style="font-size:11px; font-weight:700; color:${text}; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${clientName}</span>
                     ${invChip}
                 </div>
-                <div style="font-size:12px; color:#6b7280; margin-top:2px;">${desc}</div>
+                <div style="font-size:12px; color:#6b7280; margin-top:2px; overflow:hidden;">${desc}</div>
             </div>`;
         });
 
         html += `
-        <div class="cal-day-cell" data-date="${dateStr}" style="background:${isWeekend ? '#f7f7f8' : '#fff'}; padding:6px 5px; cursor:${dayEntries.length ? 'pointer' : 'default'};">
+        <div class="cal-day-cell" data-date="${dateStr}" style="background:${isWeekend ? '#f7f7f8' : '#fff'}; padding:6px 5px; cursor:${dayEntries.length ? 'pointer' : 'default'}; min-width:0; overflow:hidden;">
             <div style="font-size:12px; font-weight:${isToday ? '800' : '600'}; color:${isToday ? '#2563eb' : isWeekend ? '#6b7280' : '#111827'}; ${isToday ? 'background:#eff6ff; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center;' : ''}">${day}</div>
             ${entriesHtml}
         </div>`;
