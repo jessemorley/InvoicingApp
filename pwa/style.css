@@ -616,8 +616,15 @@
                 width: 380px;
             }
 
-            /* On desktop the entry/invoice expand-in-place still works on mobile
-               but on desktop we don't need the max-height animation on wide screens */
+            /* On desktop: disable expand-in-place for entries */
+            .entry-detail-panel {
+                display: none !important;
+            }
+
+            /* Selected entry row highlight */
+            .entry-selected .entry-row {
+                background: #f0f4ff;
+            }
         }
 
         /* Client form panel (used in Clients view) */

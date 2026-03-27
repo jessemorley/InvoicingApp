@@ -668,15 +668,25 @@ async function saveNewEntry() {
 // ENTRY CARD EXPAND / EDIT / DELETE
 // ─────────────────────────────────────────────
 
+function _isDesktop() {
+    return window.innerWidth >= 768;
+}
+
 function closeEntryCard(wrap) {
-    const row = wrap.querySelector('.entry-row');
-    if (row) row.style.borderRadius = '14px 14px 0 0';
-    wrap.classList.remove('expanded');
-    setTimeout(() => {
-        if (row) row.style.borderRadius = '';
-        const inner = wrap.querySelector('.entry-detail-inner');
-        if (inner) inner.innerHTML = '';
-    }, 400);
+    if (_isDesktop()) {
+        const panel = document.getElementById('detailPanel');
+        if (panel) { panel.classList.remove('open'); panel.innerHTML = ''; }
+        if (wrap) wrap.classList.remove('entry-selected');
+    } else {
+        const row = wrap.querySelector('.entry-row');
+        if (row) row.style.borderRadius = '14px 14px 0 0';
+        wrap.classList.remove('expanded');
+        setTimeout(() => {
+            if (row) row.style.borderRadius = '';
+            const inner = wrap.querySelector('.entry-detail-inner');
+            if (inner) inner.innerHTML = '';
+        }, 400);
+    }
     if (expandedWrap === wrap) {
         expandedWrap  = null;
         editingEntry  = null;
@@ -685,8 +695,10 @@ function closeEntryCard(wrap) {
 }
 
 function openEntryCard(wrap, entry, readOnly = false) {
+    // Close previously open card
     if (expandedWrap && expandedWrap !== wrap) closeEntryCard(expandedWrap);
-    if (wrap.classList.contains('expanded')) { closeEntryCard(wrap); return; }
+    // Toggle closed if same card tapped again (mobile only)
+    if (!_isDesktop() && wrap.classList.contains('expanded')) { closeEntryCard(wrap); return; }
 
     const { allClients, workflowRates } = getState();
     editingEntry  = entry;
@@ -701,9 +713,22 @@ function openEntryCard(wrap, entry, readOnly = false) {
     editWorkflow = entry.workflow_type || 'Apparel';
     editRole     = entry.role          || 'Photographer';
 
-    const inner = wrap.querySelector('.entry-detail-inner');
+    const desktop = _isDesktop();
+    const panel   = desktop ? document.getElementById('detailPanel') : null;
+    const inner   = desktop ? panel : wrap.querySelector('.entry-detail-inner');
 
-    let html = `
+    // On desktop: wrap content in a padded container with a close button header
+    const desktopPrefix = desktop ? `
+        <div style="padding:20px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <h3 style="font-size:15px; font-weight:700; color:#111827; margin:0;">Edit Entry</h3>
+            <button id="detailPanelClose" style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>` : '';
+    const desktopSuffix = desktop ? `</div>` : '';
+
+    let html = desktopPrefix + `
         <div class="space-y-3">
         <div class="bg-slate-50 rounded-2xl px-5 py-4">
             <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Date</span>
@@ -845,7 +870,7 @@ function openEntryCard(wrap, entry, readOnly = false) {
             <button id="editDeleteBtn" class="w-full rounded-2xl text-[15px] font-bold text-red-500 bg-red-50 active:bg-red-100 transition-colors border-none cursor-pointer" style="padding: 18px 14px;">Delete Entry</button>
         </div>`;
     }
-    html += `</div>`;
+    html += `</div>` + desktopSuffix;
     inner.innerHTML = html;
 
     // Populate values
@@ -907,11 +932,20 @@ function openEntryCard(wrap, entry, readOnly = false) {
     }
 
     editRecalculate();
-    wrap.classList.add('expanded');
 
-    const tabRecent = document.getElementById('entriesScroll');
-    const wrapTop = wrap.getBoundingClientRect().top + tabRecent.scrollTop - 100;
-    tabRecent.scrollTo({ top: wrapTop, behavior: 'smooth' });
+    if (desktop) {
+        // Wire close button
+        document.getElementById('detailPanelClose').addEventListener('click', () => closeEntryCard(wrap));
+        // Highlight selected row, open panel
+        document.querySelectorAll('.entry-selected').forEach(el => el.classList.remove('entry-selected'));
+        wrap.classList.add('entry-selected');
+        panel.classList.add('open');
+    } else {
+        wrap.classList.add('expanded');
+        const tabRecent = document.getElementById('entriesScroll');
+        const wrapTop = wrap.getBoundingClientRect().top + tabRecent.scrollTop - 100;
+        tabRecent.scrollTo({ top: wrapTop, behavior: 'smooth' });
+    }
 }
 
 function _setEditDayType(type) {
