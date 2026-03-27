@@ -643,6 +643,11 @@
             .entry-selected .entry-row {
                 background: #f0f4ff;
             }
+
+            /* Selected client row highlight */
+            .client-list-row.client-selected {
+                background: #f0f4ff;
+            }
         }
 
         /* Client form panel (used in Clients view) */

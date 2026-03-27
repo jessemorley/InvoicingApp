@@ -86,7 +86,7 @@ function renderClientsList() {
                 <svg width="16" height="16" fill="none" stroke="#c7c7cc" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/>
                 </svg>`;
-            row.addEventListener('click', () => openClientForm(client));
+            row.addEventListener('click', () => openClientForm(client, row));
             grp.appendChild(row);
         });
         list.appendChild(grp);
@@ -107,7 +107,7 @@ export function openNewClientForm() {
     _renderClientForm(null);
 }
 
-async function openClientForm(client) {
+async function openClientForm(client, rowEl) {
     editingClient = client;
     isNewClient   = false;
 
@@ -122,26 +122,46 @@ async function openClientForm(client) {
         workflowRatesLocal = [];
     }
 
+    if (window.innerWidth >= 768 && rowEl) {
+        document.querySelectorAll('.client-selected').forEach(el => el.classList.remove('client-selected'));
+        rowEl.classList.add('client-selected');
+    }
+
     _renderClientForm(client);
 }
 
-function _renderClientForm(client) {
-    const list = document.getElementById('clientsList');
-    if (!list) return;
+function _closeClientForm() {
+    if (window.innerWidth >= 768) {
+        const panel = document.getElementById('detailPanel');
+        if (panel) { panel.classList.remove('open'); panel.innerHTML = ''; }
+        document.querySelectorAll('.client-selected').forEach(el => el.classList.remove('client-selected'));
+    } else {
+        clientsLoaded = false;
+        _fetchAndRender();
+    }
+}
 
+function _renderClientForm(client) {
+    const desktop = window.innerWidth >= 768;
     const isNew = !client;
     const bt = client?.billing_type || 'day_rate';
 
-    list.innerHTML = `
-    <div class="client-form-panel">
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-5">
-            <button id="cfBackBtn" class="text-[15px] font-semibold text-blue-500 bg-none border-none cursor-pointer p-0">
-                ← Clients
+    const header = desktop
+        ? `<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+            <h3 style="font-size:15px; font-weight:700; color:#111827; margin:0;">${isNew ? 'New Client' : client.name}</h3>
+            <button id="cfBackBtn" style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
+           </div>`
+        : `<div class="flex items-center justify-between mb-5">
+            <button id="cfBackBtn" class="text-[15px] font-semibold text-blue-500 bg-none border-none cursor-pointer p-0">← Clients</button>
             <h2 class="text-[17px] font-bold text-gray-900">${isNew ? 'New Client' : client.name}</h2>
             <div style="width:80px;"></div>
-        </div>
+           </div>`;
+
+    const formHtml = `
+    <div class="${desktop ? '' : 'client-form-panel'}">
+        ${header}
 
         <!-- Name -->
         <div class="space-y-3">
@@ -284,14 +304,24 @@ function _renderClientForm(client) {
         </div>
     </div>`;
 
+    // Inject into detailPanel on desktop, replace list on mobile
+    const list = document.getElementById('clientsList');
+    if (desktop) {
+        const panel = document.getElementById('detailPanel');
+        panel.innerHTML = `<div style="padding:20px; overflow-y:auto; height:100%;">${formHtml}</div>`;
+        panel.classList.add('open');
+    } else {
+        list.innerHTML = formHtml;
+    }
+
     // Render workflow rates
     if (bt === 'day_rate') _renderWorkflowRates();
 
     // Billing type switcher
-    list.querySelectorAll('[data-cfbt]').forEach(btn => {
+    document.querySelectorAll('[data-cfbt]').forEach(btn => {
         btn.addEventListener('click', () => {
             const newBt = btn.dataset.cfbt;
-            list.querySelectorAll('[data-cfbt]').forEach(b => b.classList.toggle('active', b.dataset.cfbt === newBt));
+            document.querySelectorAll('[data-cfbt]').forEach(b => b.classList.toggle('active', b.dataset.cfbt === newBt));
             document.getElementById('cfDayRateFields').classList.toggle('hidden', newBt !== 'day_rate');
             document.getElementById('cfHourlyFields').classList.toggle('hidden', newBt !== 'hourly');
             document.getElementById('cfWorkflowRatesSection').classList.toggle('hidden', newBt !== 'day_rate');
@@ -299,9 +329,9 @@ function _renderClientForm(client) {
     });
 
     // Invoice frequency switcher
-    list.querySelectorAll('[data-cffreq]').forEach(btn => {
+    document.querySelectorAll('[data-cffreq]').forEach(btn => {
         btn.addEventListener('click', () => {
-            list.querySelectorAll('[data-cffreq]').forEach(b => b.classList.toggle('active', b.dataset.cffreq === btn.dataset.cffreq));
+            document.querySelectorAll('[data-cffreq]').forEach(b => b.classList.toggle('active', b.dataset.cffreq === btn.dataset.cffreq));
         });
     });
 
@@ -310,11 +340,8 @@ function _renderClientForm(client) {
         document.getElementById('cfSuperRateRow').classList.toggle('hidden', !e.target.checked);
     });
 
-    // Back button
-    document.getElementById('cfBackBtn').addEventListener('click', () => {
-        clientsLoaded = false;
-        _fetchAndRender();
-    });
+    // Back / close button
+    document.getElementById('cfBackBtn').addEventListener('click', _closeClientForm);
 
     // Add workflow rate
     const addWfBtn = document.getElementById('cfAddWfRateBtn');
@@ -494,6 +521,7 @@ async function _saveClient() {
         }
         // Refresh list and mark app-level clients stale
         document.dispatchEvent(new CustomEvent('clients:saved'));
+        _closeClientForm();
         clientsLoaded = false;
         await _fetchAndRender();
     } catch (err) {
