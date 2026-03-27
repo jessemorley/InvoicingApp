@@ -84,7 +84,7 @@ function _renderCalendar() {
     <div style="margin-bottom:16px; padding:0 20px;">
         <h2 style="font-size:22px; font-weight:800; color:#111827; margin:0;">${monthNames[currentMonth]} ${currentYear}</h2>
     </div>
-    <div style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:auto repeat(6,minmax(50px,auto)); gap:1px; background:#e5e7eb; overflow:hidden;">`;
+    <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:auto repeat(6,minmax(50px,auto)); gap:1px; background:#e5e7eb; overflow:hidden;">`;
 
     // Day-of-week header row (Sat/Sun columns slightly dimmer)
     dayHeaders.forEach((d, i) => {
