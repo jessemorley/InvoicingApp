@@ -117,18 +117,18 @@ function _renderCalendar() {
             const { bg, text }  = clientCalColor(clientName);
             const inv     = e.invoices;
             const invChip = inv
-                ? `<span class="invoice-chip ${chipColors[inv.status] || 'bg-gray-100 text-gray-500'}" style="font-size:8px; padding:1px 4px; flex-shrink:0;">${inv.invoice_number}</span>`
+                ? `<span class="invoice-chip ${chipColors[inv.status] || 'bg-gray-100 text-gray-500'}" style="font-size:11px; padding:2px 6px; flex-shrink:0;">${inv.invoice_number}</span>`
                 : '';
             const desc   = entryDescription(e);
             const total  = e.total_amount || 0;
             const amount = fmt(includeSuperInTotals ? total : total - (e.super_amount || 0));
             entriesHtml += `
-            <div style="margin-top:3px; padding:3px 5px; border-radius:6px; background:${bg}; min-width:0;">
-                <div style="display:flex; align-items:center; gap:3px; min-width:0;">
-                    <span style="font-size:8px; font-weight:700; color:${text}; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${clientName}</span>
+            <div style="margin-top:3px; padding:4px 7px; border-radius:6px; background:${bg}; min-width:0;">
+                <div style="display:flex; align-items:center; gap:4px; min-width:0;">
+                    <span style="font-size:11px; font-weight:700; color:${text}; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${clientName}</span>
                     ${invChip}
                 </div>
-                <div style="font-size:9px; color:#6b7280; margin-top:1px;">${desc}</div>
+                <div style="font-size:12px; color:#6b7280; margin-top:2px;">${desc}</div>
             </div>`;
         });
 
