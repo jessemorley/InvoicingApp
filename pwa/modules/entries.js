@@ -22,6 +22,10 @@ let entriesOldestDate  = null;
 let entriesAllLoaded   = false;
 let entriesScrollLoading = false;
 
+// ── View mode ────────────────────────────────
+let entriesViewMode = 'client-week'; // 'client-week' | 'week'
+let entriesRawCache = [];            // last-fetched data for re-render without refetch
+
 // ── New entry card state ─────────────────────
 let newEntryWrap           = null;
 let newEntrySelectedClient = null;
@@ -71,8 +75,9 @@ export async function loadRecentEntries() {
     }
 
     entriesOldestDate = rawData[rawData.length - 1].date;
+    entriesRawCache = rawData;
     list.innerHTML = '';
-    renderEntryWeeks(list, rawData, 0);
+    renderEntries(list, rawData, 0);
     updateLoadMoreSentinel();
     appendNewEntryCard(list, 0);
 }
@@ -109,10 +114,11 @@ async function loadMoreEntries() {
     });
 
     entriesOldestDate = rawData[rawData.length - 1].date;
+    entriesRawCache = [...entriesRawCache, ...rawData];
 
     const list = document.getElementById('recentList');
     const existingCardCount = list.querySelectorAll('.entry-card-wrap').length;
-    renderEntryWeeks(list, rawData, existingCardCount, true);
+    renderEntries(list, rawData, existingCardCount, true);
     updateLoadMoreSentinel();
 }
 
@@ -130,6 +136,123 @@ function updateLoadMoreSentinel() {
     } else {
         sentinel.innerHTML = '<div class="spinner" style="margin:0 auto;width:24px;height:24px;opacity:0.4;"></div>';
     }
+}
+
+function renderEntries(list, data, startCardIndex, beforeSentinel = false) {
+    if (entriesViewMode === 'client-week') {
+        renderEntryClientWeeks(list, data, startCardIndex, beforeSentinel);
+    } else {
+        renderEntryWeeks(list, data, startCardIndex, beforeSentinel);
+    }
+}
+
+function renderEntryClientWeeks(list, data, startCardIndex, beforeSentinel = false) {
+    const { businessDetails, invoiceChipColors } = getState();
+    const includeSuperInTotals = businessDetails?.include_super_in_totals ?? true;
+
+    function entryAmt(entry) {
+        const total = entry.total_amount || 0;
+        return includeSuperInTotals ? total : total - (entry.super_amount || 0);
+    }
+
+    // Group by client + ISO week, preserving order of first appearance
+    const groups = [];
+    const groupIndex = {};
+    data.forEach(entry => {
+        const clientId = entry.client_id;
+        const weekKey  = isoWeekKey(entry.date);
+        const key      = `${clientId}-${weekKey}`;
+        if (!groupIndex[key]) {
+            const g = { key, clientId, clientName: entry.clients?.name || 'Unknown', weekStart: isoWeekStart(entry.date), entries: [] };
+            groups.push(g);
+            groupIndex[key] = g;
+        }
+        groupIndex[key].entries.push(entry);
+    });
+
+    const sentinel = document.getElementById('entriesLoadMore');
+    let cardIndex = startCardIndex;
+
+    groups.forEach(({ clientName, weekStart, entries }) => {
+        const badgeColor  = clientBadgeColor(clientName);
+        const groupTotal  = entries.reduce((sum, e) => sum + entryAmt(e), 0);
+        const isInvoiced  = entries.every(e => !!e.invoice_id);
+        const inv         = entries[0]?.invoices;
+
+        // Header: client badge + week label + subtotal + invoice chip
+        const chipHtml = inv ? (() => {
+            const chipColor = invoiceChipColors[inv.status] || 'bg-slate-100 text-slate-500';
+            return `<span class="invoice-chip ${chipColor}">${inv.invoice_number}</span>`;
+        })() : '';
+
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        const opts = { day: 'numeric', month: 'short' };
+        const weekLabel = `${weekStart.toLocaleDateString('en-AU', opts)} – ${weekEnd.toLocaleDateString('en-AU', opts)}`;
+
+        const header = document.createElement('div');
+        header.className = 'week-header';
+        header.style.animation = `cardIn 0.3s ease both`;
+        header.style.animationDelay = `${Math.min(cardIndex, 6) * 40}ms`;
+        header.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                <span class="client-badge ${badgeColor}">${clientName}</span>
+                <span style="font-size:12px; color:#9ca3af;">${weekLabel}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                ${chipHtml}
+                <span>${fmt(groupTotal)}</span>
+            </div>`;
+
+        const group = document.createElement('div');
+        group.className = 'week-group';
+
+        entries.forEach(entry => {
+            const description = entryDescription(entry);
+            const total       = fmt(entryAmt(entry));
+            const dowColor    = clientDowColor(clientName);
+
+            const el = document.createElement('div');
+            el.className = 'entry-row' + (isInvoiced ? ' entry-row-invoiced' : ' entry-row-tappable');
+            const dateParts = formatEntryDateParts(entry.date);
+            el.innerHTML = `
+                <div class="entry-date-col">
+                    <span class="dow ${dowColor}">${dateParts.dow}</span>
+                    <span class="day-num">${dateParts.day}</span>
+                    <span class="mon">${dateParts.mon}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-[15px] font-semibold text-gray-800 truncate">${description}</p>
+                </div>
+                <div class="flex flex-col items-end gap-1 shrink-0">
+                    <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
+                </div>`;
+
+            const wrap = document.createElement('div');
+            wrap.className = 'entry-card-wrap';
+            wrap.style.animationDelay = `${Math.min(cardIndex, 6) * 40}ms`;
+            cardIndex++;
+
+            const detailPanel = document.createElement('div');
+            detailPanel.className = 'entry-detail-panel';
+            const detailInner = document.createElement('div');
+            detailInner.className = 'entry-detail-inner';
+            detailPanel.appendChild(detailInner);
+
+            el.addEventListener('click', () => openEntryCard(wrap, entry, isInvoiced));
+            wrap.appendChild(el);
+            wrap.appendChild(detailPanel);
+            group.appendChild(wrap);
+        });
+
+        if (beforeSentinel && sentinel) {
+            list.insertBefore(header, sentinel);
+            list.insertBefore(group, sentinel);
+        } else {
+            list.appendChild(header);
+            list.appendChild(group);
+        }
+    });
 }
 
 function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
@@ -1116,6 +1239,26 @@ async function deleteEntryEntry() {
 // ─────────────────────────────────────────────
 
 export function initScrollHandlers() {
+    // View mode toggle
+    document.getElementById('entriesViewToggle')?.addEventListener('click', e => {
+        const btn = e.target.closest('[data-entriesview]');
+        if (!btn) return;
+        const mode = btn.dataset.entriesview;
+        if (mode === entriesViewMode) return;
+        entriesViewMode = mode;
+        document.querySelectorAll('#entriesViewToggle .seg-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.entriesview === mode);
+        });
+        // Re-render from cache without refetch
+        if (entriesRawCache.length) {
+            const list = document.getElementById('recentList');
+            list.innerHTML = '';
+            renderEntries(list, entriesRawCache, 0);
+            updateLoadMoreSentinel();
+            appendNewEntryCard(list, 0);
+        }
+    });
+
     // Pull to refresh
     (function() {
         const THRESHOLD = 110, MAX_PULL = 130;
