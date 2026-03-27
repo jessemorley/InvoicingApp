@@ -161,7 +161,7 @@
         .entry-row {
             background: #fff;
             border-radius: 0;
-            padding: 14px 16px;
+            padding: 9px 16px;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -199,7 +199,7 @@
             margin-bottom: 4px;
         }
         .entry-date-col .day-num {
-            font-size: 20px;
+            font-size: 17px;
             font-weight: 700;
             color: #111827;
         }
