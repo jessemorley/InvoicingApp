@@ -2,7 +2,7 @@
 // CALENDAR MODULE
 // Monthly grid showing entries with invoice status icons
 // ─────────────────────────────────────────────
-import { fmt, clientBadgeColor, entryDescription } from './utils.js';
+import { fmt, clientCalColor, entryDescription } from './utils.js';
 
 let sb, getState;
 
@@ -113,22 +113,22 @@ function _renderCalendar() {
 
         let entriesHtml = '';
         dayEntries.forEach(e => {
-            const clientName = e.clients?.name || '';
-            const badgeColor = clientBadgeColor(clientName);
-            const inv        = e.invoices;
-            const invChip    = inv
+            const clientName    = e.clients?.name || '';
+            const { bg, text }  = clientCalColor(clientName);
+            const inv     = e.invoices;
+            const invChip = inv
                 ? `<span class="invoice-chip ${chipColors[inv.status] || 'bg-gray-100 text-gray-500'}" style="font-size:8px; padding:1px 4px; flex-shrink:0;">${inv.invoice_number}</span>`
                 : '';
             const desc   = entryDescription(e);
             const total  = e.total_amount || 0;
             const amount = fmt(includeSuperInTotals ? total : total - (e.super_amount || 0));
             entriesHtml += `
-            <div style="margin-top:4px; min-width:0;">
+            <div style="margin-top:3px; padding:3px 5px; border-radius:6px; background:${bg}; min-width:0;">
                 <div style="display:flex; align-items:center; gap:3px; min-width:0;">
-                    <span class="client-badge ${badgeColor}" style="font-size:8px; padding:1px 4px; flex-shrink:0; max-width:60px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${clientName}</span>
+                    <span style="font-size:8px; font-weight:700; color:${text}; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${clientName}</span>
                     ${invChip}
                 </div>
-                <div style="font-size:9px; color:#374151; margin-top:1px;">${desc}</div>
+                <div style="font-size:9px; color:#6b7280; margin-top:1px;">${desc}</div>
             </div>`;
         });
 

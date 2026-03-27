@@ -131,6 +131,13 @@ export function clientDotColor(name) {
     return '#9ca3af';
 }
 
+export function clientCalColor(name) {
+    if (name.includes('ICONIC'))  return { bg: '#f5f0ff', text: '#a855f7' };
+    if (name.includes('Images'))  return { bg: '#eff6ff', text: '#3b82f6' };
+    if (name.includes('JD'))      return { bg: '#fff7ed', text: '#f97316' };
+    return { bg: '#f3f4f6', text: '#6b7280' };
+}
+
 export function clientDowColor(name) {
     if (name.includes('ICONIC'))  return 'text-purple-500';
     if (name.includes('Images'))  return 'text-blue-500';
