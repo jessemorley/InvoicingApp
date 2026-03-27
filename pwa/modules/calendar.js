@@ -84,7 +84,7 @@ function _renderCalendar() {
     <div style="margin-bottom:16px; padding:0 20px;">
         <h2 style="font-size:22px; font-weight:800; color:#111827; margin:0;">${monthNames[currentMonth]} ${currentYear}</h2>
     </div>
-    <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:auto repeat(6,minmax(50px,auto)); gap:1px; background:#e5e7eb; overflow:hidden;">`;
+    <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:auto repeat(6,auto); gap:1px; background:#e5e7eb; overflow:hidden;">`;
 
     // Day-of-week header row (Sat/Sun columns slightly dimmer)
     dayHeaders.forEach((d, i) => {
@@ -124,9 +124,9 @@ function _renderCalendar() {
             const amount = fmt(includeSuperInTotals ? total : total - (e.super_amount || 0));
             entriesHtml += `
             <div style="margin-top:3px; padding:4px 7px; border-radius:6px; background:${bg}; min-width:0;">
-                <div style="display:flex; align-items:center; gap:4px; min-width:0;">
-                    <span style="font-size:11px; font-weight:700; color:${text}; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${clientName}</span>
-                    ${invChip}
+                <div style="min-width:0;">
+                    <span style="display:block; font-size:11px; font-weight:700; color:${text}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${clientName}</span>
+                    <span class="cal-inv-chip-wrap">${invChip}</span>
                 </div>
                 <div class="cal-entry-desc" style="font-size:12px; color:#6b7280; margin-top:2px; overflow:hidden;">${desc}</div>
             </div>`;
