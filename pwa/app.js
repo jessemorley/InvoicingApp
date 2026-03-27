@@ -1,56 +1,51 @@
 // ─────────────────────────────────────────────
-// CONFIG  (replace before deploying)
+// APP SHELL — auth, routing, global state, data loading
 // ─────────────────────────────────────────────
+import * as Entries  from './modules/entries.js';
+import * as Invoices from './modules/invoices.js';
+import * as Clients  from './modules/clients.js';
+import * as Calendar from './modules/calendar.js';
+import * as Generate from './modules/generate.js';
+import { clientDotColor } from './modules/utils.js';
+
+// ── Supabase ─────────────────────────────────
 const SUPABASE_URL      = 'https://cmbycqzjlwvydemaxrtb.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_UYYQBD6MkiRxpv7Z_-sIGA_riCDJQzD';
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ─────────────────────────────────────────────
-// STATE
-// ─────────────────────────────────────────────
+// ── View constants ────────────────────────────
+const VIEW_ENTRIES  = 0;
+const VIEW_INVOICES = 1;
+const VIEW_CALENDAR = 2;
+const VIEW_CLIENTS  = 3;
+
+// ── Global state ─────────────────────────────
 let allClients              = [];
 let clientLatestInvoiceMap  = {};
 let clientInvoiceCountMap   = {};
 let workflowRates           = [];
-let selectedClient   = null;
-let currentDayType   = 'full';
-let currentWorkflow  = 'Apparel';
-let currentRole      = 'Photographer';
+let businessDetails         = null;
+let currentUserId           = null;
+let currentViewIndex        = 0;
 
-// View navigation
-let currentViewIndex  = 0;
-let invoicesLoaded    = false;
-let invoicesSortMode  = 'chronological'; // 'chronological' | 'status'
-let invoicesCache     = [];
-
-// New entry card state
-let newEntryWrap           = null;
-let newEntrySelectedClient = null;
-let newEntryDayType        = 'full';
-let newEntryWorkflow       = 'Apparel';
-let newEntryRole           = 'Photographer';
-
-// Entries lazy-load state
-let entriesOldestDate = null;  // earliest date fetched so far (Date object)
-let entriesAllLoaded  = false; // true once we've hit the beginning of history
-
-// Invoice preview state
-let businessDetails    = null;
-let currentPreviewHTML = null;
-
-// Authenticated user
-let currentUserId = null;
-
-function includeSuperInTotals() {
-    return businessDetails?.include_super_in_totals ?? true;
+function getState() {
+    return { allClients, clientLatestInvoiceMap, clientInvoiceCountMap, workflowRates, businessDetails, currentUserId, invoiceChipColors };
 }
 
-function entryDisplayAmount(entry) {
-    const total = entry.total_amount || 0;
-    return includeSuperInTotals() ? total : total - (entry.super_amount || 0);
-}
+const invoiceChipColors = {
+    'draft':  'bg-gray-100 text-gray-500',
+    'issued': 'bg-orange-100 text-orange-600',
+    'paid':   'bg-green-100 text-green-600',
+};
+
+// Initialise modules
+Entries.init(sb, getState);
+Invoices.init(sb, getState);
+Clients.init(sb, getState);
+Calendar.init(sb, getState);
+Generate.init(sb, getState);
 
 // ─────────────────────────────────────────────
 // AUTH
@@ -74,6 +69,17 @@ function showLogin() {
 function showApp() {
     document.getElementById('loginScreen').classList.remove('active');
     document.getElementById('appShell').classList.add('active');
+    Clients.initHandlers();
+    // Desktop: initialize pane visibility (show Entries, hide others)
+    if (window.innerWidth >= 768) {
+        ['viewEntries','viewInvoices','viewCalendar','viewClients'].forEach((id, i) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = i === 0 ? '' : 'none';
+        });
+        document.querySelectorAll('.sidebar-btn[data-view]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === 'entries');
+        });
+    }
 }
 
 document.getElementById('loginBtn').addEventListener('click', async () => {
@@ -81,15 +87,12 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     const password = document.getElementById('loginPassword').value;
     const errEl    = document.getElementById('loginError');
     const btn      = document.getElementById('loginBtn');
-
     btn.disabled   = true;
     btn.textContent = 'Signing in…';
     errEl.classList.add('hidden');
-
     const { data: signInData, error } = await sb.auth.signInWithPassword({ email, password });
     btn.disabled   = false;
     btn.textContent = 'Sign In';
-
     if (error) {
         errEl.textContent = error.message;
         errEl.classList.remove('hidden');
@@ -100,10 +103,49 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     }
 });
 
-document.getElementById('newEntryFab').addEventListener('click', () => {
-    openClientPicker();
+document.getElementById('signOutBtn').addEventListener('click', async () => {
+    await sb.auth.signOut();
+    showLogin();
 });
 
+document.getElementById('sidebarSignOut').addEventListener('click', async () => {
+    await sb.auth.signOut();
+    showLogin();
+});
+
+// ─────────────────────────────────────────────
+// DATA LOADING
+// ─────────────────────────────────────────────
+async function loadData() {
+    const [{ data: clients }, { data: rates }, { data: invoices }, { data: bizData }] = await Promise.all([
+        sb.from('clients').select('*').eq('is_active', true).order('name'),
+        sb.from('client_workflow_rates').select('*'),
+        sb.from('invoices').select('client_id'),
+        sb.from('business_details').select('*').single()
+    ]);
+    allClients    = clients || [];
+    workflowRates = rates   || [];
+    if (bizData) businessDetails = bizData;
+
+    clientInvoiceCountMap = {};
+    (invoices || []).forEach(inv => {
+        if (inv.client_id) {
+            clientInvoiceCountMap[inv.client_id] = (clientInvoiceCountMap[inv.client_id] || 0) + 1;
+        }
+    });
+
+    Invoices.markStale();
+    await Entries.loadRecentEntries();
+    Generate.scanAndRender();
+
+    if (currentViewIndex === VIEW_INVOICES) {
+        Invoices.loadInvoices();
+    }
+}
+
+// ─────────────────────────────────────────────
+// CLIENT PICKER OVERLAY
+// ─────────────────────────────────────────────
 function openClientPicker() {
     const overlay = document.getElementById('clientPickerOverlay');
     const input   = document.getElementById('overlayClientInput');
@@ -119,16 +161,8 @@ function closeClientPicker() {
     document.getElementById('overlayClientInput').value = '';
 }
 
-function clientDotColor(name) {
-    if (name.includes('ICONIC'))  return '#a855f7';
-    if (name.includes('Images'))  return '#3b82f6';
-    if (name.includes('JD'))      return '#f97316';
-    return '#9ca3af';
-}
-
 function renderOverlayClients(query) {
     const list = document.getElementById('overlayClientList');
-
     let matches = query
         ? allClients.filter(c => c.name.toLowerCase().includes(query.toLowerCase()))
         : [...allClients].sort((a, b) =>
@@ -136,7 +170,6 @@ function renderOverlayClients(query) {
           );
 
     list.innerHTML = '';
-
     const label = document.createElement('div');
     label.style.cssText = 'padding:20px 24px 10px; font-size:13px; font-weight:700; color:#8e8e93; text-transform:uppercase; letter-spacing:0.06em;';
     label.textContent = query ? `${matches.length} ${matches.length === 1 ? 'Result' : 'Results'}` : 'Clients';
@@ -151,7 +184,7 @@ function renderOverlayClients(query) {
     }
 
     matches.forEach(client => {
-        const count = clientInvoiceCountMap[client.id] || 0;
+        const count    = clientInvoiceCountMap[client.id] || 0;
         const subtitle = count > 0 ? `${count} ${count === 1 ? 'invoice' : 'invoices'}` : null;
         const dotColor = clientDotColor(client.name);
         const row = document.createElement('button');
@@ -167,18 +200,18 @@ function renderOverlayClients(query) {
             </svg>`;
         row.addEventListener('click', () => {
             closeClientPicker();
-            openNewEntryCardForClient(client);
+            Entries.openNewEntryCardForClient(client);
         });
         list.appendChild(row);
     });
 }
 
+document.getElementById('newEntryFab').addEventListener('click', openClientPicker);
 document.getElementById('overlayClientInput').addEventListener('input', e => {
     const val = e.target.value.trim();
     renderOverlayClients(val);
     document.getElementById('overlayInputClear').style.display = val ? 'flex' : 'none';
 });
-
 document.getElementById('overlayInputClear').addEventListener('click', () => {
     const input = document.getElementById('overlayClientInput');
     input.value = '';
@@ -186,1230 +219,83 @@ document.getElementById('overlayInputClear').addEventListener('click', () => {
     document.getElementById('overlayInputClear').style.display = 'none';
     renderOverlayClients('');
 });
-
 document.getElementById('overlayCancel').addEventListener('click', closeClientPicker);
 
-document.getElementById('signOutBtn').addEventListener('click', async () => {
-    await sb.auth.signOut();
-    resetForm();
-    showLogin();
+// Entries module requests picker re-open (e.g. clear client button)
+document.addEventListener('entries:openClientPicker', openClientPicker);
+
+// After invoice generation: reload entries + mark invoices stale + re-scan
+document.addEventListener('generate:done', async () => {
+    Invoices.markStale();
+    await Entries.loadRecentEntries();
+    Generate.scanAndRender();
 });
 
-// ─────────────────────────────────────────────
-// DATA LOADING
-// ─────────────────────────────────────────────
-async function loadData() {
-    const [{ data: clients }, { data: rates }, { data: invoices }, { data: bizData }] = await Promise.all([
+// After client saved: refresh allClients + workflow rates so new/edited clients appear everywhere
+document.addEventListener('clients:saved', async () => {
+    const [{ data: clients }, { data: rates }] = await Promise.all([
         sb.from('clients').select('*').eq('is_active', true).order('name'),
         sb.from('client_workflow_rates').select('*'),
-        sb.from('invoices').select('client_id'),
-        sb.from('business_details').select('*').single()
     ]);
-    allClients   = clients || [];
-    workflowRates = rates || [];
-    if (bizData) businessDetails = bizData;
-
-    clientInvoiceCountMap = {};
-    (invoices || []).forEach(inv => {
-        if (inv.client_id) {
-            clientInvoiceCountMap[inv.client_id] = (clientInvoiceCountMap[inv.client_id] || 0) + 1;
-        }
-    });
-
-    // Mark invoices stale so the invoices view reloads on next visit
-    invoicesLoaded = false;
-
-    setDefaultDate();
-    loadRecentEntries();
-
-    // Reload invoices view if currently visible
-    if (currentViewIndex === 1) {
-        loadInvoices();
-    }
-}
-
-function setDefaultDate() {
-    const today = new Date();
-    const yyyy  = today.getFullYear();
-    const mm    = String(today.getMonth() + 1).padStart(2, '0');
-    const dd    = String(today.getDate()).padStart(2, '0');
-    document.getElementById('entryDate').value = `${yyyy}-${mm}-${dd}`;
-}
-
-
-// ─────────────────────────────────────────────
-// CLIENT AUTOCOMPLETE
-// ─────────────────────────────────────────────
-const clientInput     = document.getElementById('clientInput');
-const clientContainer = document.getElementById('clientContainer');
-const autocompleteList = document.getElementById('autocompleteList');
-
-clientInput.addEventListener('input', () => {
-    const val = clientInput.value.trim();
-    autocompleteList.innerHTML = '';
-
-    if (!val) { autocompleteList.style.display = 'none'; return; }
-
-    const matches = allClients.filter(c =>
-        c.name.toLowerCase().includes(val.toLowerCase())
-    );
-
-    if (!matches.length) { autocompleteList.style.display = 'none'; return; }
-
-    matches.forEach(client => {
-        const el = document.createElement('div');
-        el.className = 'px-5 py-4 cursor-pointer active:bg-slate-50 border-b border-slate-100 last:border-0';
-        el.innerHTML = `
-            <div class="font-bold text-slate-800">${client.name}</div>`;
-        el.addEventListener('click', () => selectClient(client));
-        autocompleteList.appendChild(el);
-    });
-    autocompleteList.style.display = 'block';
-});
-
-
-function selectClient(client) {
-    selectedClient = client;
-    clientInput.value    = client.name;
-    clientInput.disabled = true;
-    clientContainer.classList.add('has-client');
-    autocompleteList.style.display = 'none';
-    document.getElementById('clientSection').classList.add('fields-open');
-    showEntryFields(client);
-}
-
-document.getElementById('clearClient').addEventListener('click', () => {
-    clientInput.value    = '';
-    clientInput.disabled = false;
-    clientContainer.classList.remove('has-client');
-    selectedClient = null;
-    document.getElementById('entryFields').classList.remove('open');
-    document.getElementById('clientSection').classList.remove('fields-open');
-});
-
-// Close autocomplete on outside click
-document.addEventListener('click', (e) => {
-    if (!clientContainer.contains(e.target)) {
-        autocompleteList.style.display = 'none';
-    }
+    allClients    = clients || [];
+    workflowRates = rates   || [];
 });
 
 // ─────────────────────────────────────────────
-// SHOW ENTRY FIELDS (client-aware)
+// VIEW SWITCHING
 // ─────────────────────────────────────────────
-function showEntryFields(client) {
-    // Hide all billing sections first
-    document.getElementById('dayRateFields').classList.add('hidden');
-    document.getElementById('hourlyFields').classList.add('hidden');
-    document.getElementById('manualFields').classList.add('hidden');
-    document.getElementById('durationBlock').classList.add('hidden');
-    document.getElementById('bonusLine').classList.add('hidden');
-    document.getElementById('superLine').classList.add('hidden');
-
-    if (client.billing_type === 'day_rate') {
-        document.getElementById('dayRateFields').classList.remove('hidden');
-        document.getElementById('bonusLine').classList.remove('hidden');
-        if (client.pays_super) document.getElementById('superLine').classList.remove('hidden');
-        setDayType('full');
-
-    } else if (client.billing_type === 'hourly') {
-        document.getElementById('hourlyFields').classList.remove('hidden');
-        document.getElementById('durationBlock').classList.remove('hidden');
-        if (client.pays_super) document.getElementById('superLine').classList.remove('hidden');
-
-        // Show entry label field if configured
-        const hasLabel = !!client.entry_label;
-        document.getElementById('itsFields').classList.toggle('hidden', !hasLabel);
-        document.getElementById('hourlyDescField').classList.toggle('hidden', hasLabel);
-        if (hasLabel) {
-            const labelEl = document.getElementById('itsFieldLabel');
-            if (labelEl) labelEl.textContent = client.entry_label;
-        }
-
-        // Show role picker if configured
-        const roleSection = document.getElementById('roleSection');
-        if (roleSection) roleSection.classList.toggle('hidden', !client.show_role);
-
-        // Apply default times from client settings, fall back to 09:00/17:00
-        const startDefault  = client.default_start_time  ? client.default_start_time.substring(0, 5)  : '09:00';
-        const finishDefault = client.default_finish_time ? client.default_finish_time.substring(0, 5) : '17:00';
-        document.getElementById('startTime').value  = startDefault;
-        document.getElementById('finishTime').value = finishDefault;
-        document.getElementById('breakMinutes').value = '0';
-
-    } else { // manual
-        document.getElementById('manualFields').classList.remove('hidden');
-        if (client.pays_super) document.getElementById('superLine').classList.remove('hidden');
-    }
-
-    document.getElementById('entryFields').classList.add('open');
-    document.getElementById('saveBtn').disabled = false;
-    recalculate();
-
-    setTimeout(() => {
-        document.getElementById('entryFields').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 100);
-}
-
-// ─────────────────────────────────────────────
-// DAY RATE CONTROLS
-// ─────────────────────────────────────────────
-function setDayType(type) {
-    currentDayType = type;
-    document.querySelectorAll('[data-day]').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.day === type);
-    });
-
-    const workflowSection = document.getElementById('workflowSection');
-    const bonusLine       = document.getElementById('bonusLine');
-
-    if (type === 'full') {
-        workflowSection.classList.add('open');
-        bonusLine.classList.remove('hidden');
-    } else {
-        workflowSection.classList.remove('open');
-        bonusLine.classList.add('hidden');
-    }
-    recalculate();
-}
-
-function setWorkflow(wf) {
-    currentWorkflow = wf;
-    document.querySelectorAll('[data-wf]').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.wf === wf);
-    });
-    document.getElementById('brandField').classList.toggle('hidden', wf !== 'Own Brand');
-    document.getElementById('skuField').classList.toggle('hidden', wf === 'Own Brand');
-    recalculate();
-}
-
-// ─────────────────────────────────────────────
-// HOURLY CONTROLS
-// ─────────────────────────────────────────────
-function setRole(role) {
-    currentRole = role;
-    document.querySelectorAll('[data-role]').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.role === role);
-    });
-}
-
-window.adjustBreak = (val) => {
-    const el  = document.getElementById('breakMinutes');
-    el.value  = Math.max(0, parseInt(el.value || 0) + val);
-    recalculate();
-};
-
-// ─────────────────────────────────────────────
-// CALCULATION
-// ─────────────────────────────────────────────
-function toMins(timeStr) {
-    const [h, m] = timeStr.split(':').map(Number);
-    return h * 60 + m;
-}
-
-function fmt(n) {
-    return '$' + Number(n).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function calcDayRate(client, dayType, workflow, skus) {
-    const base = dayType === 'full'
-        ? parseFloat(client.rate_full_day)
-        : parseFloat(client.rate_half_day);
-
-    let bonus = 0;
-    if (dayType === 'full') {
-        const clientRates = workflowRates.filter(r => r.client_id === client.id);
-        const rate = clientRates.find(r => r.workflow === workflow);
-        if (rate) {
-            if (rate.is_flat_bonus) {
-                bonus = parseFloat(rate.max_bonus);
-            } else if (skus != null) {
-                const s = parseInt(skus) || 0;
-                if (s >= rate.upper_limit_skus) {
-                    bonus = parseFloat(rate.max_bonus);
-                } else if (s > rate.kpi) {
-                    bonus = Math.min((s - rate.kpi) * parseFloat(rate.incentive_rate_per_sku), parseFloat(rate.max_bonus));
-                }
-            }
-        }
-    }
-
-    const subtotal = base + bonus;
-    const superAmt = client.pays_super ? subtotal * parseFloat(client.super_rate || 0.12) : 0;
-    return { base, bonus, superAmt, total: subtotal + superAmt, hoursWorked: null };
-}
-
-function calcHourly(client, startStr, finishStr, breakMins, role) {
-    if (!startStr || !finishStr) return null;
-    let diffMins = (toMins(finishStr) - toMins(startStr) + 1440) % 1440;
-    diffMins = Math.max(0, diffMins - (parseInt(breakMins) || 0));
-    // Round to nearest quarter hour
-    const roundedHours = Math.round(diffMins / 60 / 0.25) * 0.25;
-    let hourlyRate = parseFloat(client.rate_hourly) || 0;
-    if (client.show_role && role) {
-        hourlyRate = role === 'Operator'
-            ? parseFloat(client.rate_hourly_operator || client.rate_hourly) || 0
-            : parseFloat(client.rate_hourly_photographer || client.rate_hourly) || 0;
-    }
-    const base     = roundedHours * hourlyRate;
-    const superAmt = client.pays_super ? base * parseFloat(client.super_rate || 0.12) : 0;
-    return { base, bonus: 0, superAmt, total: base + superAmt, hoursWorked: roundedHours, rawMins: diffMins };
-}
-
-function calcManual(amountStr, client) {
-    const base     = parseFloat(amountStr) || 0;
-    const superAmt = client.pays_super ? base * parseFloat(client.super_rate || 0.12) : 0;
-    return { base, bonus: 0, superAmt, total: base + superAmt, hoursWorked: null };
-}
-
-function recalculate() {
-    if (!selectedClient) return;
-
-    let result = null;
-
-    if (selectedClient.billing_type === 'day_rate') {
-        const skus = document.getElementById('skuInput').value;
-        result = calcDayRate(selectedClient, currentDayType, currentWorkflow, skus);
-
-    } else if (selectedClient.billing_type === 'hourly') {
-        const start  = document.getElementById('startTime').value;
-        const finish = document.getElementById('finishTime').value;
-        const brk    = document.getElementById('breakMinutes').value;
-        result = calcHourly(selectedClient, start, finish, brk, currentRole);
-
-        if (result) {
-            const h = Math.floor(result.rawMins / 60);
-            const m = result.rawMins % 60;
-            document.getElementById('displayDuration').textContent = `${h}h ${m}m`;
-        }
-
-    } else { // manual
-        const amount = document.getElementById('manualAmount').value;
-        result = calcManual(amount, selectedClient);
-    }
-
-    if (!result) return;
-
-    document.getElementById('displayTotal').textContent = fmt(result.total);
-    document.getElementById('displayBase').textContent  = fmt(result.base);
-    document.getElementById('displayBonus').textContent = `+${fmt(result.bonus)}`;
-    document.getElementById('displaySuper').textContent = `+${fmt(result.superAmt)}`;
-}
-
-// Wire up recalc listeners
-['startTime', 'finishTime', 'breakMinutes', 'skuInput', 'manualAmount', 'brandInput']
-    .forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('input', recalculate);
-    });
-
-// ─────────────────────────────────────────────
-// SAVE ENTRY
-// ─────────────────────────────────────────────
-document.getElementById('saveBtn').addEventListener('click', async () => {
-    if (!selectedClient) return;
-    const btn = document.getElementById('saveBtn');
-    btn.disabled = true;
-    btn.textContent = 'Saving…';
-
-    try {
-        const payload = buildPayload();
-        const { error } = await sb.from('entries').insert(payload);
-        if (error) throw error;
-
-        btn.textContent = 'Saved ✓';
-        btn.classList.add('success');
-        setTimeout(() => {
-            btn.classList.remove('success');
-            btn.textContent = 'Save Entry';
-            resetForm();
-        }, 2000);
-    } catch (err) {
-        alert('Error saving entry: ' + err.message);
-        btn.disabled = false;
-        btn.textContent = 'Save Entry';
-    }
-});
-
-function buildPayload() {
-    const date = document.getElementById('entryDate').value;
-    const base = {
-        user_id: currentUserId,
-        client_id: selectedClient.id,
-        date,
-        billing_type_snapshot: selectedClient.billing_type,
-    };
-
-    if (selectedClient.billing_type === 'day_rate') {
-        const skus   = parseInt(document.getElementById('skuInput').value) || null;
-        const brand  = document.getElementById('brandInput').value.trim() || null;
-        const result = calcDayRate(selectedClient, currentDayType, currentWorkflow, skus);
-        return {
-            ...base,
-            day_type:      currentDayType,
-            workflow_type: currentDayType === 'full' ? currentWorkflow : null,
-            brand:         currentDayType === 'full' && currentWorkflow === 'Own Brand' ? brand : null,
-            skus:          currentDayType === 'full' && currentWorkflow !== 'Own Brand' ? skus : null,
-            base_amount:   result.base,
-            bonus_amount:  result.bonus,
-            super_amount:  result.superAmt,
-            total_amount:  result.total,
-        };
-
-    } else if (selectedClient.billing_type === 'hourly') {
-        const start  = document.getElementById('startTime').value;
-        const finish = document.getElementById('finishTime').value;
-        const brk    = parseInt(document.getElementById('breakMinutes').value) || 0;
-        const result = calcHourly(selectedClient, start, finish, brk, currentRole);
-
-        const hasLabel    = !!selectedClient.entry_label;
-        const description = hasLabel ? document.getElementById('jobInput').value.trim() || null : document.getElementById('hourlyDesc').value.trim() || null;
-        const role        = selectedClient.show_role ? currentRole : null;
-
-        return {
-            ...base,
-            start_time:    start,
-            finish_time:   finish,
-            break_minutes: brk,
-            hours_worked:  result.hoursWorked,
-            shoot_client:  null,
-            role,
-            description,
-            base_amount:   result.base,
-            bonus_amount:  0,
-            super_amount:  result.superAmt,
-            total_amount:  result.total,
-        };
-
-    } else { // manual
-        const amount = parseFloat(document.getElementById('manualAmount').value) || 0;
-        const desc   = document.getElementById('manualDesc').value.trim() || null;
-        const result = calcManual(amount, selectedClient);
-        return {
-            ...base,
-            description:  desc,
-            base_amount:  result.base,
-            bonus_amount: 0,
-            super_amount: result.superAmt,
-            total_amount: result.total,
-        };
-    }
-}
-
-function resetForm() {
-    clientInput.value    = '';
-    clientInput.disabled = false;
-    clientContainer.classList.remove('has-client');
-    selectedClient     = null;
-    currentDayType     = 'full';
-    currentWorkflow    = 'Apparel';
-    currentRole        = 'Photographer';
-
-    document.getElementById('entryFields').classList.remove('open');
-    document.getElementById('clientSection').classList.remove('fields-open');
-    document.getElementById('saveBtn').disabled = true;
-    document.getElementById('saveBtn').textContent = 'Save Entry';
-
-    // Reset amounts
-    document.getElementById('displayTotal').textContent = '$0.00';
-    document.getElementById('displayBase').textContent  = '$0.00';
-    document.getElementById('displayBonus').textContent = '+$0.00';
-    document.getElementById('displaySuper').textContent = '+$0.00';
-    document.getElementById('displayDuration').textContent = '0h 0m';
-
-    setDefaultDate();
-}
-
-// ─────────────────────────────────────────────
-// RECENT ENTRIES
-// ─────────────────────────────────────────────
-
-// Returns a YYYY-MM-DD string in local time
-function localDateStr(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-}
-
-// Returns a YYYY-MM-DD string for `weeks` weeks before today
-function weeksAgoDateStr(weeks) {
-    const d = new Date();
-    d.setDate(d.getDate() - weeks * 7);
-    return localDateStr(d);
-}
-
-async function loadRecentEntries() {
-    entriesOldestDate = null;
-    entriesAllLoaded  = false;
-    const list = document.getElementById('recentList');
-    list.innerHTML = '<div class="spinner"></div>';
-
-    const fromDate = weeksAgoDateStr(4);
-    const { data: rawData, error } = await sb
-        .from('entries')
-        .select('*, clients(name, billing_type), invoices(invoice_number, status)')
-        .gte('date', fromDate)
-        .order('date', { ascending: false });
-
-    // Build latest invoice map for client picker
-    clientLatestInvoiceMap = {};
-    (rawData || []).forEach(entry => {
-        const name = entry.clients?.name;
-        const inv  = entry.invoices?.invoice_number;
-        if (name && inv && !clientLatestInvoiceMap[name]) {
-            clientLatestInvoiceMap[name] = inv;
-        }
-    });
-
-    if (error || !rawData?.length) {
-        list.innerHTML = '';
-        appendNewEntryCard(list, 0);
-        return;
-    }
-
-    // Track the oldest date we've loaded so the next page starts before it
-    const oldest = rawData[rawData.length - 1].date;
-    entriesOldestDate = oldest;
-
-    list.innerHTML = '';
-    renderEntryWeeks(list, rawData, 0);
-    updateLoadMoreSentinel();
-    appendNewEntryCard(list, 0);
-}
-
-async function loadMoreEntries() {
-    if (entriesAllLoaded || !entriesOldestDate) return;
-
-    const sentinel = document.getElementById('entriesLoadMore');
-    if (sentinel) sentinel.innerHTML = '<div class="spinner" style="margin:16px auto;width:24px;height:24px;"></div>';
-
-    const toDate   = entriesOldestDate; // exclusive upper bound (we already have this date)
-    const fromDate = weeksAgoDateStr_before(toDate, 4);
-
-    const { data: rawData, error } = await sb
-        .from('entries')
-        .select('*, clients(name, billing_type), invoices(invoice_number, status)')
-        .gte('date', fromDate)
-        .lt('date', toDate)
-        .order('date', { ascending: false });
-
-    if (error || !rawData?.length) {
-        entriesAllLoaded = true;
-        updateLoadMoreSentinel();
-        return;
-    }
-
-    // Update latest invoice map with new entries
-    (rawData || []).forEach(entry => {
-        const name = entry.clients?.name;
-        const inv  = entry.invoices?.invoice_number;
-        if (name && inv && !clientLatestInvoiceMap[name]) {
-            clientLatestInvoiceMap[name] = inv;
-        }
-    });
-
-    entriesOldestDate = rawData[rawData.length - 1].date;
-
-    const list = document.getElementById('recentList');
-    const existingCardCount = list.querySelectorAll('.entry-card-wrap').length;
-    renderEntryWeeks(list, rawData, existingCardCount, /* beforeSentinel= */ true);
-    updateLoadMoreSentinel();
-}
-
-// Returns a YYYY-MM-DD string for `weeks` weeks before a given date string
-function weeksAgoDateStr_before(dateStr, weeks) {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const date = new Date(y, m - 1, d);
-    date.setDate(date.getDate() - weeks * 7);
-    return localDateStr(date);
-}
-
-function updateLoadMoreSentinel() {
-    let sentinel = document.getElementById('entriesLoadMore');
-    if (!sentinel) {
-        sentinel = document.createElement('div');
-        sentinel.id = 'entriesLoadMore';
-        sentinel.style.cssText = 'text-align:center;padding:16px 0 8px;color:#999;font-size:13px;';
-        const list = document.getElementById('recentList');
-        list.appendChild(sentinel);
-    }
-    if (entriesAllLoaded) {
-        sentinel.textContent = '';
-    } else {
-        sentinel.innerHTML = '<div class="spinner" style="margin:0 auto;width:24px;height:24px;opacity:0.4;"></div>';
-    }
-}
-
-function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
-    // Group entries by ISO week
-    const weeks = [];
-    const weekIndex = {};
-    data.forEach(entry => {
-        const key = isoWeekKey(entry.date);
-        if (!weekIndex[key]) {
-            const group = { key, weekStart: isoWeekStart(entry.date), entries: [] };
-            weeks.push(group);
-            weekIndex[key] = group;
-        }
-        weekIndex[key].entries.push(entry);
-    });
-
-    const sentinel = document.getElementById('entriesLoadMore');
-    let cardIndex = startCardIndex;
-    weeks.forEach(({ weekStart, entries }) => {
-        // Week header
-        const header = document.createElement('div');
-        header.className = 'week-header';
-        header.style.animation = `cardIn 0.3s ease both`;
-        header.style.animationDelay = `${Math.min(cardIndex, 6) * 40}ms`;
-        const weekTotal = entries.reduce((sum, e) => sum + entryDisplayAmount(e), 0);
-        header.innerHTML = `<span>${formatWeekLabel(weekStart)}</span><span>${fmt(weekTotal)}</span>`;
-
-        // Cards
-        const group = document.createElement('div');
-        group.className = 'week-group';
-        entries.forEach(entry => {
-            const clientName  = entry.clients?.name || 'Unknown';
-            const badgeColor  = clientBadgeColor(clientName);
-            const description = entryDescription(entry);
-            const total       = fmt(entryDisplayAmount(entry));
-            const inv         = entry.invoices;
-            const isInvoiced  = !!entry.invoice_id;
-
-            const chipHtml = inv ? (() => {
-                const chipColor = invoiceChipColors[inv.status] || 'bg-slate-100 text-slate-500';
-                return `<span class="invoice-chip ${chipColor}">${inv.invoice_number}</span>`;
-            })() : '';
-
-            const el = document.createElement('div');
-            el.className = 'entry-row' + (isInvoiced ? ' entry-row-invoiced' : ' entry-row-tappable');
-            const dateParts = formatEntryDateParts(entry.date);
-            const dowColor  = clientDowColor(clientName);
-            el.innerHTML = `
-                <div class="entry-date-col">
-                    <span class="dow ${dowColor}">${dateParts.dow}</span>
-                    <span class="day-num">${dateParts.day}</span>
-                    <span class="mon">${dateParts.mon}</span>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-1.5 mb-1.5">
-                        <span class="client-badge ${badgeColor}">${clientName}</span>
-                    </div>
-                    <p class="text-[15px] font-semibold text-gray-800 truncate">${description}</p>
-                </div>
-                <div class="flex flex-col items-end gap-1 shrink-0">
-                    ${chipHtml || '<span class="h-[18px]"></span>'}
-                    <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
-                </div>`;
-
-            const wrap = document.createElement('div');
-            wrap.className = 'entry-card-wrap';
-            wrap.style.animationDelay = `${Math.min(cardIndex, 6) * 40}ms`;
-            cardIndex++;
-
-            const detailPanel = document.createElement('div');
-            detailPanel.className = 'entry-detail-panel';
-            const detailInner = document.createElement('div');
-            detailInner.className = 'entry-detail-inner';
-            detailPanel.appendChild(detailInner);
-
-            if (!isInvoiced) {
-                el.addEventListener('click', () => openEntryCard(wrap, entry, false));
-            } else {
-                el.addEventListener('click', () => openEntryCard(wrap, entry, true));
-            }
-            wrap.appendChild(el);
-            wrap.appendChild(detailPanel);
-            group.appendChild(wrap);
+const TAB_IDS = ['tabEntriesBtn', 'tabInvoicesBtn', 'tabCalendarBtn', 'tabClientsBtn'];
+const SIDEBAR_VIEWS = ['entries', 'invoices', 'calendar', 'clients'];
+
+export function switchView(index) {
+    currentViewIndex = index;
+    const isDesktop = window.innerWidth >= 768;
+
+    if (isDesktop) {
+        // On desktop: show/hide panes directly (no slider transform)
+        ['viewEntries','viewInvoices','viewCalendar','viewClients'].forEach((id, i) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = i === index ? '' : 'none';
         });
-
-        if (beforeSentinel && sentinel) {
-            list.insertBefore(header, sentinel);
-            list.insertBefore(group, sentinel);
-        } else {
-            list.appendChild(header);
-            list.appendChild(group);
-        }
-    });
-}
-
-function appendNewEntryCard(_list, _cardIndex) {
-    const slot = document.getElementById('newEntrySlot');
-    const newWrap = document.createElement('div');
-    newWrap.className = 'entry-card-wrap';
-    newWrap.style.marginTop = '24px';
-    newWrap.style.marginBottom = '1rem';
-    newWrap.style.display = 'none';
-    newWrap.innerHTML = buildNewEntryFormHTML();
-    slot.innerHTML = '';
-    slot.appendChild(newWrap);
-    newEntryWrap = newWrap;
-    wireNewEntryForm();
-}
-
-// ─────────────────────────────────────────────
-// NEW ENTRY CARD
-// ─────────────────────────────────────────────
-function closeNewEntryCard() {
-    if (!newEntryWrap) return;
-
-    newEntrySelectedClient = null;
-    newEntryDayType        = 'full';
-    newEntryWorkflow       = 'Apparel';
-    newEntryRole           = 'Photographer';
-
-    // Hide and re-render the card fresh
-    newEntryWrap.style.display = 'none';
-    newEntryWrap.innerHTML = buildNewEntryFormHTML();
-    wireNewEntryForm();
-}
-
-function buildNewEntryFormHTML() {
-    return `
-    <div style="background:#fff; border-radius:1.75rem; padding:20px 24px; display:flex; flex-direction:column; gap:0;">
-        <!-- Client chip -->
-        <div id="newClientContainer" class="flex items-center justify-between pb-2">
-            <div id="newClientChip"></div>
-            <button id="newClearClient" style="flex-shrink:0; cursor:pointer; border:none; background:none; padding:4px;">
-                <span style="display:flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#e5e7eb;">
-                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#6b7280" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </span>
-            </button>
-        </div>
-
-        <!-- Billing fields (revealed after client select) -->
-        <div id="newEntryFields" class="reveal space-y-3 mt-3">
-
-            <!-- Date -->
-            <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Date</span>
-                <input type="date" id="newEntryDate" class="bg-transparent w-full text-[15px] font-semibold outline-none">
-            </div>
-
-            <!-- DAY RATE -->
-            <div id="newDayRateFields" class="hidden space-y-3">
-                <div>
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Day Type</span>
-                    <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
-                        <button class="seg-btn active" data-newday="full">Full Day</button>
-                        <button class="seg-btn" data-newday="half">Half Day</button>
-                    </div>
-                </div>
-                <div id="newWorkflowSection" class="reveal open space-y-3">
-                    <div>
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Workflow</span>
-                        <div class="flex gap-1.5" id="newWorkflowBtns">
-                            <button class="workflow-btn active" data-newwf="Apparel">Apparel</button>
-                            <button class="workflow-btn" data-newwf="Product">Product</button>
-                            <button class="workflow-btn" data-newwf="Own Brand">Own Brand</button>
-                        </div>
-                    </div>
-                    <div id="newBrandField" class="hidden">
-                        <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Brand</span>
-                            <input type="text" id="newBrandInput"
-                                class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400">
-                        </div>
-                    </div>
-                    <div id="newSkuField" class="hidden">
-                        <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">SKUs Shot</span>
-                            <input type="number" id="newSkuInput" placeholder="0" min="0"
-                                class="bg-transparent w-full text-[15px] font-semibold outline-none">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- HOURLY -->
-            <div id="newHourlyFields" class="hidden space-y-3">
-                <div id="newItsFields" class="hidden space-y-3">
-                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Shoot Client</span>
-                        <input type="text" id="newShootClientInput"
-                            class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400" placeholder="">
-                    </div>
-                    <div>
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Role</span>
-                        <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
-                            <button class="seg-btn active" data-newrole="Photographer">Photographer</button>
-                            <button class="seg-btn" data-newrole="Operator">Operator</button>
-                        </div>
-                    </div>
-                </div>
-                <div id="newHourlyDescField" class="hidden">
-                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
-                        <input type="text" id="newHourlyDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Start</span>
-                        <input type="time" id="newStartTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative">
-                    </div>
-                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">End</span>
-                        <input type="time" id="newFinishTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative">
-                    </div>
-                </div>
-                <div class="bg-slate-50 px-5 py-4 rounded-2xl flex items-center justify-between">
-                    <div>
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Break</span>
-                        <div class="flex items-baseline gap-2">
-                            <span id="newBreakDisplay" class="text-2xl font-black text-gray-900">0</span>
-                            <span class="text-slate-400 text-[11px] font-bold uppercase">min</span>
-                        </div>
-                        <input type="hidden" id="newBreakMinutes" value="0">
-                    </div>
-                    <div class="flex gap-2">
-                        <button data-newbreakadj="-15" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all">-15</button>
-                        <button data-newbreakadj="15" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all">+15</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MANUAL -->
-            <div id="newManualFields" class="hidden space-y-3">
-                <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
-                    <input type="text" id="newManualDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none">
-                </div>
-                <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Amount ($)</span>
-                    <input type="number" id="newManualAmount" placeholder="0.00" step="0.01" min="0"
-                        class="bg-transparent w-full text-[15px] font-semibold outline-none">
-                </div>
-                <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
-                    <div>
-                        <p class="text-[13px] font-semibold text-slate-800">Include Super (12%)</p>
-                        <p id="newSuperToggleLabel" class="text-[11px] text-slate-400 mt-0.5">Off</p>
-                    </div>
-                    <label class="toggle-wrap">
-                        <input type="checkbox" id="newSuperToggle">
-                        <div class="toggle-track"><div class="toggle-thumb"></div></div>
-                    </label>
-                </div>
-            </div>
-
-            <!-- SUMMARY -->
-            <div class="summary-card bg-white">
-                <div class="flex justify-between items-end mb-2">
-                    <div id="newDurationBlock" class="hidden">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Duration</p>
-                        <span id="newDisplayDuration" class="text-4xl font-black text-slate-900 leading-none">0h 0m</span>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Subtotal</p>
-                        <h2 id="newDisplayTotal" class="text-2xl font-bold text-slate-800">$0.00</h2>
-                    </div>
-                </div>
-                <div class="space-y-1 pt-2 border-t border-slate-100">
-                    <div class="flex justify-between items-center">
-                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Base</span>
-                        <span id="newDisplayBase" class="text-[13px] font-bold text-slate-600">$0.00</span>
-                    </div>
-                    <div id="newBonusLine" class="flex justify-between items-center hidden">
-                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Bonus</span>
-                        <span id="newDisplayBonus" class="text-[13px] font-bold text-[#34c759]">+$0.00</span>
-                    </div>
-                    <div id="newSuperLine" class="flex justify-between items-center hidden">
-                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Super (12%)</span>
-                        <span id="newDisplaySuper" class="text-[13px] font-bold text-[#007AFF]">+$0.00</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Save -->
-            <div class="pt-1 pb-2">
-                <button id="newSaveBtn" class="btn-primary">Save Entry</button>
-            </div>
-
-        </div><!-- /newEntryFields -->
-    </div>`;
-}
-
-function wireNewEntryForm() {
-    const today = new Date();
-    const yyyy  = today.getFullYear();
-    const mm    = String(today.getMonth() + 1).padStart(2, '0');
-    const dd    = String(today.getDate()).padStart(2, '0');
-    document.getElementById('newEntryDate').value = `${yyyy}-${mm}-${dd}`;
-
-    // Clear client — reopens the picker
-    document.getElementById('newClearClient').addEventListener('click', () => {
-        closeNewEntryCard();
-        openClientPicker();
-    });
-
-    // Day type buttons
-    newEntryWrap.querySelectorAll('[data-newday]').forEach(btn => {
-        btn.addEventListener('click', () => setNewEntryDayType(btn.dataset.newday));
-    });
-
-    // Workflow buttons
-    newEntryWrap.querySelectorAll('[data-newwf]').forEach(btn => {
-        btn.addEventListener('click', () => setNewEntryWorkflow(btn.dataset.newwf));
-    });
-
-    // Role buttons
-    newEntryWrap.querySelectorAll('[data-newrole]').forEach(btn => {
-        btn.addEventListener('click', () => setNewEntryRole(btn.dataset.newrole));
-    });
-
-    // Break adjust
-    newEntryWrap.querySelectorAll('[data-newbreakadj]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const el = document.getElementById('newBreakMinutes');
-            el.value = Math.max(0, (parseInt(el.value) || 0) + parseInt(btn.dataset.newbreakadj));
-            const disp = document.getElementById('newBreakDisplay');
-            if (disp) disp.textContent = el.value;
-            newEntryRecalculate();
+        document.querySelectorAll('.sidebar-btn[data-view]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === SIDEBAR_VIEWS[index]);
         });
-    });
-
-    // Live recalc
-    ['newStartTime','newFinishTime','newBreakMinutes','newSkuInput','newManualAmount','newBrandInput'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('input', newEntryRecalculate);
-    });
-
-    // Save
-    document.getElementById('newSaveBtn').addEventListener('click', saveNewEntry);
-}
-
-function openNewEntryCardForClient(client) {
-    if (!newEntryWrap) return;
-    newEntryWrap.style.display = '';
-    document.getElementById('tabRecent').scrollTo({ top: 0, behavior: 'smooth' });
-    selectNewEntryClient(client);
-}
-
-function selectNewEntryClient(client) {
-    newEntrySelectedClient = client;
-    const badgeColor = clientBadgeColor(client.name);
-    document.getElementById('newClientChip').innerHTML =
-        `<span class="client-badge ${badgeColor}" style="font-size:15px; padding:7px 14px; border-radius:10px;">${client.name}</span>`;
-    showNewEntryFields(client);
-}
-
-function showNewEntryFields(client) {
-    document.getElementById('newDayRateFields').classList.add('hidden');
-    document.getElementById('newHourlyFields').classList.add('hidden');
-    document.getElementById('newManualFields').classList.add('hidden');
-    document.getElementById('newDurationBlock').classList.add('hidden');
-    document.getElementById('newBonusLine').classList.add('hidden');
-    document.getElementById('newSuperLine').classList.add('hidden');
-
-    if (client.billing_type === 'day_rate') {
-        document.getElementById('newDayRateFields').classList.remove('hidden');
-        document.getElementById('newBonusLine').classList.remove('hidden');
-        if (client.pays_super) document.getElementById('newSuperLine').classList.remove('hidden');
-        setNewEntryDayType('full');
-
-    } else if (client.billing_type === 'hourly') {
-        document.getElementById('newHourlyFields').classList.remove('hidden');
-        document.getElementById('newDurationBlock').classList.remove('hidden');
-        if (client.pays_super) document.getElementById('newSuperLine').classList.remove('hidden');
-
-        const hasLabel = !!client.entry_label;
-        document.getElementById('newItsFields').classList.toggle('hidden', !hasLabel);
-        document.getElementById('newHourlyDescField').classList.toggle('hidden', hasLabel);
-        if (hasLabel) {
-            const labelEl = document.getElementById('newItsFieldLabel');
-            if (labelEl) labelEl.textContent = client.entry_label;
-        }
-
-        const newRoleSection = document.getElementById('newRoleSection');
-        if (newRoleSection) newRoleSection.classList.toggle('hidden', !client.show_role);
-
-        const startDefault  = client.default_start_time  ? client.default_start_time.substring(0, 5)  : '09:00';
-        const finishDefault = client.default_finish_time ? client.default_finish_time.substring(0, 5) : '17:00';
-        document.getElementById('newStartTime').value    = startDefault;
-        document.getElementById('newFinishTime').value   = finishDefault;
-        document.getElementById('newBreakMinutes').value = '0';
-        const newBreakDisp = document.getElementById('newBreakDisplay');
-        if (newBreakDisp) newBreakDisp.textContent = '0';
-
-    } else { // manual
-        document.getElementById('newManualFields').classList.remove('hidden');
-        if (client.pays_super) document.getElementById('newSuperLine').classList.remove('hidden');
-    }
-
-    document.getElementById('newEntryFields').classList.add('open');
-    newEntryRecalculate();
-
-    setTimeout(() => {
-        const tabRecent = document.getElementById('entriesScroll');
-        tabRecent.scrollTo({ top: tabRecent.scrollHeight, behavior: 'smooth' });
-    }, 150);
-}
-
-function setNewEntryDayType(type) {
-    newEntryDayType = type;
-    newEntryWrap.querySelectorAll('[data-newday]').forEach(b => {
-        b.classList.toggle('active', b.dataset.newday === type);
-    });
-    const wfSection = document.getElementById('newWorkflowSection');
-    const bonusLine = document.getElementById('newBonusLine');
-    if (type === 'full') {
-        wfSection.classList.add('open');
-        bonusLine.classList.remove('hidden');
-        setNewEntryWorkflow(newEntryWorkflow);
     } else {
-        wfSection.classList.remove('open');
-        bonusLine.classList.add('hidden');
-    }
-    newEntryRecalculate();
-}
+        // On mobile: slider transform
+        const slider = document.getElementById('viewSlider');
+        slider.style.transition = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)';
+        slider.style.transform  = `translateX(${index * -100}vw)`;
 
-function setNewEntryWorkflow(wf) {
-    newEntryWorkflow = wf;
-    newEntryWrap.querySelectorAll('[data-newwf]').forEach(b => {
-        b.classList.toggle('active', b.dataset.newwf === wf);
-    });
-    document.getElementById('newBrandField').classList.toggle('hidden', wf !== 'Own Brand');
-    document.getElementById('newSkuField').classList.toggle('hidden', wf === 'Own Brand');
-    const bonusLine = document.getElementById('newBonusLine');
-    if (bonusLine) bonusLine.classList.toggle('hidden', wf === 'Own Brand');
-    newEntryRecalculate();
-}
-
-function setNewEntryRole(role) {
-    newEntryRole = role;
-    newEntryWrap.querySelectorAll('[data-newrole]').forEach(b => {
-        b.classList.toggle('active', b.dataset.newrole === role);
-    });
-}
-
-function newEntryRecalculate() {
-    if (!newEntrySelectedClient) return;
-    const client = newEntrySelectedClient;
-    let result = null;
-
-    if (client.billing_type === 'day_rate') {
-        const skus = document.getElementById('newSkuInput')?.value;
-        result = calcDayRate(client, newEntryDayType, newEntryWorkflow, skus);
-
-    } else if (client.billing_type === 'hourly') {
-        const start  = document.getElementById('newStartTime').value;
-        const finish = document.getElementById('newFinishTime').value;
-        const brk    = document.getElementById('newBreakMinutes').value;
-        result = calcHourly(client, start, finish, brk, newEntryRole);
-        if (result) {
-            const h = Math.floor(result.rawMins / 60);
-            const m = result.rawMins % 60;
-            document.getElementById('newDisplayDuration').textContent = `${h}h ${m}m`;
-        }
-
-    } else { // manual
-        const amount = document.getElementById('newManualAmount').value;
-        result = calcManual(amount, client);
+        TAB_IDS.forEach((id, i) => {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('active', i === index);
+        });
     }
 
-    if (!result) return;
-    document.getElementById('newDisplayTotal').textContent = fmt(result.total);
-    document.getElementById('newDisplayBase').textContent  = fmt(result.base);
-    document.getElementById('newDisplayBonus').textContent = `+${fmt(result.bonus)}`;
-    document.getElementById('newDisplaySuper').textContent = `+${fmt(result.superAmt)}`;
-}
+    // FAB: only on Entries view
+    document.getElementById('newEntryFab').style.display = index === VIEW_ENTRIES ? 'flex' : 'none';
 
-function buildNewEntryPayload() {
-    const client = newEntrySelectedClient;
-    const date   = document.getElementById('newEntryDate').value;
-    const base   = {
-        user_id: currentUserId,
-        client_id: client.id,
-        date,
-        billing_type_snapshot: client.billing_type,
-    };
-
-    if (client.billing_type === 'day_rate') {
-        const skus   = parseInt(document.getElementById('newSkuInput').value) || null;
-        const brand  = document.getElementById('newBrandInput').value.trim() || null;
-        const result = calcDayRate(client, newEntryDayType, newEntryWorkflow, skus);
-        return {
-            ...base,
-            day_type:      newEntryDayType,
-            workflow_type: newEntryDayType === 'full' ? newEntryWorkflow : null,
-            brand:         newEntryDayType === 'full' && newEntryWorkflow === 'Own Brand' ? brand : null,
-            skus:          newEntryDayType === 'full' && newEntryWorkflow !== 'Own Brand' ? skus : null,
-            base_amount:   result.base,
-            bonus_amount:  result.bonus,
-            super_amount:  result.superAmt,
-            total_amount:  result.total,
-        };
-
-    } else if (client.billing_type === 'hourly') {
-        const start  = document.getElementById('newStartTime').value;
-        const finish = document.getElementById('newFinishTime').value;
-        const brk    = parseInt(document.getElementById('newBreakMinutes').value) || 0;
-        const result   = calcHourly(client, start, finish, brk, newEntryRole);
-        const hasLabel = !!client.entry_label;
-        const description = hasLabel ? document.getElementById('newShootClientInput').value.trim() || null : document.getElementById('newHourlyDesc').value.trim() || null;
-        const role        = client.show_role ? newEntryRole : null;
-        return {
-            ...base,
-            start_time:    start,
-            finish_time:   finish,
-            break_minutes: brk,
-            hours_worked:  result.hoursWorked,
-            shoot_client:  null,
-            role,
-            description,
-            base_amount:   result.base,
-            bonus_amount:  0,
-            super_amount:  result.superAmt,
-            total_amount:  result.total,
-        };
-
-    } else { // manual
-        const amount = parseFloat(document.getElementById('newManualAmount').value) || 0;
-        const result = calcManual(amount, client);
-        return {
-            ...base,
-            description:  document.getElementById('newManualDesc').value.trim() || null,
-            base_amount:  result.base,
-            bonus_amount: 0,
-            super_amount: result.superAmt,
-            total_amount: result.total,
-        };
+    // Lazy-load
+    if (index === VIEW_INVOICES && !Invoices.isLoaded()) {
+        Invoices.loadInvoices();
+    }
+    if (index === VIEW_CALENDAR) {
+        Calendar.loadCalendar();
+    }
+    if (index === VIEW_CLIENTS) {
+        Clients.loadClients();
     }
 }
-
-async function saveNewEntry() {
-    if (!newEntrySelectedClient) return;
-    const btn = document.getElementById('newSaveBtn');
-    btn.disabled    = true;
-    btn.textContent = 'Saving…';
-    try {
-        const payload = buildNewEntryPayload();
-        const { error } = await sb.from('entries').insert(payload);
-        if (error) throw error;
-        btn.textContent = 'Saved ✓';
-        btn.classList.add('success');
-        setTimeout(() => {
-            closeNewEntryCard();
-            loadRecentEntries();
-        }, 1500);
-    } catch (err) {
-        alert('Error saving entry: ' + err.message);
-        btn.disabled    = false;
-        btn.textContent = 'Save Entry';
-    }
-}
-
-// ─────────────────────────────────────────────
-// PULL TO REFRESH — Entries
-// ─────────────────────────────────────────────
-(function() {
-    const THRESHOLD = 110;
-    const MAX_PULL  = 130;
-    let startY = 0, pulling = false, triggered = false;
-
-    const scroller  = document.getElementById('tabRecent');
-    const indicator = document.getElementById('pullIndicator');
-
-    scroller.addEventListener('touchstart', e => {
-        if (scroller.scrollTop > 5) return;
-        startY    = e.touches[0].clientY;
-        pulling   = true;
-        triggered = false;
-    }, { passive: true });
-
-    scroller.addEventListener('touchmove', e => {
-        if (!pulling) return;
-        const dy = Math.min(e.touches[0].clientY - startY, MAX_PULL);
-        if (dy <= 10) return;
-        indicator.classList.add('visible');
-        const progress = Math.min(dy / THRESHOLD, 1);
-        document.getElementById('pullSpinner').style.transform = `rotate(${progress * 270}deg)`;
-        if (dy >= THRESHOLD) triggered = true;
-    }, { passive: true });
-
-    scroller.addEventListener('touchend', async () => {
-        if (!pulling) return;
-        pulling = false;
-        if (triggered) {
-            document.getElementById('pullSpinner').style.transform = '';
-            await loadRecentEntries();
-        }
-        indicator.classList.remove('visible');
-    });
-})();
-
-// ─────────────────────────────────────────────
-// INFINITE SCROLL — Entries
-// ─────────────────────────────────────────────
-let entriesScrollLoading = false;
-
-async function checkEntriesScroll() {
-    if (entriesScrollLoading || entriesAllLoaded) return;
-    const scroller = document.getElementById('tabRecent');
-    const distFromBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
-    if (distFromBottom < 300) {
-        entriesScrollLoading = true;
-        await loadMoreEntries();
-        entriesScrollLoading = false;
-    }
-}
-
-(function() {
-    const scroller = document.getElementById('tabRecent');
-    scroller.addEventListener('scroll', checkEntriesScroll, { passive: true });
-})();
-
-// ─────────────────────────────────────────────
-// PULL TO REFRESH — Invoices
-// ─────────────────────────────────────────────
-(function() {
-    const THRESHOLD = 110;
-    const MAX_PULL  = 130;
-    let startY = 0, pulling = false, triggered = false;
-
-    const scroller  = document.getElementById('invoicesScroll');
-    const indicator = document.getElementById('invoicesPullIndicator');
-
-    scroller.addEventListener('touchstart', e => {
-        if (scroller.scrollTop > 5) return;
-        startY    = e.touches[0].clientY;
-        pulling   = true;
-        triggered = false;
-    }, { passive: true });
-
-    scroller.addEventListener('touchmove', e => {
-        if (!pulling) return;
-        const dy = Math.min(e.touches[0].clientY - startY, MAX_PULL);
-        if (dy <= 10) return;
-        indicator.classList.add('visible');
-        const progress = Math.min(dy / THRESHOLD, 1);
-        document.getElementById('invoicesPullSpinner').style.transform = `rotate(${progress * 270}deg)`;
-        if (dy >= THRESHOLD) triggered = true;
-    }, { passive: true });
-
-    scroller.addEventListener('touchend', async () => {
-        if (!pulling) return;
-        pulling = false;
-        if (triggered) {
-            document.getElementById('invoicesPullSpinner').style.transform = '';
-            invoicesLoaded = false;
-            await loadInvoices();
-        }
-        indicator.classList.remove('visible');
-    });
-})();
+// Expose for onclick= attributes in HTML
+window.switchView = switchView;
 
 // ─────────────────────────────────────────────
 // VIEW SWIPE GESTURE
 // ─────────────────────────────────────────────
 (function() {
     let startX = 0, startY = 0;
-    let swipeDir = null; // null | 'h' | 'v'
+    let swipeDir = null;
     let liveOffsetVw = 0;
-
     const slider = document.getElementById('viewSlider');
 
     slider.addEventListener('touchstart', e => {
@@ -1422,620 +308,42 @@ async function checkEntriesScroll() {
     slider.addEventListener('touchmove', e => {
         const dx = e.touches[0].clientX - startX;
         const dy = e.touches[0].clientY - startY;
-
-        // Determine direction once we have enough movement
         if (!swipeDir && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
             swipeDir = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
         }
-
         if (swipeDir !== 'h') return;
-
         e.preventDefault();
-
-        const baseVw    = currentViewIndex * -100;
-        const dragVw    = (dx / window.innerWidth) * 100;
-        const totalVw   = Math.max(-100, Math.min(0, baseVw + dragVw));
-        liveOffsetVw    = totalVw;
+        const baseVw  = currentViewIndex * -100;
+        const dragVw  = (dx / window.innerWidth) * 100;
+        const totalVw = Math.max(-300, Math.min(0, baseVw + dragVw));
+        liveOffsetVw  = totalVw;
         slider.style.transform = `translateX(${totalVw}vw)`;
     }, { passive: false });
 
     slider.addEventListener('touchend', () => {
         if (swipeDir !== 'h') return;
-
         slider.style.transition = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)';
         const moved = liveOffsetVw - (currentViewIndex * -100);
-
-        if (moved < -28 && currentViewIndex < 1) {
-            switchView(1);
+        const maxView = 3;
+        if (moved < -28 && currentViewIndex < maxView) {
+            switchView(currentViewIndex + 1);
         } else if (moved > 28 && currentViewIndex > 0) {
-            switchView(0);
+            switchView(currentViewIndex - 1);
         } else {
-            // Snap back to current view
             slider.style.transform = `translateX(${currentViewIndex * -100}vw)`;
         }
     });
 })();
 
 // ─────────────────────────────────────────────
-// INFINITE SCROLL — Invoices
+// INVOICE PREVIEW BACK / PRINT
 // ─────────────────────────────────────────────
-(function() {
-    const scroller = document.getElementById('invoicesScroll');
-    scroller.addEventListener('scroll', () => {
-        if (invoicesAllLoaded) return;
-        const distFromBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
-        if (distFromBottom < 300) loadMoreInvoices();
-    }, { passive: true });
-})();
-
-// ─────────────────────────────────────────────
-// VIEW SWITCHING
-// ─────────────────────────────────────────────
-function switchView(index) {
-    currentViewIndex = index;
-    const slider = document.getElementById('viewSlider');
-    slider.style.transition = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)';
-    slider.style.transform  = `translateX(${index * -100}vw)`;
-
-    document.getElementById('tabEntriesBtn').classList.toggle('active', index === 0);
-    document.getElementById('tabInvoicesBtn').classList.toggle('active', index === 1);
-    document.getElementById('newEntryFab').style.display = index === 0 ? 'flex' : 'none';
-
-    if (index === 1 && !invoicesLoaded) {
-        loadInvoices();
-    }
-}
-
-// ─────────────────────────────────────────────
-// INVOICES VIEW
-// ─────────────────────────────────────────────
-let expandedInvoiceWrap = null;
-
-let invoicesAllLoaded    = false;
-const INVOICES_PAGE_SIZE = 18;
-let invoicesRenderedCount = 0;
-
-async function loadInvoices() {
-    invoicesLoaded        = true;
-    invoicesAllLoaded     = false;
-    invoicesCache         = [];
-    invoicesRenderedCount = 0;
-    const list = document.getElementById('invoicesList');
-    list.innerHTML = '<div class="spinner"></div>';
-
-    const { data, error } = await sb
-        .from('invoices')
-        .select('id, invoice_number, status, issued_date, subtotal, clients(name), entries(date)')
-        .order('issued_date', { ascending: false });
-
-    if (error || !data?.length) {
-        list.innerHTML = '<p class="text-gray-400 text-sm py-8 text-center">No invoices yet</p>';
-        return;
-    }
-
-    invoicesCache = data;
-    updateSortBtnIcon();
-    renderInvoices(invoicesCache);
-}
-
-function loadMoreInvoices() {
-    if (invoicesAllLoaded) return;
-
-    const startIndex = invoicesRenderedCount;
-    const batch = invoicesCache.slice(startIndex, startIndex + INVOICES_PAGE_SIZE);
-    if (!batch.length) { invoicesAllLoaded = true; updateInvoicesLoadMoreSentinel(); return; }
-
-    const list = document.getElementById('invoicesList');
-    const sentinel = document.getElementById('invoicesLoadMore');
-
-    if (invoicesSortMode === 'chronological') {
-        const grp = list.querySelector('.week-group') || (() => {
-            const g = document.createElement('div');
-            g.className = 'week-group';
-            list.insertBefore(g, sentinel);
-            return g;
-        })();
-        batch.forEach((inv, i) => grp.appendChild(buildInvoiceCard(inv, startIndex + i)));
-    } else {
-        // Status mode — re-render from full cache, all groups always complete
-        renderInvoices(invoicesCache);
-        return;
-    }
-
-    invoicesRenderedCount += batch.length;
-    if (invoicesRenderedCount >= invoicesCache.length) invoicesAllLoaded = true;
-    updateInvoicesLoadMoreSentinel();
-}
-
-function updateInvoicesLoadMoreSentinel() {
-    const list = document.getElementById('invoicesList');
-    let sentinel = document.getElementById('invoicesLoadMore');
-    if (!sentinel) {
-        sentinel = document.createElement('div');
-        sentinel.id = 'invoicesLoadMore';
-        sentinel.style.cssText = 'text-align:center;padding:16px 0 8px;';
-        list.appendChild(sentinel);
-    }
-    sentinel.innerHTML = invoicesAllLoaded
-        ? ''
-        : '<div class="spinner" style="margin:0 auto;width:24px;height:24px;opacity:0.4;"></div>';
-}
-
-function renderInvoices(data) {
-    const list = document.getElementById('invoicesList');
-    list.innerHTML = '';
-    expandedInvoiceWrap = null;
-
-    if (invoicesSortMode === 'status') {
-        const unpaid = data.filter(inv => inv.status !== 'paid');
-        const paid   = data.filter(inv => inv.status === 'paid');
-        let idx = 0;
-
-        if (unpaid.length) {
-            const hdr = document.createElement('div');
-            hdr.className = 'week-header';
-            hdr.innerHTML = `<span>Unpaid</span><span>${fmt(unpaid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
-            list.appendChild(hdr);
-            const grp = document.createElement('div');
-            grp.className = 'week-group';
-            unpaid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
-            list.appendChild(grp);
-        }
-
-        if (paid.length) {
-            const hdr = document.createElement('div');
-            hdr.className = 'week-header';
-            hdr.innerHTML = `<span>Paid</span><span>${fmt(paid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
-            list.appendChild(hdr);
-            const grp = document.createElement('div');
-            grp.className = 'week-group';
-            paid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
-            list.appendChild(grp);
-        }
-    } else {
-        // Chronological — render first page only; scroll appends more from cache
-        const initial = data.slice(0, INVOICES_PAGE_SIZE);
-        const grp = document.createElement('div');
-        grp.className = 'week-group';
-        initial.forEach((inv, i) => grp.appendChild(buildInvoiceCard(inv, i)));
-        list.appendChild(grp);
-        invoicesRenderedCount = initial.length;
-        invoicesAllLoaded = invoicesRenderedCount >= data.length;
-    }
-
-    updateInvoicesLoadMoreSentinel();
-}
-
-// SVG for "tap to group by status" (funnel / decreasing lines)
-const ICON_GROUP = `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M11 18h2"/></svg>`;
-// SVG for "tap to show as flat list" (equal lines)
-const ICON_LIST  = `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>`;
-
-function updateSortBtnIcon() {
-    const btn = document.getElementById('invoiceSortBtn');
-    if (btn) btn.innerHTML = invoicesSortMode === 'chronological' ? ICON_GROUP : ICON_LIST;
-}
-
-function toggleInvoiceSort() {
-    invoicesSortMode = invoicesSortMode === 'chronological' ? 'status' : 'chronological';
-    invoicesRenderedCount = 0;
-    invoicesAllLoaded = false;
-    updateSortBtnIcon();
-    // Defer re-render out of the touch event to avoid iOS tap debouncing
-    requestAnimationFrame(() => renderInvoices(invoicesCache));
-}
-
-// Stop touch propagation so the horizontal swipe handler on #viewSlider
-// never intercepts taps on this button and suppresses the click event.
-(function () {
-    const btn = document.getElementById('invoiceSortBtn');
-    btn.addEventListener('click', toggleInvoiceSort);
-    btn.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
-    btn.addEventListener('touchend',   e => e.stopPropagation(), { passive: true });
-}());
-
-function invoiceSubtotal(inv) {
-    // Use stored subtotal when entries haven't been loaded yet
-    if (inv.subtotal != null && !inv.entries?.some(e => e.total_amount != null)) {
-        return includeSuperInTotals() ? inv.total || inv.subtotal : inv.subtotal;
-    }
-    if (!inv.entries?.length) return includeSuperInTotals() ? inv.total || inv.subtotal || 0 : inv.subtotal || 0;
-    return inv.entries.reduce((s, e) => s + entryDisplayAmount(e), 0);
-}
-
-function invoiceDateRange(inv) {
-    if (!inv.entries?.length) return '';
-    const dates = inv.entries.map(e => e.date).filter(Boolean).sort();
-    if (!dates.length) return '';
-    const first = formatEntryDate(dates[0]);
-    const last  = formatEntryDate(dates[dates.length - 1]);
-    return first === last ? first : `${first} – ${last}`;
-}
-
-function buildInvoiceCard(inv, index) {
-    const clientName  = inv.clients?.name || 'Unknown';
-    const badgeColor  = clientBadgeColor(clientName);
-    const chipColor   = invoiceChipColors[inv.status] || 'bg-gray-100 text-gray-500';
-    const statusLabel = inv.status ? (inv.status.charAt(0).toUpperCase() + inv.status.slice(1)) : '';
-    const total       = fmt(invoiceSubtotal(inv));
-    const dateRange   = invoiceDateRange(inv);
-
-    const wrap = document.createElement('div');
-    wrap.className = 'invoice-card-wrap';
-    wrap.style.animationDelay = `${index * 40}ms`;
-
-    const row = document.createElement('div');
-    row.className = 'invoice-row';
-    row.innerHTML = `
-        <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 mb-1.5">
-                <span class="client-badge ${badgeColor}">${clientName}</span>
-                <span class="text-[15px] font-bold text-gray-800">${inv.invoice_number}</span>
-            </div>
-            ${dateRange ? `<p class="text-[13px] text-gray-400 truncate">${dateRange}</p>` : ''}
-        </div>
-        <div class="flex flex-col items-end gap-1 shrink-0">
-            <span class="invoice-chip ${chipColor}">${statusLabel}</span>
-            <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
-        </div>`;
-
-    const detailPanel = document.createElement('div');
-    detailPanel.className = 'invoice-detail-panel';
-    const detailInner = document.createElement('div');
-    detailInner.className = 'invoice-detail-inner';
-    detailPanel.appendChild(detailInner);
-
-    row.addEventListener('click', () => toggleInvoiceCard(wrap, inv));
-
-    wrap.appendChild(row);
-    wrap.appendChild(detailPanel);
-    return wrap;
-}
-
-async function toggleInvoiceCard(wrap, inv) {
-    if (expandedInvoiceWrap && expandedInvoiceWrap !== wrap) {
-        collapseInvoiceCard(expandedInvoiceWrap);
-    }
-    if (wrap.classList.contains('expanded')) {
-        collapseInvoiceCard(wrap);
-        return;
-    }
-
-    expandedInvoiceWrap = wrap;
-    wrap.classList.add('expanded');
-
-    const inner = wrap.querySelector('.invoice-detail-inner');
-
-    // If full entry data hasn't been loaded yet, fetch it now
-    const hasFullData = inv.entries?.some(e => e.total_amount != null);
-    if (!hasFullData) {
-        inner.innerHTML = '<div class="spinner" style="margin:16px auto;width:24px;height:24px;"></div>';
-        const { data: fullInv, error } = await sb
-            .from('invoices')
-            .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly, entry_label), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand, start_time, finish_time, break_minutes)')
-            .eq('id', inv.id)
-            .single();
-        if (!error && fullInv) {
-            // Merge into cache so preview also works
-            const idx = invoicesCache.findIndex(i => i.id === inv.id);
-            if (idx !== -1) invoicesCache[idx] = fullInv;
-            Object.assign(inv, fullInv);
-        }
-    }
-
-    const entries = inv.entries;
-
-    if (!entries?.length) {
-        inner.innerHTML = '<p class="text-gray-400 text-sm py-4 text-center">No entries linked</p>';
-        return;
-    }
-
-    const sorted = [...entries].sort((a, b) => a.date < b.date ? -1 : 1);
-    let html = '<div class="space-y-0 pt-3">';
-    sorted.forEach(e => {
-        const desc   = entryDescription(e);
-        const amount = fmt(entryDisplayAmount(e));
-        const date   = formatEntryDate(e.date);
-        html += `
-            <div class="flex justify-between items-center py-2.5 border-b border-slate-50">
-                <div class="flex-1 min-w-0 mr-4">
-                    <p class="text-[14px] font-semibold text-gray-800 truncate">${desc}</p>
-                    <p class="text-[11px] text-gray-400 mt-0.5">${date}</p>
-                </div>
-                <span class="text-[14px] font-bold text-gray-700 shrink-0">${amount}</span>
-            </div>`;
-    });
-
-    const subtotal = invoiceSubtotal(inv);
-    html += `
-        <div class="flex justify-between items-center pt-3 pb-1">
-            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total excl. super</span>
-            <span class="text-[16px] font-bold text-gray-900">${fmt(subtotal)}</span>
-        </div>
-    </div>
-    <button onclick="openInvoicePreviewById('${inv.id}')" style="margin-top:12px; margin-bottom:4px; width:100%; padding:12px; background:#111827; color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        Preview Invoice
-    </button>`;
-
-    inner.innerHTML = html;
-}
-
-function collapseInvoiceCard(wrap) {
-    const row = wrap.querySelector('.invoice-row');
-    if (row) row.style.borderRadius = '14px 14px 0 0';
-    wrap.classList.remove('expanded');
-    setTimeout(() => {
-        if (row) row.style.borderRadius = '';
-        const inner = wrap.querySelector('.invoice-detail-inner');
-        if (inner) inner.innerHTML = '';
-    }, 400);
-    if (expandedInvoiceWrap === wrap) expandedInvoiceWrap = null;
-}
-
-// ─────────────────────────────────────────────
-// INVOICE HTML PREVIEW
-// ─────────────────────────────────────────────
-
-
-function fmtInvoiceAmount(value) {
-    return new Intl.NumberFormat('en-AU', {
-        minimumFractionDigits: 2, maximumFractionDigits: 2,
-    }).format(parseFloat(value) || 0);
-}
-
-function abbreviateRole(role) {
-    if (!role) return '';
-    const r = role.toLowerCase();
-    if (r === 'photographer') return 'P';
-    if (r === 'operator') return 'O';
-    return role;
-}
-
-function fmtInvoiceTime(t) {
-    if (!t) return '';
-    const parts = t.substring(0, 5).split(':');
-    if (parts.length < 2) return t;
-    return `${parseInt(parts[0], 10)}:${parts[1]}`;
-}
-
-function fmtInvoiceRate(value) {
-    const n = parseFloat(value) || 0;
-    return new Intl.NumberFormat('en-AU', {
-        minimumFractionDigits: 0, maximumFractionDigits: 2,
-    }).format(n);
-}
-
-function formatInvoiceDate(dateStr) {
-    if (!dateStr) return '';
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const [y, m, d] = dateStr.split('-').map(Number);
-    return `${months[m - 1]} ${d}, ${y}`;
-}
-
-function formatInvoiceEntryDate(dateStr) {
-    if (!dateStr) return '';
-    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const date = new Date(y, m - 1, d);
-    return `${days[date.getDay()]}, ${months[m - 1]} ${d}`;
-}
-
-function buildInvoiceLineItemsHTML(inv) {
-    const entries = [...(inv.entries || [])].sort((a, b) => a.date < b.date ? -1 : 1);
-    const client = inv.clients || {};
-    let html = '';
-
-    for (const e of entries) {
-        const dateStr = formatInvoiceEntryDate(e.date);
-        let description, hours, rate, amount;
-
-        const type = (e.billing_type_snapshot || '').toLowerCase();
-
-        if (type === 'day_rate' || (!type && e.day_type)) {
-            if (e.workflow_type === 'Own Brand') {
-                description = e.brand || 'Own Brand';
-            } else if (e.workflow_type) {
-                description = e.workflow_type;
-            } else {
-                description = 'Creative Assist';
-            }
-            hours = '';
-            rate = fmtInvoiceAmount(e.base_amount);
-            amount = fmtInvoiceAmount(e.base_amount);
-        } else if (type === 'hourly' || (!type && e.hours_worked != null)) {
-            const label = e.shoot_client || e.description || '';
-            description = e.role ? `${label} (${abbreviateRole(e.role)})` : label;
-            hours = e.hours_worked != null ? String(e.hours_worked) : '';
-            const rateHourly = parseFloat(client.rate_hourly) || 0;
-            rate = rateHourly ? fmtInvoiceRate(rateHourly) : '';
-            amount = fmtInvoiceAmount(e.base_amount);
-        } else {
-            description = e.description || '';
-            hours = '';
-            rate = '';
-            amount = fmtInvoiceAmount(e.base_amount);
-        }
-
-        html += `<tr><td class="col-date">${dateStr}</td><td class="col-item">${description}</td><td class="col-qty">${hours}</td><td class="col-rate">${rate}</td><td class="col-amount">${amount}</td></tr>\n`;
-
-        const bonus = parseFloat(e.bonus_amount) || 0;
-        if (bonus > 0 && e.skus) {
-            html += `<tr><td class="col-date"></td><td class="col-item">&nbsp;&nbsp;+ SKU bonus (${e.skus} SKUs)</td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount">${fmtInvoiceAmount(bonus)}</td></tr>\n`;
-        }
-
-        if ((type === 'hourly' || (!type && e.hours_worked != null)) && e.start_time && e.finish_time) {
-            let subLine = `${fmtInvoiceTime(e.start_time)} – ${fmtInvoiceTime(e.finish_time)}`;
-            if (e.break_minutes) subLine += ` (${e.break_minutes}m)`;
-            html += `<tr><td class="col-date"></td><td class="col-item" style="color:#555;font-size:0.75em;padding-top:0">${subLine}</td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount"></td></tr>\n`;
-        }
-    }
-
-    return html;
-}
-
-function buildInvoiceHTML(inv) {
-    const client = inv.clients || {};
-    const issuedStr = formatInvoiceDate(inv.issued_date);
-    const dueStr = formatInvoiceDate(inv.due_date);
-    const lineItems = buildInvoiceLineItemsHTML(inv);
-    const descriptionHeader = client.entry_label || 'Description';
-
-    const paysSuper = client.pays_super;
-    const superRatePct = Math.round((parseFloat(client.super_rate) || 0) * 100);
-    const superRow = paysSuper
-        ? `<div class="totals-row"><span class="label">Super (${superRatePct}%)</span><span class="value">${fmtInvoiceAmount(inv.super_amount)}</span></div>`
-        : '';
-
-    const clientLines = [client.name, client.email, client.address, client.suburb]
-        .filter(Boolean).map(l => `<p>${l}</p>`).join('');
-
-    const biz = businessDetails || {};
-    const superMetaLines = paysSuper && biz.super_fund
-        ? `<p>${biz.super_fund}, Member ${biz.super_member_number}, ABN ${biz.super_fund_abn}</p><p>USI ${biz.super_usi}</p>`
-        : '';
-
-    return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-<style>
-  body { margin: 0; padding: 0; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; color: #000; line-height: 1.2; -webkit-text-size-adjust: 100%; }
-  a { color: inherit; text-decoration: none; }
-  .page { width: 794px; padding: 28px 42px; background: white; box-sizing: border-box; }
-  .top-header { display: flex; justify-content: space-between; margin-bottom: 80px; }
-  .address-block { font-size: 13.5px; }
-  .address-block p { margin: 0 0 3px 0; }
-  .invoice-title { font-size: 52px; font-weight: 500; margin: 0 0 70px 0; letter-spacing: -1px; }
-  .meta-container { display: flex; margin-bottom: 120px; font-size: 13.5px; }
-  .dates-block { width: 28%; }
-  .dates-block p { margin: 0 0 4px 0; }
-  .bank-block { flex-grow: 1; }
-  .bank-block p { margin: 0 0 4px 0; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 100px; }
-  th { text-align: left; padding: 10px 0; font-size: 13.5px; font-weight: normal; }
-  td { padding: 6px 0; vertical-align: top; font-size: 13.5px; }
-  .col-date   { width: 22%; }
-  .col-item   { width: 37%; }
-  .col-qty    { width: 11%; text-align: right; }
-  .col-rate   { width: 11%; text-align: right; }
-  .col-amount { width: 9%;  text-align: right; }
-  .totals-section { display: flex; flex-direction: column; align-items: flex-end; font-size: 13.5px; }
-  .totals-row { display: flex; justify-content: space-between; width: 100%; padding: 4px 0; }
-  .totals-row.grand-total { margin-top: 40px; }
-  .label { text-align: left; }
-  .value { text-align: right; width: 100px; }
-</style>
-</head>
-<body>
-<div class="page">
-  <div class="top-header">
-    <div class="address-block">
-      <p>${biz.business_name ?? ''}</p>
-      <p>ABN ${biz.abn ?? ''}</p>
-      <p>${biz.address ?? ''}</p>
-    </div>
-    <div class="address-block">
-      ${clientLines}
-    </div>
-  </div>
-  <h1 class="invoice-title">Invoice ${inv.invoice_number}</h1>
-  <div class="meta-container">
-    <div class="dates-block">
-      <p>Issued ${issuedStr}</p>
-      <p>Due ${dueStr}</p>
-    </div>
-    <div class="bank-block">
-      <p>BSB ${biz.bsb ?? ''} Account Number ${biz.account_number ?? ''}</p>
-      ${superMetaLines}
-    </div>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th class="col-date">Item</th>
-        <th class="col-item">${descriptionHeader}</th>
-        <th class="col-qty">Hours</th>
-        <th class="col-rate">Rate</th>
-        <th class="col-amount">Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${lineItems}
-    </tbody>
-  </table>
-  <div class="totals-section">
-    <div class="totals-row">
-      <span class="label">Subtotal</span>
-      <span class="value">${fmtInvoiceAmount(inv.subtotal)}</span>
-    </div>
-    ${superRow}
-    <div class="totals-row grand-total">
-      <span class="label">Total</span>
-      <span class="value">${fmtInvoiceAmount(inv.total)}</span>
-    </div>
-  </div>
-</div>
-</body>
-</html>`;
-}
-
-function openInvoicePreviewById(id) {
-    const inv = invoicesCache.find(i => i.id === id);
-    if (inv) openInvoicePreview(inv);
-}
-
-function openInvoicePreview(inv) {
-    const html = buildInvoiceHTML(inv);
-    currentPreviewHTML = html;
-    const overlay   = document.getElementById('invoicePreviewOverlay');
-    const frame     = document.getElementById('invoicePreviewFrame');
-    const scaleWrap = document.getElementById('invoicePreviewScaleWrap');
-    const slider    = document.getElementById('viewSlider');
-
-    const docWidth  = 794;
-    const docHeight = 1123;
-    const scale     = window.innerWidth / docWidth;
-    const scaledH   = docHeight * scale;
-    const topOffset = Math.max(0, (window.innerHeight - scaledH) / 2);
-
-    frame.style.width  = docWidth + 'px';
-    frame.style.height = docHeight + 'px';
-
-    scaleWrap.style.width     = docWidth + 'px';
-    scaleWrap.style.top       = topOffset + 'px';
-    scaleWrap.style.transform = `scale(${scale})`;
-
-    frame.srcdoc = html;
-
-    // Slide app content left (30vw parallax, matching tab-switch easing)
-    slider.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
-    slider.style.transform  = 'translateX(-200vw)';
-
-    // Slide preview in from right
-    overlay.style.transition = 'none';
-    overlay.style.transform  = 'translateX(100%)';
-    overlay.style.display    = 'block';
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            overlay.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
-            overlay.style.transform  = 'translateX(0)';
-        });
-    });
-}
-
 document.getElementById('invoicePreviewBack').addEventListener('click', () => {
     const overlay = document.getElementById('invoicePreviewOverlay');
     const slider  = document.getElementById('viewSlider');
-
     overlay.style.transform = 'translateX(100%)';
-
-    // Restore app content
     slider.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
     slider.style.transform  = 'translateX(-100vw)';
-
     setTimeout(() => {
         overlay.style.display = 'none';
         document.getElementById('invoicePreviewFrame').srcdoc = '';
@@ -2043,538 +351,17 @@ document.getElementById('invoicePreviewBack').addEventListener('click', () => {
 });
 
 document.getElementById('invoicePreviewPrint').addEventListener('click', () => {
-    if (!currentPreviewHTML) return;
-    const blob = new Blob([currentPreviewHTML], { type: 'text/html' });
+    const html = Invoices.getPrintHTML();
+    if (!html) return;
+    const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
 });
 
-function clientBadgeColor(name) {
-    if (name.includes('ICONIC'))  return 'bg-purple-50 text-purple-500';
-    if (name.includes('Images'))  return 'bg-blue-50 text-blue-500';
-    if (name.includes('JD'))      return 'bg-orange-50 text-orange-500';
-    return 'bg-gray-100 text-gray-500';
-}
-
-function clientDowColor(name) {
-    if (name.includes('ICONIC'))  return 'text-purple-500';
-    if (name.includes('Images'))  return 'text-blue-500';
-    if (name.includes('JD'))      return 'text-orange-500';
-    return 'text-gray-400';
-}
-
-const invoiceChipColors = {
-    'draft':  'bg-gray-100 text-gray-500',
-    'issued': 'bg-orange-100 text-orange-600',
-    'paid':   'bg-green-100 text-green-600',
-};
-
-function entryDescription(entry) {
-    const label = entry.shoot_client || entry.description;
-    if (label) return label + (entry.role ? ` · ${abbreviateRole(entry.role)}` : '');
-    if (entry.day_type)     return (entry.day_type === 'full' ? 'Full day' : 'Half day')
-                                   + (entry.workflow_type ? ` · ${entry.workflow_type}` : '');
-    if (entry.hours_worked) return `${entry.hours_worked}h`;
-    return '—';
-}
-
-function formatEntryDate(dateStr) {
-    if (!dateStr) return '';
-    const [y, m, d] = dateStr.split('-');
-    const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-    return date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
-}
-
-function formatEntryDateParts(dateStr) {
-    if (!dateStr) return { dow: '', day: '', mon: '' };
-    const [y, m, d] = dateStr.split('-');
-    const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-    return {
-        dow: date.toLocaleDateString('en-AU', { weekday: 'short' }),
-        day: date.getDate(),
-        mon: date.toLocaleDateString('en-AU', { month: 'short' }),
-    };
-}
-
-function isoWeekStart(dateStr) {
-    const [y, m, d] = dateStr.split('-');
-    const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-    const day = date.getDay(); // 0=Sun
-    const diff = (day === 0 ? -6 : 1 - day); // Monday-based
-    const mon = new Date(date);
-    mon.setDate(date.getDate() + diff);
-    return mon;
-}
-
-function isoWeekKey(dateStr) {
-    const mon = isoWeekStart(dateStr);
-    return `${mon.getFullYear()}-${mon.getMonth()}-${mon.getDate()}`;
-}
-
-function formatWeekLabel(weekStart) {
-    const end = new Date(weekStart);
-    end.setDate(weekStart.getDate() + 6);
-    const opts = { day: 'numeric', month: 'short' };
-    return `${weekStart.toLocaleDateString('en-AU', opts)} – ${end.toLocaleDateString('en-AU', opts)}`;
-}
-
-
 // ─────────────────────────────────────────────
-// ENTRY CARD EXPAND / COLLAPSE
+// INIT SCROLL HANDLERS + START
 // ─────────────────────────────────────────────
-let editingEntry    = null;
-let editingClient   = null;
-let editDayType     = 'full';
-let editWorkflow    = 'Apparel';
-let editRole        = 'Photographer';
-let expandedWrap    = null;
+Entries.initScrollHandlers();
+Invoices.initScrollHandlers();
 
-function closeEntryCard(wrap) {
-    // Hold the squared-off bottom corners on the row during collapse
-    const row = wrap.querySelector('.entry-row');
-    if (row) row.style.borderRadius = '14px 14px 0 0';
-
-    wrap.classList.remove('expanded');
-
-    setTimeout(() => {
-        if (row) row.style.borderRadius = '';
-        const inner = wrap.querySelector('.entry-detail-inner');
-        if (inner) inner.innerHTML = '';
-    }, 400);
-
-    if (expandedWrap === wrap) {
-        expandedWrap  = null;
-        editingEntry  = null;
-        editingClient = null;
-    }
-}
-
-function openEntryCard(wrap, entry, readOnly = false) {
-    // Collapse any previously expanded card
-    if (expandedWrap && expandedWrap !== wrap) {
-        closeEntryCard(expandedWrap);
-    }
-
-    // If this card is already expanded, collapse it
-    if (wrap.classList.contains('expanded')) {
-        closeEntryCard(wrap);
-        return;
-    }
-
-    editingEntry  = entry;
-    editingClient = allClients.find(c => c.id === entry.client_id) || null;
-    expandedWrap  = wrap;
-
-    const billing  = entry.billing_type_snapshot;
-    const hasLabel = !!editingClient?.entry_label;
-    const showRole = !!editingClient?.show_role;
-
-    editDayType   = entry.day_type || 'full';
-    editWorkflow  = entry.workflow_type || 'Apparel';
-    editRole      = entry.role || 'Photographer';
-
-    // Build detail panel HTML
-    const inner = wrap.querySelector('.entry-detail-inner');
-
-    // --- Date field ---
-    let html = `
-        <div class="space-y-3">
-        <div class="bg-slate-50 rounded-2xl px-5 py-4">
-            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Date</span>
-            <input type="date" id="editDate" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
-        </div>`;
-
-    // --- Billing-specific fields ---
-    if (billing === 'day_rate') {
-        const wfHidden     = editDayType !== 'full' ? 'hidden' : '';
-        const brandHidden  = editWorkflow !== 'Own Brand' ? 'hidden' : '';
-        const skuHidden    = editWorkflow === 'Own Brand' ? 'hidden' : '';
-        html += `
-        <div id="editDayRateFields" class="space-y-3">
-            <div>
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Day Type</span>
-                <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
-                    <button class="seg-btn${editDayType === 'full' ? ' active' : ''}" data-editday="full" onclick="setEditDayType('full')"${readOnly ? ' disabled' : ''}>Full Day</button>
-                    <button class="seg-btn${editDayType === 'half' ? ' active' : ''}" data-editday="half" onclick="setEditDayType('half')"${readOnly ? ' disabled' : ''}>Half Day</button>
-                </div>
-            </div>
-            <div id="editWorkflowSection" class="${wfHidden} space-y-3">
-                <div>
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Workflow</span>
-                    <div class="flex gap-1.5" id="editWorkflowBtns">
-                        <button class="workflow-btn${editWorkflow === 'Apparel' ? ' active' : ''}" data-editwf="Apparel" onclick="setEditWorkflow('Apparel')"${readOnly ? ' disabled' : ''}>Apparel</button>
-                        <button class="workflow-btn${editWorkflow === 'Product' ? ' active' : ''}" data-editwf="Product" onclick="setEditWorkflow('Product')"${readOnly ? ' disabled' : ''}>Product</button>
-                        <button class="workflow-btn${editWorkflow === 'Own Brand' ? ' active' : ''}" data-editwf="Own Brand" onclick="setEditWorkflow('Own Brand')"${readOnly ? ' disabled' : ''}>Own Brand</button>
-                    </div>
-                </div>
-                <div id="editBrandField" class="${brandHidden}">
-                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Brand</span>
-                        <input type="text" id="editBrandInput"
-                            class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400"${readOnly ? ' disabled' : ''}>
-                    </div>
-                </div>
-                <div id="editSkuField" class="${skuHidden}">
-                    <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">SKUs Shot</span>
-                        <input type="number" id="editSkuInput" placeholder="0" min="0"
-                            class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    } else if (billing === 'hourly') {
-        const entryFieldLabel = editingClient?.entry_label || 'Description';
-        html += `
-        <div id="editHourlyFields" class="space-y-3">
-            <div id="editItsFields" class="${hasLabel ? '' : 'hidden'} space-y-3">
-                <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">${entryFieldLabel}</span>
-                    <input type="text" id="editShootClientInput"
-                        class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400"${readOnly ? ' disabled' : ''}>
-                </div>
-            </div>
-            <div id="editRoleSection" class="${showRole ? '' : 'hidden'}">
-                <div>
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Role</span>
-                    <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
-                        <button class="seg-btn${editRole === 'Photographer' ? ' active' : ''}" data-editrole="Photographer" onclick="setEditRole('Photographer')"${readOnly ? ' disabled' : ''}>Photographer</button>
-                        <button class="seg-btn${editRole === 'Operator' ? ' active' : ''}" data-editrole="Operator" onclick="setEditRole('Operator')"${readOnly ? ' disabled' : ''}>Operator</button>
-                    </div>
-                </div>
-            </div>
-            <div id="editHourlyDescField" class="${hasLabel ? 'hidden' : ''}">
-                <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
-                    <input type="text" id="editHourlyDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-                <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Start</span>
-                    <input type="time" id="editStartTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative"${readOnly ? ' disabled' : ''}>
-                </div>
-                <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">End</span>
-                    <input type="time" id="editFinishTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative"${readOnly ? ' disabled' : ''}>
-                </div>
-            </div>
-            <div class="bg-slate-50 px-5 py-4 rounded-2xl flex items-center justify-between">
-                <div>
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Break</span>
-                    <div class="flex items-baseline gap-2">
-                        <span id="editBreakDisplay" class="text-2xl font-black text-gray-900">0</span>
-                        <span class="text-slate-400 text-[11px] font-bold uppercase">min</span>
-                    </div>
-                    <input type="hidden" id="editBreakMinutes" value="0">
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="adjustEditBreak(-15)" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all"${readOnly ? ' disabled' : ''}>-15</button>
-                    <button onclick="adjustEditBreak(15)" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all"${readOnly ? ' disabled' : ''}>+15</button>
-                </div>
-            </div>
-        </div>`;
-    } else { // manual
-        html += `
-        <div id="editManualFields" class="space-y-3">
-            <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
-                <input type="text" id="editManualDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
-            </div>
-            <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Amount ($)</span>
-                <input type="number" id="editManualAmount" placeholder="0.00" step="0.01" min="0"
-                    class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
-            </div>
-        </div>`;
-    }
-
-    // --- Summary card ---
-    const bonusHiddenSummary = (billing !== 'day_rate' || editDayType !== 'full' || editWorkflow === 'Own Brand') ? 'hidden' : '';
-    const durationHidden     = (billing !== 'hourly') ? 'hidden' : '';
-    html += `
-        <div class="summary-card bg-white">
-            <div class="flex justify-between items-end mb-2">
-                <div>
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Duration</p>
-                    <div id="editDurationBlock" class="${durationHidden}">
-                        <span id="editDisplayDuration" class="text-4xl font-black text-slate-900 leading-none">0h 0m</span>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Subtotal</p>
-                    <h2 id="editDisplayTotal" class="text-2xl font-bold text-slate-800">$0.00</h2>
-                </div>
-            </div>
-            <div class="space-y-1 pt-2 border-t border-slate-100">
-                <div class="flex justify-between items-center">
-                    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Base</span>
-                    <span id="editDisplayBase" class="text-[13px] font-bold text-slate-600">$0.00</span>
-                </div>
-                <div id="editBonusLine" class="flex justify-between items-center ${bonusHiddenSummary}">
-                    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Bonus</span>
-                    <span id="editDisplayBonus" class="text-[13px] font-bold text-[#34c759]">+$0.00</span>
-                </div>
-                <div id="editSuperLine" class="flex justify-between items-center">
-                    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Super (12%)</span>
-                    <span id="editDisplaySuper" class="text-[13px] font-bold text-[#007AFF]">+$0.00</span>
-                </div>
-            </div>
-        </div>`;
-
-    // --- Footer buttons ---
-    if (!readOnly) {
-        html += `
-        <div class="space-y-2 pt-1">
-            <button id="editSaveBtn" onclick="saveEdit()" class="btn-primary">Save Changes</button>
-            <button onclick="deleteEntry()" class="w-full rounded-2xl text-[15px] font-bold text-red-500 bg-red-50 active:bg-red-100 transition-colors border-none cursor-pointer" style="padding: 18px 14px;">Delete Entry</button>
-        </div>`;
-    }
-
-    html += `</div>`; // close space-y-4
-
-    inner.innerHTML = html;
-
-    // Populate field values now that DOM is built
-    document.getElementById('editDate').value = entry.date || '';
-
-    if (billing === 'day_rate') {
-        if (editDayType === 'full') {
-            if (editWorkflow === 'Own Brand') {
-                document.getElementById('editBrandInput').value = entry.brand || '';
-            } else {
-                document.getElementById('editSkuInput').value = entry.skus != null ? entry.skus : '';
-            }
-        }
-    } else if (billing === 'hourly') {
-        if (hasLabel) {
-            document.getElementById('editShootClientInput').value = entry.shoot_client || entry.description || '';
-        } else {
-            document.getElementById('editHourlyDesc').value = entry.description || '';
-        }
-        document.getElementById('editStartTime').value    = (entry.start_time  || '').substring(0, 5);
-        document.getElementById('editFinishTime').value   = (entry.finish_time || '').substring(0, 5);
-        document.getElementById('editBreakMinutes').value = entry.break_minutes || 0;
-        const editBreakDisp = document.getElementById('editBreakDisplay');
-        if (editBreakDisp) editBreakDisp.textContent = entry.break_minutes || 0;
-    } else { // manual
-        document.getElementById('editManualDesc').value   = entry.description || '';
-        document.getElementById('editManualAmount').value = entry.base_amount != null ? entry.base_amount : '';
-    }
-
-    // Wire up live recalc listeners
-    ['editStartTime','editFinishTime','editBreakMinutes','editSkuInput','editManualAmount','editBrandInput']
-        .forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('input', editRecalculate);
-        });
-    editRecalculate();
-
-    // Expand the card
-    wrap.classList.add('expanded');
-
-    // Scroll to near top of entriesScroll
-    const tabRecent = document.getElementById('entriesScroll');
-    const wrapTop = wrap.getBoundingClientRect().top + tabRecent.scrollTop - 100;
-    tabRecent.scrollTo({ top: wrapTop, behavior: 'smooth' });
-}
-
-function setEditDayType(type) {
-    editDayType = type;
-    document.querySelectorAll('[data-editday]').forEach(b => {
-        b.classList.toggle('active', b.dataset.editday === type);
-    });
-    const wfSection = document.getElementById('editWorkflowSection');
-    if (wfSection) {
-        if (type === 'full') {
-            wfSection.classList.remove('hidden');
-            setEditWorkflow(editWorkflow);
-        } else {
-            wfSection.classList.add('hidden');
-            const bl = document.getElementById('editBonusLine');
-            if (bl) bl.classList.add('hidden');
-        }
-    }
-    editRecalculate();
-}
-
-function setEditWorkflow(wf) {
-    editWorkflow = wf;
-    document.querySelectorAll('[data-editwf]').forEach(b => {
-        b.classList.toggle('active', b.dataset.editwf === wf);
-    });
-    const brandField = document.getElementById('editBrandField');
-    const skuField   = document.getElementById('editSkuField');
-    const bonusLine  = document.getElementById('editBonusLine');
-    if (brandField) brandField.classList.toggle('hidden', wf !== 'Own Brand');
-    if (skuField)   skuField.classList.toggle('hidden', wf === 'Own Brand');
-    if (bonusLine)  bonusLine.classList.toggle('hidden', wf === 'Own Brand');
-    editRecalculate();
-}
-
-function setEditRole(role) {
-    editRole = role;
-    document.querySelectorAll('[data-editrole]').forEach(b => {
-        b.classList.toggle('active', b.dataset.editrole === role);
-    });
-    editRecalculate();
-}
-
-function adjustEditBreak(delta) {
-    const el = document.getElementById('editBreakMinutes');
-    if (el) {
-        el.value = Math.max(0, (parseInt(el.value) || 0) + delta);
-        const disp = document.getElementById('editBreakDisplay');
-        if (disp) disp.textContent = el.value;
-        editRecalculate();
-    }
-}
-
-function editRecalculate() {
-    if (!editingEntry) return;
-    const billing = editingEntry.billing_type_snapshot;
-    const client  = editingClient;
-    let result;
-
-    if (billing === 'day_rate' && client) {
-        const skuEl = document.getElementById('editSkuInput');
-        const skus = skuEl ? (parseInt(skuEl.value) || null) : null;
-        result = calcDayRate(client, editDayType, editDayType === 'full' ? editWorkflow : null, skus);
-        const durEl = document.getElementById('editDisplayDuration');
-        if (durEl) durEl.textContent = '';
-        const bl = document.getElementById('editBonusLine');
-        if (bl) bl.classList.toggle('hidden', editDayType !== 'full' || editWorkflow === 'Own Brand');
-
-    } else if (billing === 'hourly' && client) {
-        const startEl  = document.getElementById('editStartTime');
-        const finishEl = document.getElementById('editFinishTime');
-        const brkEl    = document.getElementById('editBreakMinutes');
-        if (!startEl || !finishEl) return;
-        const start  = startEl.value;
-        const finish = finishEl.value;
-        const brk    = parseInt(brkEl?.value) || 0;
-        result = calcHourly(client, start, finish, brk, editRole);
-        if (result) {
-            const totalMins = Math.round(result.hoursWorked * 60);
-            const durEl = document.getElementById('editDisplayDuration');
-            if (durEl) durEl.textContent = `${Math.floor(totalMins / 60)}h ${totalMins % 60}m`;
-        }
-
-    } else if (billing === 'manual') {
-        const amountEl = document.getElementById('editManualAmount');
-        const amount = parseFloat(amountEl?.value) || 0;
-        result = calcManual(amount, client);
-
-    } else {
-        return;
-    }
-
-    if (result) {
-        const totalEl = document.getElementById('editDisplayTotal');
-        const baseEl  = document.getElementById('editDisplayBase');
-        const bonusEl = document.getElementById('editDisplayBonus');
-        const superEl = document.getElementById('editDisplaySuper');
-        const superLine = document.getElementById('editSuperLine');
-        if (totalEl) totalEl.textContent = fmt(result.total);
-        if (baseEl)  baseEl.textContent  = fmt(result.base);
-        if (bonusEl) bonusEl.textContent = '+' + fmt(result.bonus || 0);
-        if (superEl) superEl.textContent = '+' + fmt(result.superAmt || 0);
-        if (superLine) superLine.classList.toggle('hidden', (result.superAmt || 0) === 0);
-    }
-}
-
-function buildEditPayload() {
-    const entry   = editingEntry;
-    const client  = editingClient;
-    const billing = entry.billing_type_snapshot;
-    const date    = document.getElementById('editDate').value;
-    const base    = { date };
-
-    if (billing === 'day_rate') {
-        const skus   = parseInt(document.getElementById('editSkuInput').value) || null;
-        const brand  = document.getElementById('editBrandInput').value.trim() || null;
-        const result = calcDayRate(client, editDayType, editDayType === 'full' ? editWorkflow : null, skus);
-        return {
-            ...base,
-            day_type:      editDayType,
-            workflow_type: editDayType === 'full' ? editWorkflow : null,
-            brand:         editDayType === 'full' && editWorkflow === 'Own Brand' ? brand : null,
-            skus:          editDayType === 'full' && editWorkflow !== 'Own Brand' ? skus : null,
-            base_amount:   result.base,
-            bonus_amount:  result.bonus,
-            super_amount:  result.superAmt,
-            total_amount:  result.total,
-        };
-
-    } else if (billing === 'hourly') {
-        const start  = document.getElementById('editStartTime').value;
-        const finish = document.getElementById('editFinishTime').value;
-        const brk    = parseInt(document.getElementById('editBreakMinutes').value) || 0;
-        const result      = calcHourly(client, start, finish, brk, editRole);
-        const hasLbl      = !!client?.entry_label;
-        const description = hasLbl ? document.getElementById('editShootClientInput').value.trim() || null : document.getElementById('editHourlyDesc').value.trim() || null;
-        const role        = client?.show_role ? editRole : null;
-        return {
-            ...base,
-            start_time:    start,
-            finish_time:   finish,
-            break_minutes: brk,
-            hours_worked:  result.hoursWorked,
-            shoot_client:  null,
-            role,
-            description,
-            base_amount:   result.base,
-            bonus_amount:  0,
-            super_amount:  result.superAmt,
-            total_amount:  result.total,
-        };
-
-    } else { // manual
-        const amount = parseFloat(document.getElementById('editManualAmount').value) || 0;
-        const result = calcManual(amount, client);
-        return {
-            ...base,
-            description:  document.getElementById('editManualDesc').value.trim() || null,
-            base_amount:  result.base,
-            bonus_amount: 0,
-            super_amount: result.superAmt,
-            total_amount: result.total,
-        };
-    }
-}
-
-async function saveEdit() {
-    const btn = document.getElementById('editSaveBtn');
-    btn.disabled = true;
-    btn.textContent = 'Saving…';
-    try {
-        const payload = buildEditPayload();
-        const { error } = await sb.from('entries').update(payload).eq('id', editingEntry.id);
-        if (error) throw error;
-        const wrap = expandedWrap;
-        closeEntryCard(wrap);
-        loadRecentEntries();
-    } catch (err) {
-        alert('Error saving entry: ' + err.message);
-        btn.disabled = false;
-        btn.textContent = 'Save Changes';
-    }
-}
-
-async function deleteEntry() {
-    if (!confirm('Delete this entry? This cannot be undone.')) return;
-    try {
-        const { error } = await sb.from('entries').delete().eq('id', editingEntry.id);
-        if (error) throw error;
-        const wrap = expandedWrap;
-        closeEntryCard(wrap);
-        loadRecentEntries();
-    } catch (err) {
-        alert('Error deleting entry: ' + err.message);
-    }
-}
-
-// ─────────────────────────────────────────────
-// START
-// ─────────────────────────────────────────────
 init();
