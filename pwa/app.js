@@ -290,8 +290,9 @@ export function switchView(index) {
     document.getElementById('newEntryFab').style.display = index === VIEW_ENTRIES ? 'flex' : 'none';
 
     // Lazy-load
-    if (index === VIEW_INVOICES && !Invoices.isLoaded()) {
-        Invoices.loadInvoices();
+    if (index === VIEW_INVOICES) {
+        if (!Invoices.isLoaded()) Invoices.loadInvoices();
+        Generate.scanAndRender();
     }
     if (index === VIEW_CALENDAR) {
         Calendar.loadCalendar();
