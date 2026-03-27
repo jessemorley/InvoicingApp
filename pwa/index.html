@@ -89,7 +89,29 @@
     <!-- ── View Slider ── -->
     <div id="viewSlider">
 
-        <!-- ════ VIEW 0: ENTRIES ════ -->
+        <!-- ════ VIEW 0: CALENDAR ════ -->
+        <div id="viewCalendar" class="view-pane">
+            <div id="calendarScroll" style="width:100%; height:calc(100dvh - 56px - env(safe-area-inset-bottom)); overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column;">
+                <div style="padding-top:env(safe-area-inset-top); display:flex; flex-direction:column; flex:1;">
+                    <div style="display:flex; flex-direction:column; flex:1;">
+                        <div class="px-5 flex justify-between items-center pt-6 pb-3">
+                            <h1 class="text-3xl font-extrabold text-gray-900">Calendar</h1>
+                            <div class="flex gap-2">
+                                <button id="calPrevBtn" class="invoice-sort-btn">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
+                                <button id="calNextBtn" class="invoice-sort-btn">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="calendarInner" style="flex:1; display:flex; flex-direction:column; padding-bottom:env(safe-area-inset-bottom);"></div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /viewCalendar -->
+
+        <!-- ════ VIEW 1: ENTRIES ════ -->
         <div id="viewEntries" class="view-pane">
 
             <!-- Log Entry Tab (legacy, hidden) -->
@@ -310,7 +332,7 @@
 
         </div><!-- /viewEntries -->
 
-        <!-- ════ VIEW 1: INVOICES ════ -->
+        <!-- ════ VIEW 2: INVOICES ════ -->
         <div id="viewInvoices" class="view-pane">
 
             <div id="invoicesScroll">
@@ -329,28 +351,6 @@
             </div>
 
         </div><!-- /viewInvoices -->
-
-        <!-- ════ VIEW 2: CALENDAR ════ -->
-        <div id="viewCalendar" class="view-pane">
-            <div id="calendarScroll" style="width:100%; height:calc(100dvh - 56px - env(safe-area-inset-bottom)); overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column;">
-                <div style="padding-top:env(safe-area-inset-top); display:flex; flex-direction:column; flex:1;">
-                    <div style="display:flex; flex-direction:column; flex:1;">
-                        <div class="px-5 flex justify-between items-center pt-6 pb-3">
-                            <h1 class="text-3xl font-extrabold text-gray-900">Calendar</h1>
-                            <div class="flex gap-2">
-                                <button id="calPrevBtn" class="invoice-sort-btn">
-                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                                </button>
-                                <button id="calNextBtn" class="invoice-sort-btn">
-                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="calendarInner" style="flex:1; display:flex; flex-direction:column; padding-bottom:env(safe-area-inset-bottom);"></div>
-                    </div>
-                </div>
-            </div>
-        </div><!-- /viewCalendar -->
 
         <!-- ════ VIEW 3: CLIENTS ════ -->
         <div id="viewClients" class="view-pane">
@@ -396,19 +396,19 @@
 
     <!-- ── Tab Bar (mobile only) ── -->
     <div id="tabBar">
-        <button id="tabEntriesBtn" class="tab-btn active" onclick="switchView(0)">
-            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-            </svg>
-            <span>Entries</span>
-        </button>
-        <button id="tabCalendarBtn" class="tab-btn" onclick="switchView(2)">
+        <button id="tabCalendarBtn" class="tab-btn" onclick="switchView(0)">
             <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
             <span>Calendar</span>
         </button>
-        <button id="tabInvoicesBtn" class="tab-btn" onclick="switchView(1)">
+        <button id="tabEntriesBtn" class="tab-btn active" onclick="switchView(1)">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+            </svg>
+            <span>Entries</span>
+        </button>
+        <button id="tabInvoicesBtn" class="tab-btn" onclick="switchView(2)">
             <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>

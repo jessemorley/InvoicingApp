@@ -17,9 +17,9 @@ const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ── View constants ────────────────────────────
-const VIEW_ENTRIES  = 0;
-const VIEW_INVOICES = 1;
-const VIEW_CALENDAR = 2;
+const VIEW_CALENDAR = 0;
+const VIEW_ENTRIES  = 1;
+const VIEW_INVOICES = 2;
 const VIEW_CLIENTS  = 3;
 const VIEW_SETTINGS = 4;
 
@@ -31,7 +31,7 @@ let workflowRates           = [];
 let businessDetails         = null;
 let invoiceSequence         = null;
 let currentUserId           = null;
-let currentViewIndex        = 0;
+let currentViewIndex        = VIEW_ENTRIES;
 
 function getState() {
     return { allClients, clientLatestInvoiceMap, clientInvoiceCountMap, workflowRates, businessDetails, invoiceSequence, currentUserId, invoiceChipColors };
@@ -74,16 +74,7 @@ function showApp() {
     document.getElementById('loginScreen').classList.remove('active');
     document.getElementById('appShell').classList.add('active');
     Clients.initHandlers();
-    // Desktop: initialize pane visibility (show Entries, hide others)
-    if (window.innerWidth >= 768) {
-        ['viewEntries','viewInvoices','viewCalendar','viewClients','viewSettings'].forEach((id, i) => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = i === 0 ? '' : 'none';
-        });
-        document.querySelectorAll('.sidebar-btn[data-view]').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.view === 'entries');
-        });
-    }
+    switchView(VIEW_ENTRIES);
 }
 
 document.getElementById('loginBtn').addEventListener('click', async () => {
@@ -267,8 +258,8 @@ document.addEventListener('clients:saved', async () => {
 // ─────────────────────────────────────────────
 // VIEW SWITCHING
 // ─────────────────────────────────────────────
-const TAB_IDS = ['tabEntriesBtn', 'tabInvoicesBtn', 'tabCalendarBtn', 'tabClientsBtn', 'tabSettingsBtn'];
-const SIDEBAR_VIEWS = ['entries', 'invoices', 'calendar', 'clients', 'settings'];
+const TAB_IDS = ['tabCalendarBtn', 'tabEntriesBtn', 'tabInvoicesBtn', 'tabClientsBtn', 'tabSettingsBtn'];
+const SIDEBAR_VIEWS = ['calendar', 'entries', 'invoices', 'clients', 'settings'];
 
 export function switchView(index) {
     currentViewIndex = index;
@@ -276,7 +267,7 @@ export function switchView(index) {
 
     if (isDesktop) {
         // On desktop: show/hide panes directly (no slider transform)
-        ['viewEntries','viewInvoices','viewCalendar','viewClients','viewSettings'].forEach((id, i) => {
+        ['viewCalendar','viewEntries','viewInvoices','viewClients','viewSettings'].forEach((id, i) => {
             const el = document.getElementById(id);
             if (el) el.style.display = i === index ? '' : 'none';
         });
