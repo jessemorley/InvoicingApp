@@ -91,12 +91,12 @@ function _render() {
             <div class="settings-section-header">General</div>
             <div class="settings-group">
                 <div class="settings-row">
-                    <label class="settings-label">Invoice Prefix</label>
+                    <label class="settings-label" for="s_invoicePrefix">Invoice Prefix</label>
                     <input id="s_invoicePrefix" class="settings-input settings-input-short" type="text"
                         value="${_esc(seqData.invoice_prefix)}" maxlength="10">
                 </div>
                 <div class="settings-row">
-                    <label class="settings-label">Next Invoice #</label>
+                    <label class="settings-label" for="s_nextInvoiceNumber">Next Invoice #</label>
                     <input id="s_nextInvoiceNumber" class="settings-input settings-input-short" type="number"
                         min="1" step="1" value="${nextNum}">
                 </div>
@@ -108,21 +108,21 @@ function _render() {
             <div class="settings-section-header">Preferences</div>
             <div class="settings-group">
                 <div class="settings-row settings-row-toggle">
-                    <label class="settings-label">Include super in totals</label>
+                    <span class="settings-label">Include super in totals</span>
                     <label class="settings-toggle">
                         <input id="s_includeSuperInTotals" type="checkbox" ${bizData.include_super_in_totals ? 'checked' : ''}>
                         <span class="settings-toggle-track"></span>
                     </label>
                 </div>
                 <div class="settings-row settings-row-toggle">
-                    <label class="settings-label">Mark as issued on PDF export</label>
+                    <span class="settings-label">Mark as issued on PDF export</span>
                     <label class="settings-toggle">
                         <input id="s_markIssuedOnExport" type="checkbox" ${markIssued ? 'checked' : ''}>
                         <span class="settings-toggle-track"></span>
                     </label>
                 </div>
                 <div class="settings-row">
-                    <label class="settings-label">Due date offset</label>
+                    <label class="settings-label" for="s_dueDateOffsetDays">Due date offset</label>
                     <div class="settings-input-row">
                         <input id="s_dueDateOffsetDays" class="settings-input settings-input-short" type="number"
                             min="7" max="90" value="${dueOffset}">
@@ -130,7 +130,7 @@ function _render() {
                     </div>
                 </div>
                 <div class="settings-row">
-                    <label class="settings-label">Financial year starts</label>
+                    <label class="settings-label" for="s_financialYearStartMonth">Financial year starts</label>
                     <select id="s_financialYearStartMonth" class="settings-select">
                         ${monthOptions}
                     </select>
@@ -143,19 +143,19 @@ function _render() {
             <div class="settings-section-header">Personal Info</div>
             <div class="settings-group">
                 <div class="settings-field">
-                    <label class="settings-field-label">Name</label>
+                    <label class="settings-field-label" for="s_name">Name</label>
                     <input id="s_name" class="settings-input settings-input-full" type="text" value="${_esc(bizData.name)}">
                 </div>
                 <div class="settings-field">
-                    <label class="settings-field-label">Business Name</label>
+                    <label class="settings-field-label" for="s_businessName">Business Name</label>
                     <input id="s_businessName" class="settings-input settings-input-full" type="text" value="${_esc(bizData.business_name)}">
                 </div>
                 <div class="settings-field">
-                    <label class="settings-field-label">ABN</label>
+                    <label class="settings-field-label" for="s_abn">ABN</label>
                     <input id="s_abn" class="settings-input settings-input-full" type="text" inputmode="numeric" value="${_esc(bizData.abn)}">
                 </div>
                 <div class="settings-field">
-                    <label class="settings-field-label">Address</label>
+                    <label class="settings-field-label" for="s_address">Address</label>
                     <input id="s_address" class="settings-input settings-input-full" type="text" value="${_esc(bizData.address)}">
                 </div>
             </div>
@@ -166,11 +166,11 @@ function _render() {
             <div class="settings-section-header">Banking</div>
             <div class="settings-group">
                 <div class="settings-field">
-                    <label class="settings-field-label">BSB</label>
+                    <label class="settings-field-label" for="s_bsb">BSB</label>
                     <input id="s_bsb" class="settings-input settings-input-full" type="text" inputmode="numeric" value="${_esc(bizData.bsb)}">
                 </div>
                 <div class="settings-field">
-                    <label class="settings-field-label">Account Number</label>
+                    <label class="settings-field-label" for="s_accountNumber">Account Number</label>
                     <input id="s_accountNumber" class="settings-input settings-input-full" type="text" inputmode="numeric" value="${_esc(bizData.account_number)}">
                 </div>
             </div>
@@ -181,19 +181,19 @@ function _render() {
             <div class="settings-section-header">Superannuation</div>
             <div class="settings-group">
                 <div class="settings-field">
-                    <label class="settings-field-label">Fund Name</label>
+                    <label class="settings-field-label" for="s_superFund">Fund Name</label>
                     <input id="s_superFund" class="settings-input settings-input-full" type="text" value="${_esc(bizData.super_fund)}">
                 </div>
                 <div class="settings-field">
-                    <label class="settings-field-label">Member Number</label>
+                    <label class="settings-field-label" for="s_superMemberNumber">Member Number</label>
                     <input id="s_superMemberNumber" class="settings-input settings-input-full" type="text" value="${_esc(bizData.super_member_number)}">
                 </div>
                 <div class="settings-field">
-                    <label class="settings-field-label">Fund ABN</label>
+                    <label class="settings-field-label" for="s_superFundAbn">Fund ABN</label>
                     <input id="s_superFundAbn" class="settings-input settings-input-full" type="text" inputmode="numeric" value="${_esc(bizData.super_fund_abn)}">
                 </div>
                 <div class="settings-field">
-                    <label class="settings-field-label">USI</label>
+                    <label class="settings-field-label" for="s_superUsi">USI</label>
                     <input id="s_superUsi" class="settings-input settings-input-full" type="text" value="${_esc(bizData.super_usi)}">
                 </div>
             </div>
