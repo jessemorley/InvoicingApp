@@ -537,12 +537,14 @@
         }
 
         .cal-entry-desc { display: none; }
+        .cal-entry-pill-desktop { display: none !important; }
 
         @media (min-width: 768px) {
+            .cal-entry-pill { display: none !important; }
+            .cal-entry-pill-desktop { display: block !important; }
             .cal-entry-desc { display: block; }
             .cal-grid { grid-template-rows: auto repeat(6, minmax(50px, 1fr)) !important; }
-            .cal-inv-chip-wrap { display: inline; }
-            .cal-inv-chip-wrap .invoice-chip { vertical-align: middle; }
+            .cal-day-cell { padding: 6px 5px !important; }
             /* App shell becomes a row */
             #appShell.active {
                 flex-direction: row;

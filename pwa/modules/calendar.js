@@ -117,23 +117,27 @@ function _renderCalendar() {
             const { bg, text }  = clientCalColor(clientName);
             const inv     = e.invoices;
             const invChip = inv
-                ? `<span class="invoice-chip ${chipColors[inv.status] || 'bg-gray-100 text-gray-500'}" style="font-size:11px; padding:2px 6px; flex-shrink:0;">${inv.invoice_number}</span>`
+                ? `<span class="invoice-chip cal-inv-chip-wrap ${chipColors[inv.status] || 'bg-gray-100 text-gray-500'}" style="font-size:11px; padding:2px 6px; flex-shrink:0;">${inv.invoice_number}</span>`
                 : '';
             const desc   = entryDescription(e);
             const total  = e.total_amount || 0;
             const amount = fmt(includeSuperInTotals ? total : total - (e.super_amount || 0));
             entriesHtml += `
-            <div style="margin-top:3px; padding:4px 7px; border-radius:6px; background:${bg}; min-width:0;">
-                <div style="min-width:0;">
-                    <span style="display:block; font-size:11px; font-weight:700; color:${text}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${clientName}</span>
-                    <span class="cal-inv-chip-wrap">${invChip}</span>
+            <div class="cal-entry-pill" style="margin-top:2px; padding:3px 5px; border-radius:6px; background:${bg}; min-width:0; overflow:hidden;">
+                <div style="font-size:10px; font-weight:700; color:${text}; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${clientName}</div>
+                <span class="cal-inv-chip-wrap">${invChip}</span>
+            </div>
+            <div class="cal-entry-pill-desktop" style="display:none; margin-top:3px; padding:4px 7px; border-radius:6px; background:${bg}; min-width:0;">
+                <div style="display:flex; align-items:center; gap:4px; min-width:0;">
+                    <span style="font-size:11px; font-weight:700; color:${text}; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${clientName}</span>
+                    ${invChip}
                 </div>
                 <div class="cal-entry-desc" style="font-size:12px; color:#6b7280; margin-top:2px; overflow:hidden;">${desc}</div>
             </div>`;
         });
 
         html += `
-            <div class="cal-day-cell" data-date="${dateStr}" style="background:${isWeekend ? '#f7f7f8' : '#fff'}; padding:6px 5px; cursor:${dayEntries.length ? 'pointer' : 'default'}; min-width:0; overflow:hidden;">
+            <div class="cal-day-cell" data-date="${dateStr}" style="background:${isWeekend ? '#f7f7f8' : '#fff'}; padding:4px 3px; cursor:${dayEntries.length ? 'pointer' : 'default'}; min-width:0; overflow:hidden;">
             <div style="font-size:12px; font-weight:${isToday ? '800' : '600'}; color:${isToday ? '#2563eb' : isWeekend ? '#6b7280' : '#111827'}; ${isToday ? 'background:#eff6ff; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center;' : ''}">${day}</div>
             ${entriesHtml}
         </div>`;
