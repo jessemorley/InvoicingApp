@@ -40,6 +40,44 @@
 ═══════════════════════════════════════════════ -->
 <div id="appShell" class="screen">
 
+    <!-- ── Desktop Sidebar ── -->
+    <nav id="sidebar">
+        <div id="sidebarBrand">Invoicing</div>
+        <button class="sidebar-btn active" data-view="entries" onclick="switchView(0)">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+            </svg>
+            Entries
+        </button>
+        <button class="sidebar-btn" data-view="calendar" onclick="switchView(2)">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            Calendar
+        </button>
+        <button class="sidebar-btn" data-view="invoices" onclick="switchView(1)">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Invoices
+        </button>
+        <button class="sidebar-btn" data-view="clients" onclick="switchView(3)">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            Clients
+        </button>
+        <button class="sidebar-btn sidebar-btn-signout" id="sidebarSignOut">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            Sign Out
+        </button>
+    </nav>
+
+    <!-- ── Main content (slider + optional detail panel) ── -->
+    <div id="mainContent">
+
     <!-- ── View Slider ── -->
     <div id="viewSlider">
 
@@ -239,13 +277,15 @@
                     <div id="entriesInner" style="padding-top:env(safe-area-inset-top);">
                         <div class="px-5">
                             <div id="newEntrySlot"></div>
+                            <div id="generateBar" class="mb-3" style="display:none;"></div>
                             <div id="entriesHeaderTop" class="flex justify-between items-center pt-6 pb-3">
                                 <h1 class="text-3xl font-extrabold text-gray-900">Entries</h1>
-                                <button id="signOutBtn" class="p-2 -mr-1 text-gray-400 active:text-gray-600 transition-colors bg-transparent border-none cursor-pointer">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                    </svg>
-                                </button>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div class="seg-ctrl" id="entriesViewToggle" style="grid-template-columns:1fr 1fr; width:auto;">
+                                        <button class="seg-btn active" data-entriesview="client-week" style="font-size:13px; padding:6px 14px;">By Client</button>
+                                        <button class="seg-btn" data-entriesview="week" style="font-size:13px; padding:6px 14px;">By Week</button>
+                                    </div>
+                                </div>
                             </div>
                             <div id="pullIndicator" class="pull-indicator"><div class="spinner" id="pullSpinner"></div></div>
                             <div id="recentList" class="space-y-3 pb-36">
@@ -279,9 +319,55 @@
 
         </div><!-- /viewInvoices -->
 
+        <!-- ════ VIEW 2: CALENDAR ════ -->
+        <div id="viewCalendar" class="view-pane">
+            <div id="calendarScroll" style="width:100%; height:100dvh; overflow-y:auto; overflow-x:hidden;">
+                <div style="padding-top:env(safe-area-inset-top);">
+                    <div class="px-5">
+                        <div class="flex justify-between items-center pt-6 pb-3">
+                            <h1 class="text-3xl font-extrabold text-gray-900">Calendar</h1>
+                            <div class="flex gap-2">
+                                <button id="calPrevBtn" class="invoice-sort-btn">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
+                                <button id="calNextBtn" class="invoice-sort-btn">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="calendarInner" class="pb-36"></div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /viewCalendar -->
+
+        <!-- ════ VIEW 3: CLIENTS ════ -->
+        <div id="viewClients" class="view-pane">
+            <div id="clientsScroll" style="width:100%; height:100dvh; overflow-y:auto; overflow-x:hidden;">
+                <div style="padding-top:env(safe-area-inset-top);">
+                    <div class="px-5">
+                        <div class="flex justify-between items-center pt-6 pb-3">
+                            <h1 class="text-3xl font-extrabold text-gray-900">Clients</h1>
+                            <button id="addClientBtn" class="invoice-sort-btn" title="Add client">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            </button>
+                        </div>
+                        <div id="clientsList" class="space-y-3 pb-36">
+                            <p class="text-gray-400 text-sm py-8 text-center">Loading clients...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /viewClients -->
+
     </div><!-- /viewSlider -->
 
-    <!-- ── Tab Bar ── -->
+    <!-- ── Desktop Detail Panel ── -->
+    <div id="detailPanel" class="detail-panel"></div>
+
+    </div><!-- /mainContent -->
+
+    <!-- ── Tab Bar (mobile only) ── -->
     <div id="tabBar">
         <button id="tabEntriesBtn" class="tab-btn active" onclick="switchView(0)">
             <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -289,11 +375,23 @@
             </svg>
             <span>Entries</span>
         </button>
+        <button id="tabCalendarBtn" class="tab-btn" onclick="switchView(2)">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span>Calendar</span>
+        </button>
         <button id="tabInvoicesBtn" class="tab-btn" onclick="switchView(1)">
             <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
             <span>Invoices</span>
+        </button>
+        <button id="tabClientsBtn" class="tab-btn" onclick="switchView(3)">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span>Clients</span>
         </button>
     </div>
 
@@ -350,6 +448,6 @@
 
 </div>
 
-<script src="app.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

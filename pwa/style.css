@@ -160,13 +160,12 @@
         /* Recent entries list */
         .entry-row {
             background: #fff;
-            border-radius: 14px;
-            padding: 14px 16px;
+            border-radius: 0;
+            padding: 9px 16px;
             display: flex;
             align-items: center;
             gap: 12px;
             position: relative;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .entry-row-tappable {
             cursor: pointer;
@@ -200,7 +199,7 @@
             margin-bottom: 4px;
         }
         .entry-date-col .day-num {
-            font-size: 20px;
+            font-size: 17px;
             font-weight: 700;
             color: #111827;
         }
@@ -293,10 +292,29 @@
             gap: 12px;
             padding-top: 0;
         }
-
-        /* Expanded entry card */
-        .entry-card-wrap.expanded .entry-row {
+        /* Connected card style only for entry groups */
+        #recentList .week-group {
+            gap: 0;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        #recentList .week-group .entry-card-wrap:not(:last-child) .entry-row {
+            border-bottom: 1px solid #f0f0f0;
+        }
+        #recentList .week-group .entry-card-wrap:first-child .entry-row {
             border-radius: 14px 14px 0 0;
+        }
+        #recentList .week-group .entry-card-wrap:last-child .entry-row {
+            border-radius: 0 0 14px 14px;
+        }
+        #recentList .week-group .entry-card-wrap:first-child:last-child .entry-row {
+            border-radius: 14px;
+        }
+
+        /* Expanded entry card — square the bottom corners to connect to detail panel */
+        .entry-card-wrap.expanded .entry-row {
+            border-radius: 0 0 0 0 !important;
         }
         .entry-detail-panel {
             background: #fff;
@@ -376,7 +394,7 @@
         ───────────────────────────────────────────── */
         #viewSlider {
             display: flex;
-            width: 200vw;
+            width: 400vw;
             height: 100%;
             /* transition added by JS after swipe ends */
         }
@@ -492,4 +510,166 @@
         .invoice-detail-inner {
             padding: 0 1rem 1rem;
             border-top: 1px solid #f0f0f0;
+        }
+
+        /* ─────────────────────────────────────────────
+           DESKTOP LAYOUT  (≥ 768px)
+        ───────────────────────────────────────────── */
+
+        /* Sidebar — hidden on mobile */
+        #sidebar {
+            display: none;
+        }
+
+        /* Main content wrapper — takes full width on mobile */
+        #mainContent {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Desktop detail panel — hidden on mobile */
+        .detail-panel {
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            /* App shell becomes a row */
+            #appShell.active {
+                flex-direction: row;
+                overflow: hidden;
+            }
+
+            /* Sidebar */
+            #sidebar {
+                display: flex;
+                flex-direction: column;
+                width: 220px;
+                flex-shrink: 0;
+                background: #fff;
+                border-right: 1px solid #e5e7eb;
+                padding: 24px 12px 16px;
+                gap: 4px;
+                height: 100%;
+                overflow: hidden;
+            }
+
+            #sidebarBrand {
+                font-size: 18px;
+                font-weight: 800;
+                color: #111827;
+                padding: 4px 12px 20px;
+                letter-spacing: -0.3px;
+            }
+
+            .sidebar-btn {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 12px;
+                border-radius: 10px;
+                border: none;
+                background: none;
+                color: #6b7280;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                font-family: inherit;
+                transition: background 0.15s, color 0.15s;
+                text-align: left;
+                width: 100%;
+            }
+            .sidebar-btn:hover {
+                background: #f3f4f6;
+                color: #111827;
+            }
+            .sidebar-btn.active {
+                background: #f0f4ff;
+                color: #2563eb;
+            }
+            .sidebar-btn-signout {
+                margin-top: auto;
+                color: #9ca3af;
+            }
+
+            /* Hide mobile tab bar on desktop */
+            #tabBar { display: none; }
+
+            /* FAB moves to bottom-right of mainContent */
+            #newEntryFab {
+                bottom: 1.5rem;
+                right: 1.5rem;
+            }
+
+            /* View slider fills mainContent (minus detail panel) */
+            #viewSlider {
+                flex: 1;
+                min-width: 0;
+                width: auto;   /* override the 400vw */
+                height: 100%;
+            }
+
+            .view-pane {
+                width: 100%;   /* fill available width */
+                min-width: 0;
+            }
+
+            /* Desktop detail panel */
+            .detail-panel {
+                display: flex;
+                flex-direction: column;
+                width: 0;
+                flex-shrink: 0;
+                border-left: 1px solid #e5e7eb;
+                background: #fff;
+                overflow-y: auto;
+                overflow-x: hidden;
+                transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
+                height: 100%;
+            }
+            .detail-panel.open {
+                width: 380px;
+            }
+
+            /* On desktop: disable expand-in-place for entries */
+            .entry-detail-panel {
+                display: none !important;
+            }
+
+            /* Selected entry row highlight */
+            .entry-selected .entry-row {
+                background: #f0f4ff;
+            }
+
+            /* Selected client row highlight */
+            .client-list-row.client-selected {
+                background: #f0f4ff;
+            }
+        }
+
+        /* Client form panel (used in Clients view) */
+        .client-form-panel {
+            background: #fff;
+            border-radius: 1.5rem;
+            padding: 20px;
+            margin-bottom: 12px;
+        }
+
+        /* Client list row */
+        .client-list-row {
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: background 0.1s;
+        }
+        .client-list-row:active, .client-list-row:hover {
+            background: #f9fafb;
         }
