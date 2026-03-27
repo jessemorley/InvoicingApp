@@ -1380,7 +1380,7 @@ export function initScrollHandlers() {
     (function() {
         const THRESHOLD = 110, MAX_PULL = 130;
         let startY = 0, pulling = false, triggered = false;
-        const scroller  = document.getElementById('entriesScroll');
+        const scroller  = document.getElementById('tabRecent');
         const indicator = document.getElementById('pullIndicator');
         scroller.addEventListener('touchstart', e => {
             if (scroller.scrollTop > 5) return;
@@ -1407,7 +1407,7 @@ export function initScrollHandlers() {
     })();
 
     // Infinite scroll
-    const scroller = document.getElementById('entriesScroll');
+    const scroller = document.getElementById('tabRecent');
     scroller.addEventListener('scroll', async () => {
         if (entriesScrollLoading || entriesAllLoaded) return;
         const distFromBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
