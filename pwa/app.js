@@ -6,6 +6,7 @@ import * as Invoices from './modules/invoices.js';
 import * as Clients  from './modules/clients.js';
 import * as Calendar from './modules/calendar.js';
 import * as Generate from './modules/generate.js';
+import * as Settings from './modules/settings.js';
 import { clientDotColor } from './modules/utils.js';
 
 // ── Supabase ─────────────────────────────────
@@ -20,6 +21,7 @@ const VIEW_ENTRIES  = 0;
 const VIEW_INVOICES = 1;
 const VIEW_CALENDAR = 2;
 const VIEW_CLIENTS  = 3;
+const VIEW_SETTINGS = 4;
 
 // ── Global state ─────────────────────────────
 let allClients              = [];
@@ -47,6 +49,7 @@ Invoices.init(sb, getState);
 Clients.init(sb, getState);
 Calendar.init(sb, getState);
 Generate.init(sb, getState);
+Settings.init(sb, getState);
 
 // ─────────────────────────────────────────────
 // AUTH
@@ -73,7 +76,7 @@ function showApp() {
     Clients.initHandlers();
     // Desktop: initialize pane visibility (show Entries, hide others)
     if (window.innerWidth >= 768) {
-        ['viewEntries','viewInvoices','viewCalendar','viewClients'].forEach((id, i) => {
+        ['viewEntries','viewInvoices','viewCalendar','viewClients','viewSettings'].forEach((id, i) => {
             const el = document.getElementById(id);
             if (el) el.style.display = i === 0 ? '' : 'none';
         });
@@ -264,8 +267,8 @@ document.addEventListener('clients:saved', async () => {
 // ─────────────────────────────────────────────
 // VIEW SWITCHING
 // ─────────────────────────────────────────────
-const TAB_IDS = ['tabEntriesBtn', 'tabInvoicesBtn', 'tabCalendarBtn', 'tabClientsBtn'];
-const SIDEBAR_VIEWS = ['entries', 'invoices', 'calendar', 'clients'];
+const TAB_IDS = ['tabEntriesBtn', 'tabInvoicesBtn', 'tabCalendarBtn', 'tabClientsBtn', 'tabSettingsBtn'];
+const SIDEBAR_VIEWS = ['entries', 'invoices', 'calendar', 'clients', 'settings'];
 
 export function switchView(index) {
     currentViewIndex = index;
@@ -273,7 +276,7 @@ export function switchView(index) {
 
     if (isDesktop) {
         // On desktop: show/hide panes directly (no slider transform)
-        ['viewEntries','viewInvoices','viewCalendar','viewClients'].forEach((id, i) => {
+        ['viewEntries','viewInvoices','viewCalendar','viewClients','viewSettings'].forEach((id, i) => {
             const el = document.getElementById(id);
             if (el) el.style.display = i === index ? '' : 'none';
         });
@@ -305,6 +308,9 @@ export function switchView(index) {
     if (index === VIEW_CLIENTS) {
         Clients.loadClients();
     }
+    if (index === VIEW_SETTINGS) {
+        Settings.loadSettings();
+    }
 }
 // Expose for onclick= attributes in HTML
 window.switchView = switchView;
@@ -335,7 +341,7 @@ window.switchView = switchView;
         e.preventDefault();
         const baseVw  = currentViewIndex * -100;
         const dragVw  = (dx / window.innerWidth) * 100;
-        const totalVw = Math.max(-300, Math.min(0, baseVw + dragVw));
+        const totalVw = Math.max(-400, Math.min(0, baseVw + dragVw));
         liveOffsetVw  = totalVw;
         slider.style.transform = `translateX(${totalVw}vw)`;
     }, { passive: false });
@@ -344,7 +350,7 @@ window.switchView = switchView;
         if (swipeDir !== 'h') return;
         slider.style.transition = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)';
         const moved = liveOffsetVw - (currentViewIndex * -100);
-        const maxView = 3;
+        const maxView = 4;
         if (moved < -28 && currentViewIndex < maxView) {
             switchView(currentViewIndex + 1);
         } else if (moved > 28 && currentViewIndex > 0) {
