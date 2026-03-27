@@ -2,7 +2,7 @@
 // CALENDAR MODULE
 // Monthly grid showing entries with invoice status icons
 // ─────────────────────────────────────────────
-import { fmt, clientCalColor, entryDescription } from './utils.js';
+import { fmt, clientCalColor, clientBadgeColor, entryDescription } from './utils.js';
 
 let sb, getState;
 
@@ -179,13 +179,14 @@ function _showDayEntries(dateStr, entries) {
         </div>
         <div class="space-y-3">`;
 
+    const { businessDetails } = getState();
+    const includeSuperInTotals = businessDetails?.include_super_in_totals ?? true;
+
     entries.forEach(e => {
         const clientName = e.clients?.name || 'Unknown';
         const badgeColor = clientBadgeColor(clientName);
         const inv        = e.invoices;
         const desc       = entryDescription(e);
-        const { businessDetails } = getState();
-        const includeSuperInTotals = businessDetails?.include_super_in_totals ?? true;
         const total   = e.total_amount || 0;
         const amount  = fmt(includeSuperInTotals ? total : total - (e.super_amount || 0));
 
