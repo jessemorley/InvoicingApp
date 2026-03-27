@@ -27,11 +27,12 @@ let clientLatestInvoiceMap  = {};
 let clientInvoiceCountMap   = {};
 let workflowRates           = [];
 let businessDetails         = null;
+let invoiceSequence         = null;
 let currentUserId           = null;
 let currentViewIndex        = 0;
 
 function getState() {
-    return { allClients, clientLatestInvoiceMap, clientInvoiceCountMap, workflowRates, businessDetails, currentUserId, invoiceChipColors };
+    return { allClients, clientLatestInvoiceMap, clientInvoiceCountMap, workflowRates, businessDetails, invoiceSequence, currentUserId, invoiceChipColors };
 }
 
 const invoiceChipColors = {
@@ -117,15 +118,17 @@ document.getElementById('sidebarSignOut').addEventListener('click', async () => 
 // DATA LOADING
 // ─────────────────────────────────────────────
 async function loadData() {
-    const [{ data: clients }, { data: rates }, { data: invoices }, { data: bizData }] = await Promise.all([
+    const [{ data: clients }, { data: rates }, { data: invoices }, { data: bizData }, { data: seqData }] = await Promise.all([
         sb.from('clients').select('*').eq('is_active', true).order('name'),
         sb.from('client_workflow_rates').select('*'),
         sb.from('invoices').select('client_id'),
-        sb.from('business_details').select('*').single()
+        sb.from('business_details').select('*').single(),
+        sb.from('invoice_sequence').select('invoice_prefix').single()
     ]);
-    allClients    = clients || [];
-    workflowRates = rates   || [];
-    if (bizData) businessDetails = bizData;
+    allClients      = clients || [];
+    workflowRates   = rates   || [];
+    if (bizData)  businessDetails  = bizData;
+    if (seqData)  invoiceSequence  = seqData;
 
     clientInvoiceCountMap = {};
     (invoices || []).forEach(inv => {
@@ -239,6 +242,11 @@ document.addEventListener('entries:openClientPicker', () => {
 // After invoice generation: reload entries + mark invoices stale + re-scan
 document.addEventListener('generate:done', async () => {
     Invoices.markStale();
+    await Entries.loadRecentEntries();
+    Generate.scanAndRender();
+});
+
+document.addEventListener('invoice:deleted', async () => {
     await Entries.loadRecentEntries();
     Generate.scanAndRender();
 });

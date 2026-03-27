@@ -171,7 +171,7 @@ async function _generate() {
     btn.disabled = true;
     btn.textContent = 'Generating…';
 
-    const { businessDetails, currentUserId } = getState();
+    const { invoiceSequence, businessDetails, currentUserId } = getState();
     const selectedGroups = uninvoicedGroups.filter(g => g.selected);
 
     try {
@@ -180,7 +180,7 @@ async function _generate() {
             const { data: nextNum, error: rpcErr } = await sb.rpc('next_invoice_number');
             if (rpcErr) throw rpcErr;
 
-            const invoicePrefix = businessDetails?.invoice_prefix || 'INV-';
+            const invoicePrefix = invoiceSequence?.invoice_prefix || businessDetails?.invoice_prefix || 'INV';
             const dueDays       = businessDetails?.due_date_offset_days || 14;
             const now     = new Date();
             const dueDate = new Date(now);

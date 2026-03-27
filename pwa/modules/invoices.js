@@ -283,10 +283,15 @@ async function toggleInvoiceCard(wrap, inv) {
     <button id="previewBtn_${inv.id}" style="margin-top:12px; margin-bottom:4px; width:100%; padding:12px; background:#111827; color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Preview Invoice
+    </button>
+    <button id="deleteBtn_${inv.id}" style="margin-top:6px; margin-bottom:4px; width:100%; padding:12px; background:transparent; color:#ef4444; border:1.5px solid #fecaca; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        Delete Invoice
     </button>`;
 
     inner.innerHTML = html;
     document.getElementById(`previewBtn_${inv.id}`).addEventListener('click', () => openInvoicePreview(inv));
+    document.getElementById(`deleteBtn_${inv.id}`).addEventListener('click', () => openDeleteSheet(inv));
 }
 
 function collapseInvoiceCard(wrap) {
@@ -481,6 +486,77 @@ function openInvoicePreview(inv) {
 }
 
 export function getPrintHTML() { return currentPreviewHTML; }
+
+// ─────────────────────────────────────────────
+// DELETE INVOICE
+// ─────────────────────────────────────────────
+
+function openDeleteSheet(inv) {
+    const existing = document.getElementById('invoiceDeleteSheet');
+    if (existing) existing.remove();
+
+    const sheet = document.createElement('div');
+    sheet.id = 'invoiceDeleteSheet';
+    sheet.style.cssText = `position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;justify-content:flex-end;`;
+    sheet.innerHTML = `
+        <div id="invoiceDeleteBackdrop" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s;"></div>
+        <div id="invoiceDeletePanel" style="position:relative;background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 40px;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);">
+            <p style="font-size:13px;font-weight:600;color:#9ca3af;text-align:center;margin:0 0 16px;letter-spacing:0.05em;text-transform:uppercase;">Delete ${inv.invoice_number}</p>
+            <button id="deleteInvoiceOnly" style="width:100%;padding:14px;margin-bottom:10px;background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;font-size:15px;font-weight:600;color:#111827;cursor:pointer;font-family:inherit;">
+                Delete invoice only (keep entries)
+            </button>
+            <button id="deleteInvoiceAndEntries" style="width:100%;padding:14px;margin-bottom:16px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;font-size:15px;font-weight:600;color:#ef4444;cursor:pointer;font-family:inherit;">
+                Delete invoice and entries
+            </button>
+            <button id="deleteInvoiceCancel" style="width:100%;padding:14px;background:#f9fafb;border:none;border-radius:12px;font-size:15px;font-weight:600;color:#6b7280;cursor:pointer;font-family:inherit;">
+                Cancel
+            </button>
+        </div>`;
+
+    document.body.appendChild(sheet);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.getElementById('invoiceDeleteBackdrop').style.opacity = '1';
+        document.getElementById('invoiceDeletePanel').style.transform = 'translateY(0)';
+    }));
+
+    const close = () => {
+        document.getElementById('invoiceDeleteBackdrop').style.opacity = '0';
+        document.getElementById('invoiceDeletePanel').style.transform = 'translateY(100%)';
+        setTimeout(() => sheet.remove(), 300);
+    };
+
+    document.getElementById('invoiceDeleteBackdrop').addEventListener('click', close);
+    document.getElementById('deleteInvoiceCancel').addEventListener('click', close);
+    document.getElementById('deleteInvoiceOnly').addEventListener('click', async () => {
+        close();
+        await _deleteInvoice(inv, false);
+    });
+    document.getElementById('deleteInvoiceAndEntries').addEventListener('click', async () => {
+        close();
+        await _deleteInvoice(inv, true);
+    });
+}
+
+async function _deleteInvoice(inv, deleteEntries) {
+    try {
+        if (deleteEntries) {
+            const { error } = await sb.from('entries').delete().eq('invoice_id', inv.id);
+            if (error) throw error;
+        } else {
+            const { error } = await sb.from('entries').update({ invoice_id: null }).eq('invoice_id', inv.id);
+            if (error) throw error;
+        }
+        const { error: invErr } = await sb.from('invoices').delete().eq('id', inv.id);
+        if (invErr) throw invErr;
+
+        invoicesCache = invoicesCache.filter(i => i.id !== inv.id);
+        invoicesLoaded = false;
+        await loadInvoices();
+        document.dispatchEvent(new CustomEvent('invoice:deleted'));
+    } catch (err) {
+        alert('Error deleting invoice: ' + err.message);
+    }
+}
 
 // ─────────────────────────────────────────────
 // SCROLL + PULL TO REFRESH + SORT BUTTON
