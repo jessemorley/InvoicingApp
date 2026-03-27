@@ -160,13 +160,12 @@
         /* Recent entries list */
         .entry-row {
             background: #fff;
-            border-radius: 14px;
+            border-radius: 0;
             padding: 14px 16px;
             display: flex;
             align-items: center;
             gap: 12px;
             position: relative;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .entry-row-tappable {
             cursor: pointer;
@@ -290,13 +289,28 @@
         .week-group {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 0;
             padding-top: 0;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .week-group .entry-card-wrap:not(:last-child) .entry-row {
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .week-group .entry-card-wrap:first-child .entry-row {
+            border-radius: 14px 14px 0 0;
+        }
+        .week-group .entry-card-wrap:last-child .entry-row {
+            border-radius: 0 0 14px 14px;
+        }
+        .week-group .entry-card-wrap:first-child:last-child .entry-row {
+            border-radius: 14px;
         }
 
-        /* Expanded entry card */
+        /* Expanded entry card — square the bottom corners to connect to detail panel */
         .entry-card-wrap.expanded .entry-row {
-            border-radius: 14px 14px 0 0;
+            border-radius: 0 0 0 0 !important;
         }
         .entry-detail-panel {
             background: #fff;
