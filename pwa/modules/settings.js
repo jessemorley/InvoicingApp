@@ -3,11 +3,10 @@
 // Handles: personal info, banking, super, invoice numbering, preferences
 // ─────────────────────────────────────────────
 
-let sb, getState;
+let sb;
 
-export function init(supabase, stateGetter) {
+export function init(supabase, _stateGetter) {
     sb = supabase;
-    getState = stateGetter;
 }
 
 // ── State ─────────────────────────────────────
@@ -16,6 +15,7 @@ let bizData        = null;
 let seqData        = null;
 let saveSeqTask    = null;
 let saveBizTask    = null;
+let activeTab      = 'general';
 
 const LOCAL_KEYS = {
     markIssuedOnExport:     'settings_markIssuedOnExport',
@@ -71,11 +71,18 @@ async function _fetchAndRender() {
 // RENDER
 // ─────────────────────────────────────────────
 
+const TABS = [
+    { id: 'general',     label: 'General' },
+    { id: 'preferences', label: 'Preferences' },
+    { id: 'profile',     label: 'Profile' },
+    { id: 'super',       label: 'Super' },
+];
+
 function _render() {
     const container = document.getElementById('settingsContent');
     if (!container || !bizData || !seqData) return;
 
-    const nextNum = (seqData.last_number ?? 0) + 1;
+    const nextNum    = (seqData.last_number ?? 0) + 1;
     const markIssued = getLocal('markIssuedOnExport', true);
     const dueOffset  = getLocal('dueDateOffsetDays', 30);
     const fyMonth    = getLocal('financialYearStartMonth', 7);
@@ -85,121 +92,333 @@ function _render() {
         `<option value="${i+1}" ${fyMonth === i+1 ? 'selected' : ''}>${m}</option>`
     ).join('');
 
-    container.innerHTML = `
-        <!-- GENERAL -->
-        <div class="settings-section">
-            <div class="settings-section-header">General</div>
-            <div class="settings-group">
-                <div class="settings-row">
-                    <label class="settings-label" for="s_invoicePrefix">Invoice Prefix</label>
-                    <input id="s_invoicePrefix" class="settings-input settings-input-short" type="text"
-                        value="${_esc(seqData.invoice_prefix)}" maxlength="10">
-                </div>
-                <div class="settings-row">
-                    <label class="settings-label" for="s_nextInvoiceNumber">Next Invoice #</label>
-                    <input id="s_nextInvoiceNumber" class="settings-input settings-input-short" type="number"
-                        min="1" step="1" value="${nextNum}">
-                </div>
-            </div>
-        </div>
+    // Tab bar
+    const tabBar = TABS.map(t => `
+        <button class="stg-tab ${activeTab === t.id ? 'stg-tab-active' : ''}"
+                data-tab="${t.id}">${t.label}</button>
+    `).join('');
 
-        <!-- PREFERENCES -->
-        <div class="settings-section">
-            <div class="settings-section-header">Preferences</div>
-            <div class="settings-group">
-                <div class="settings-row settings-row-toggle">
-                    <span class="settings-label">Include super in totals</span>
-                    <label class="settings-toggle">
-                        <input id="s_includeSuperInTotals" type="checkbox" ${bizData.include_super_in_totals ? 'checked' : ''}>
-                        <span class="settings-toggle-track"></span>
-                    </label>
-                </div>
-                <div class="settings-row settings-row-toggle">
-                    <span class="settings-label">Mark as issued on PDF export</span>
-                    <label class="settings-toggle">
-                        <input id="s_markIssuedOnExport" type="checkbox" ${markIssued ? 'checked' : ''}>
-                        <span class="settings-toggle-track"></span>
-                    </label>
-                </div>
-                <div class="settings-row">
-                    <label class="settings-label" for="s_dueDateOffsetDays">Due date offset</label>
-                    <div class="settings-input-row">
-                        <input id="s_dueDateOffsetDays" class="settings-input settings-input-short" type="number"
-                            min="7" max="90" value="${dueOffset}">
-                        <span class="settings-unit">days</span>
+    // Tab panels
+    const panels = {
+        general: `
+            <div class="stg-section">
+                <div class="stg-group">
+                    <div class="stg-row">
+                        <span class="stg-row-label">Invoice Prefix</span>
+                        <input id="s_invoicePrefix" class="stg-input-inline" type="text"
+                            value="${_esc(seqData.invoice_prefix)}" maxlength="10">
+                    </div>
+                    <div class="stg-row">
+                        <span class="stg-row-label">Next Invoice #</span>
+                        <input id="s_nextInvoiceNumber" class="stg-input-inline" type="number"
+                            min="1" step="1" value="${nextNum}">
                     </div>
                 </div>
-                <div class="settings-row">
-                    <label class="settings-label" for="s_financialYearStartMonth">Financial year starts</label>
-                    <select id="s_financialYearStartMonth" class="settings-select">
-                        ${monthOptions}
-                    </select>
-                </div>
             </div>
-        </div>
+        `,
 
-        <!-- PERSONAL INFO -->
-        <div class="settings-section">
-            <div class="settings-section-header">Personal Info</div>
-            <div class="settings-group">
-                <div class="settings-field">
-                    <label class="settings-field-label" for="s_name">Name</label>
-                    <input id="s_name" class="settings-input settings-input-full" type="text" value="${_esc(bizData.name)}">
-                </div>
-                <div class="settings-field">
-                    <label class="settings-field-label" for="s_businessName">Business Name</label>
-                    <input id="s_businessName" class="settings-input settings-input-full" type="text" value="${_esc(bizData.business_name)}">
-                </div>
-                <div class="settings-field">
-                    <label class="settings-field-label" for="s_abn">ABN</label>
-                    <input id="s_abn" class="settings-input settings-input-full" type="text" inputmode="numeric" value="${_esc(bizData.abn)}">
-                </div>
-                <div class="settings-field">
-                    <label class="settings-field-label" for="s_address">Address</label>
-                    <input id="s_address" class="settings-input settings-input-full" type="text" value="${_esc(bizData.address)}">
+        preferences: `
+            <div class="stg-section">
+                <div class="stg-group">
+                    <div class="stg-row stg-row-toggle">
+                        <div class="stg-row-toggle-text">
+                            <span class="stg-row-label">Include super in totals</span>
+                            <span class="stg-row-sub">Add superannuation calculations to invoice summaries</span>
+                        </div>
+                        <label class="stg-switch">
+                            <input id="s_includeSuperInTotals" type="checkbox" ${bizData.include_super_in_totals ? 'checked' : ''}>
+                            <span class="stg-switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="stg-row stg-row-toggle">
+                        <div class="stg-row-toggle-text">
+                            <span class="stg-row-label">Mark as issued on PDF export</span>
+                            <span class="stg-row-sub">Automatically update status when downloading</span>
+                        </div>
+                        <label class="stg-switch">
+                            <input id="s_markIssuedOnExport" type="checkbox" ${markIssued ? 'checked' : ''}>
+                            <span class="stg-switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="stg-row">
+                        <span class="stg-row-label">Due date offset</span>
+                        <div class="stg-row-value-group">
+                            <input id="s_dueDateOffsetDays" class="stg-input-inline" type="number"
+                                min="7" max="90" value="${dueOffset}">
+                            <span class="stg-row-unit">days</span>
+                        </div>
+                    </div>
+                    <div class="stg-row">
+                        <span class="stg-row-label">Financial year starts</span>
+                        <div class="stg-row-value-group">
+                            <select id="s_financialYearStartMonth" class="stg-select">
+                                ${monthOptions}
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        `,
 
-        <!-- BANKING -->
-        <div class="settings-section">
-            <div class="settings-section-header">Banking</div>
-            <div class="settings-group">
-                <div class="settings-field">
-                    <label class="settings-field-label" for="s_bsb">BSB</label>
-                    <input id="s_bsb" class="settings-input settings-input-full" type="text" inputmode="numeric" value="${_esc(bizData.bsb)}">
+        profile: `
+            <div class="stg-section">
+                <div class="stg-group stg-group-fields">
+                    <div class="stg-fields-grid">
+                        <div class="stg-field">
+                            <label class="stg-field-label" for="s_name">Name</label>
+                            <div class="stg-input-box">
+                                <input id="s_name" class="stg-input-boxed" type="text" value="${_esc(bizData.name)}">
+                            </div>
+                        </div>
+                        <div class="stg-field">
+                            <label class="stg-field-label" for="s_businessName">Business Name</label>
+                            <div class="stg-input-box">
+                                <input id="s_businessName" class="stg-input-boxed" type="text" value="${_esc(bizData.business_name)}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stg-field stg-field-full">
+                        <label class="stg-field-label" for="s_abn">ABN</label>
+                        <div class="stg-input-box">
+                            <input id="s_abn" class="stg-input-boxed" type="text" inputmode="numeric" value="${_esc(bizData.abn)}">
+                        </div>
+                    </div>
+                    <div class="stg-field stg-field-full">
+                        <label class="stg-field-label" for="s_address">Address</label>
+                        <div class="stg-input-box">
+                            <textarea id="s_address" class="stg-input-boxed stg-textarea" rows="2">${_esc(bizData.address)}</textarea>
+                        </div>
+                    </div>
                 </div>
-                <div class="settings-field">
-                    <label class="settings-field-label" for="s_accountNumber">Account Number</label>
-                    <input id="s_accountNumber" class="settings-input settings-input-full" type="text" inputmode="numeric" value="${_esc(bizData.account_number)}">
-                </div>
+                <p class="stg-hint">This information appears on your generated invoices.</p>
             </div>
-        </div>
 
-        <!-- SUPERANNUATION -->
-        <div class="settings-section">
-            <div class="settings-section-header">Superannuation</div>
-            <div class="settings-group">
-                <div class="settings-field">
-                    <label class="settings-field-label" for="s_superFund">Fund Name</label>
-                    <input id="s_superFund" class="settings-input settings-input-full" type="text" value="${_esc(bizData.super_fund)}">
-                </div>
-                <div class="settings-field">
-                    <label class="settings-field-label" for="s_superMemberNumber">Member Number</label>
-                    <input id="s_superMemberNumber" class="settings-input settings-input-full" type="text" value="${_esc(bizData.super_member_number)}">
-                </div>
-                <div class="settings-field">
-                    <label class="settings-field-label" for="s_superFundAbn">Fund ABN</label>
-                    <input id="s_superFundAbn" class="settings-input settings-input-full" type="text" inputmode="numeric" value="${_esc(bizData.super_fund_abn)}">
-                </div>
-                <div class="settings-field">
-                    <label class="settings-field-label" for="s_superUsi">USI</label>
-                    <input id="s_superUsi" class="settings-input settings-input-full" type="text" value="${_esc(bizData.super_usi)}">
+            <div class="stg-section">
+                <div class="stg-section-header">Banking</div>
+                <div class="stg-group stg-group-fields">
+                    <div class="stg-fields-grid">
+                        <div class="stg-field">
+                            <label class="stg-field-label" for="s_bsb">BSB</label>
+                            <div class="stg-input-box">
+                                <input id="s_bsb" class="stg-input-boxed" type="text" inputmode="numeric" value="${_esc(bizData.bsb)}">
+                            </div>
+                        </div>
+                        <div class="stg-field">
+                            <label class="stg-field-label" for="s_accountNumber">Account Number</label>
+                            <div class="stg-input-box">
+                                <input id="s_accountNumber" class="stg-input-boxed" type="text" inputmode="numeric" value="${_esc(bizData.account_number)}">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+        `,
+
+        super: `
+            <div class="stg-section">
+                <div class="stg-group stg-group-fields">
+                    <div class="stg-field stg-field-full">
+                        <label class="stg-field-label" for="s_superFund">Fund Name</label>
+                        <div class="stg-input-box">
+                            <input id="s_superFund" class="stg-input-boxed" type="text" value="${_esc(bizData.super_fund)}">
+                        </div>
+                    </div>
+                    <div class="stg-field stg-field-full">
+                        <label class="stg-field-label" for="s_superMemberNumber">Member Number</label>
+                        <div class="stg-input-box">
+                            <input id="s_superMemberNumber" class="stg-input-boxed" type="text" value="${_esc(bizData.super_member_number)}">
+                        </div>
+                    </div>
+                    <div class="stg-field stg-field-full">
+                        <label class="stg-field-label" for="s_superFundAbn">Fund ABN</label>
+                        <div class="stg-input-box">
+                            <input id="s_superFundAbn" class="stg-input-boxed" type="text" inputmode="numeric" value="${_esc(bizData.super_fund_abn)}">
+                        </div>
+                    </div>
+                    <div class="stg-field stg-field-full">
+                        <label class="stg-field-label" for="s_superUsi">USI</label>
+                        <div class="stg-input-box">
+                            <input id="s_superUsi" class="stg-input-boxed" type="text" value="${_esc(bizData.super_usi)}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `,
+    };
+
+    container.innerHTML = `
+        <div class="stg-tabs-bar">${tabBar}</div>
+        <div id="stgPanels">
+            ${panels[activeTab] || ''}
         </div>
     `;
 
+    _bindTabSwitching();
+    _bindHandlers();
+}
+
+function _renderPanel() {
+    const panel = document.getElementById('stgPanels');
+    if (!panel || !bizData || !seqData) return;
+
+    const nextNum    = (seqData.last_number ?? 0) + 1;
+    const markIssued = getLocal('markIssuedOnExport', true);
+    const dueOffset  = getLocal('dueDateOffsetDays', 30);
+    const fyMonth    = getLocal('financialYearStartMonth', 7);
+
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthOptions = MONTHS.map((m, i) =>
+        `<option value="${i+1}" ${fyMonth === i+1 ? 'selected' : ''}>${m}</option>`
+    ).join('');
+
+    const panels = {
+        general: `
+            <div class="stg-section">
+                <div class="stg-group">
+                    <div class="stg-row">
+                        <span class="stg-row-label">Invoice Prefix</span>
+                        <input id="s_invoicePrefix" class="stg-input-inline" type="text"
+                            value="${_esc(seqData.invoice_prefix)}" maxlength="10">
+                    </div>
+                    <div class="stg-row">
+                        <span class="stg-row-label">Next Invoice #</span>
+                        <input id="s_nextInvoiceNumber" class="stg-input-inline" type="number"
+                            min="1" step="1" value="${nextNum}">
+                    </div>
+                </div>
+            </div>
+        `,
+
+        preferences: `
+            <div class="stg-section">
+                <div class="stg-group">
+                    <div class="stg-row stg-row-toggle">
+                        <div class="stg-row-toggle-text">
+                            <span class="stg-row-label">Include super in totals</span>
+                            <span class="stg-row-sub">Add superannuation calculations to invoice summaries</span>
+                        </div>
+                        <label class="stg-switch">
+                            <input id="s_includeSuperInTotals" type="checkbox" ${bizData.include_super_in_totals ? 'checked' : ''}>
+                            <span class="stg-switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="stg-row stg-row-toggle">
+                        <div class="stg-row-toggle-text">
+                            <span class="stg-row-label">Mark as issued on PDF export</span>
+                            <span class="stg-row-sub">Automatically update status when downloading</span>
+                        </div>
+                        <label class="stg-switch">
+                            <input id="s_markIssuedOnExport" type="checkbox" ${markIssued ? 'checked' : ''}>
+                            <span class="stg-switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="stg-row">
+                        <span class="stg-row-label">Due date offset</span>
+                        <div class="stg-row-value-group">
+                            <input id="s_dueDateOffsetDays" class="stg-input-inline" type="number"
+                                min="7" max="90" value="${dueOffset}">
+                            <span class="stg-row-unit">days</span>
+                        </div>
+                    </div>
+                    <div class="stg-row">
+                        <span class="stg-row-label">Financial year starts</span>
+                        <div class="stg-row-value-group">
+                            <select id="s_financialYearStartMonth" class="stg-select">
+                                ${monthOptions}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `,
+
+        profile: `
+            <div class="stg-section">
+                <div class="stg-group stg-group-fields">
+                    <div class="stg-fields-grid">
+                        <div class="stg-field">
+                            <label class="stg-field-label" for="s_name">Name</label>
+                            <div class="stg-input-box">
+                                <input id="s_name" class="stg-input-boxed" type="text" value="${_esc(bizData.name)}">
+                            </div>
+                        </div>
+                        <div class="stg-field">
+                            <label class="stg-field-label" for="s_businessName">Business Name</label>
+                            <div class="stg-input-box">
+                                <input id="s_businessName" class="stg-input-boxed" type="text" value="${_esc(bizData.business_name)}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stg-field stg-field-full">
+                        <label class="stg-field-label" for="s_abn">ABN</label>
+                        <div class="stg-input-box">
+                            <input id="s_abn" class="stg-input-boxed" type="text" inputmode="numeric" value="${_esc(bizData.abn)}">
+                        </div>
+                    </div>
+                    <div class="stg-field stg-field-full">
+                        <label class="stg-field-label" for="s_address">Address</label>
+                        <div class="stg-input-box">
+                            <textarea id="s_address" class="stg-input-boxed stg-textarea" rows="2">${_esc(bizData.address)}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <p class="stg-hint">This information appears on your generated invoices.</p>
+            </div>
+
+            <div class="stg-section">
+                <div class="stg-section-header">Banking</div>
+                <div class="stg-group stg-group-fields">
+                    <div class="stg-fields-grid">
+                        <div class="stg-field">
+                            <label class="stg-field-label" for="s_bsb">BSB</label>
+                            <div class="stg-input-box">
+                                <input id="s_bsb" class="stg-input-boxed" type="text" inputmode="numeric" value="${_esc(bizData.bsb)}">
+                            </div>
+                        </div>
+                        <div class="stg-field">
+                            <label class="stg-field-label" for="s_accountNumber">Account Number</label>
+                            <div class="stg-input-box">
+                                <input id="s_accountNumber" class="stg-input-boxed" type="text" inputmode="numeric" value="${_esc(bizData.account_number)}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `,
+
+        super: `
+            <div class="stg-section">
+                <div class="stg-group stg-group-fields">
+                    <div class="stg-field stg-field-full">
+                        <label class="stg-field-label" for="s_superFund">Fund Name</label>
+                        <div class="stg-input-box">
+                            <input id="s_superFund" class="stg-input-boxed" type="text" value="${_esc(bizData.super_fund)}">
+                        </div>
+                    </div>
+                    <div class="stg-field stg-field-full">
+                        <label class="stg-field-label" for="s_superMemberNumber">Member Number</label>
+                        <div class="stg-input-box">
+                            <input id="s_superMemberNumber" class="stg-input-boxed" type="text" value="${_esc(bizData.super_member_number)}">
+                        </div>
+                    </div>
+                    <div class="stg-field stg-field-full">
+                        <label class="stg-field-label" for="s_superFundAbn">Fund ABN</label>
+                        <div class="stg-input-box">
+                            <input id="s_superFundAbn" class="stg-input-boxed" type="text" inputmode="numeric" value="${_esc(bizData.super_fund_abn)}">
+                        </div>
+                    </div>
+                    <div class="stg-field stg-field-full">
+                        <label class="stg-field-label" for="s_superUsi">USI</label>
+                        <div class="stg-input-box">
+                            <input id="s_superUsi" class="stg-input-boxed" type="text" value="${_esc(bizData.super_usi)}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `,
+    };
+
+    panel.innerHTML = panels[activeTab] || '';
     _bindHandlers();
 }
 
@@ -208,18 +427,32 @@ function _esc(v) {
 }
 
 // ─────────────────────────────────────────────
+// TAB SWITCHING
+// ─────────────────────────────────────────────
+
+function _bindTabSwitching() {
+    document.querySelectorAll('.stg-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+            activeTab = btn.dataset.tab;
+            document.querySelectorAll('.stg-tab').forEach(b => b.classList.toggle('stg-tab-active', b.dataset.tab === activeTab));
+            _renderPanel();
+        });
+    });
+}
+
+// ─────────────────────────────────────────────
 // BIND INPUT HANDLERS
 // ─────────────────────────────────────────────
 
 function _bindHandlers() {
     // Invoice prefix — debounce save
-    document.getElementById('s_invoicePrefix').addEventListener('input', e => {
+    document.getElementById('s_invoicePrefix')?.addEventListener('input', e => {
         seqData.invoice_prefix = e.target.value;
         _scheduleSeqSave();
     });
 
     // Next invoice number — stored as last_number = nextNum - 1
-    document.getElementById('s_nextInvoiceNumber').addEventListener('input', e => {
+    document.getElementById('s_nextInvoiceNumber')?.addEventListener('input', e => {
         const next = parseInt(e.target.value, 10);
         if (!isNaN(next) && next >= 1) {
             seqData.last_number = next - 1;
@@ -228,18 +461,18 @@ function _bindHandlers() {
     });
 
     // Local preferences
-    document.getElementById('s_markIssuedOnExport').addEventListener('change', e => {
+    document.getElementById('s_markIssuedOnExport')?.addEventListener('change', e => {
         setLocal('markIssuedOnExport', e.target.checked);
     });
-    document.getElementById('s_dueDateOffsetDays').addEventListener('input', e => {
+    document.getElementById('s_dueDateOffsetDays')?.addEventListener('input', e => {
         setLocal('dueDateOffsetDays', e.target.value);
     });
-    document.getElementById('s_financialYearStartMonth').addEventListener('change', e => {
+    document.getElementById('s_financialYearStartMonth')?.addEventListener('change', e => {
         setLocal('financialYearStartMonth', e.target.value);
     });
 
     // Include super — in business_details
-    document.getElementById('s_includeSuperInTotals').addEventListener('change', e => {
+    document.getElementById('s_includeSuperInTotals')?.addEventListener('change', e => {
         bizData.include_super_in_totals = e.target.checked;
         _scheduleBizSave();
     });
