@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entries - Invoicing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.446.0/lucide.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fafafa; /* Slightly off-white for better card contrast */
+            color: #111;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .sidebar-item {
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-item:hover {
+            background-color: #f3f4f6;
+        }
+
+        .sidebar-item.active {
+            background-color: #f3f4f6;
+            font-weight: 500;
+        }
+
+        .week-wrapper {
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb; /* Darkened from efefef */
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        .entry-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6; /* Darkened from f9f9f9 */
+        }
+
+        .entry-row:last-child {
+            border-bottom: none;
+        }
+
+        .date-col {
+            width: 40px;
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+        .pill-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #dcfce7;
+        }
+
+        .btn-create-invoice {
+            font-size: 11px;
+            font-weight: 600;
+            color: #111;
+            background: #fff;
+            padding: 4px 12px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .btn-create-invoice:hover {
+            background: #000;
+            color: #fff;
+            border-color: #000;
+        }
+
+        .btn-floating {
+            position: fixed;
+            bottom: 80px; 
+            right: 24px;
+            background: #000;
+            color: #fff;
+            width: 48px;
+            height: 48px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 40;
+        }
+
+        @media (min-width: 768px) {
+            .btn-floating {
+                bottom: 32px;
+                right: 32px;
+            }
+        }
+
+        .week-header {
+            font-size: 11px;
+            font-weight: 700;
+            color: #666; /* Darkened from bbb */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mobile-bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 50;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 8px;
+            background-color: white;
+            min-width: 140px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            z-index: 100;
+            padding: 4px;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 8px 12px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #4b5563;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f3f4f6;
+            color: #111;
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen pb-20 md:pb-0">
+
+    <!-- Sidebar (Desktop) -->
+    <aside class="hidden md:flex w-64 border-r border-gray-200 bg-white flex-col p-6 fixed h-full overflow-y-auto">
+        <div class="mb-10">
+            <h1 class="text-xl font-bold tracking-tight text-gray-900">Invoicing</h1>
+        </div>
+
+        <nav class="space-y-1 flex-1">
+            <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm text-gray-500 rounded-lg">
+                <i data-lucide="calendar" class="w-4 h-4 mr-3"></i>
+                Calendar
+            </a>
+            <a href="entries.html" class="sidebar-item active flex items-center px-3 py-2 text-sm text-black rounded-lg">
+                <i data-lucide="list" class="w-4 h-4 mr-3"></i>
+                Entries
+            </a>
+            <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm text-gray-500 rounded-lg">
+                <i data-lucide="file-text" class="w-4 h-4 mr-3"></i>
+                Invoices
+            </a>
+            <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm text-gray-500 rounded-lg">
+                <i data-lucide="users" class="w-4 h-4 mr-3"></i>
+                Clients
+            </a>
+            <a href="settings.html" class="sidebar-item flex items-center px-3 py-2 text-sm text-gray-500 rounded-lg">
+                <i data-lucide="settings" class="w-4 h-4 mr-3"></i>
+                Settings
+            </a>
+        </nav>
+
+        <div class="mt-auto">
+            <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm text-gray-400 rounded-lg">
+                <i data-lucide="log-out" class="w-4 h-4 mr-3"></i>
+                Sign Out
+            </a>
+        </div>
+    </aside>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-bottom-nav md:hidden">
+        <a href="#" class="flex flex-col items-center text-gray-400">
+            <i data-lucide="calendar" class="w-5 h-5"></i>
+            <span class="text-[10px] mt-1">Calendar</span>
+        </a>
+        <a href="entries.html" class="flex flex-col items-center text-black font-semibold">
+            <i data-lucide="list" class="w-5 h-5"></i>
+            <span class="text-[10px] mt-1">Entries</span>
+        </a>
+        <a href="#" class="flex flex-col items-center text-gray-400">
+            <i data-lucide="file-text" class="w-5 h-5"></i>
+            <span class="text-[10px] mt-1">Invoices</span>
+        </a>
+        <a href="settings.html" class="flex flex-col items-center text-gray-400">
+            <i data-lucide="settings" class="w-5 h-5"></i>
+            <span class="text-[10px] mt-1">Settings</span>
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-1 md:ml-64 p-5 md:p-12 max-w-4xl mx-auto w-full">
+        <header class="flex justify-between items-center mb-10">
+            <h2 class="text-2xl font-bold tracking-tight">Entries</h2>
+            <div class="relative">
+                <button id="groupToggleBtn" class="flex items-center text-[10px] font-bold text-gray-500 cursor-pointer hover:text-black transition-colors uppercase tracking-widest">
+                    <i data-lucide="filter" class="w-3.5 h-3.5 mr-2"></i>
+                    <span id="currentFilterText">By Invoice</span>
+                </button>
+                <div id="groupDropdown" class="dropdown-content">
+                    <div class="dropdown-item" onclick="setView('by-client')">By Invoice</div>
+                    <div class="dropdown-item" onclick="setView('by-week')">By Week</div>
+                    <div class="dropdown-item" onclick="setView('none')">None</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- VIEW: BY INVOICE (Behavioral Client Mapping) -->
+        <div id="view-by-client" class="view-section active">
+            <!-- CURRENT WEEK -->
+            <div class="week-wrapper">
+                <div class="week-header">
+                    <span class="text-gray-900">Mar 23 — Mar 29</span>
+                    <span class="text-gray-400 font-medium lowercase italic">current week</span>
+                </div>
+                <div class="space-y-8">
+                    <div class="client-group">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Testy</span>
+                            <div class="flex items-center gap-4">
+                                <span class="text-sm font-bold text-gray-900">$1,200.00</span>
+                                <button class="btn-create-invoice">Create Invoice</button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="entry-row">
+                                <div class="date-col">
+                                    <span class="text-[9px] block font-bold text-gray-500 uppercase">Fri</span>
+                                    <span class="text-sm font-bold">27</span>
+                                </div>
+                                <div class="flex-1 pl-6">
+                                    <span class="text-sm text-gray-500 italic">No description provided</span>
+                                </div>
+                                <div class="text-right flex items-center gap-8 md:gap-12">
+                                    <span class="text-xs text-gray-500 font-medium">8h</span>
+                                    <span class="text-sm text-gray-600 font-medium w-20">$1,200.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="client-group">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Images That Sell</span>
+                            <div class="flex items-center gap-4">
+                                <span class="text-sm font-bold text-gray-900">$1,080.00</span>
+                                <button class="btn-create-invoice">Create Invoice</button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="entry-row">
+                                <div class="date-col">
+                                    <span class="text-[9px] block font-bold text-gray-500 uppercase">Thu</span>
+                                    <span class="text-sm font-bold">26</span>
+                                </div>
+                                <div class="flex-1 pl-6">
+                                    <span class="text-sm font-medium text-gray-900">Just Cuts (LC) · O</span>
+                                </div>
+                                <div class="text-right flex items-center gap-8 md:gap-12">
+                                    <span class="text-xs text-gray-500 font-medium">2.5h</span>
+                                    <span class="text-sm text-gray-600 font-medium w-20">$360.00</span>
+                                </div>
+                            </div>
+                            <div class="entry-row">
+                                <div class="date-col">
+                                    <span class="text-[9px] block font-bold text-gray-500 uppercase">Wed</span>
+                                    <span class="text-sm font-bold">25</span>
+                                </div>
+                                <div class="flex-1 pl-6">
+                                    <span class="text-sm font-medium text-gray-900">Najo (BTS) · P</span>
+                                </div>
+                                <div class="text-right flex items-center gap-8 md:gap-12">
+                                    <span class="text-xs text-gray-500 font-medium">2.5h</span>
+                                    <span class="text-sm text-gray-600 font-medium w-20">$360.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PREVIOUS WEEK -->
+            <div class="week-wrapper">
+                <div class="week-header">
+                    <span class="text-gray-900">Mar 16 — Mar 22</span>
+                </div>
+                <div class="client-group">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Images That Sell</span>
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm font-bold text-gray-700">$1,552.50</span>
+                            <span class="pill-badge">JM169</span>
+                        </div>
+                    </div>
+                    <div class="card opacity-70">
+                        <div class="entry-row">
+                            <div class="date-col">
+                                <span class="text-[9px] block font-bold text-gray-500 uppercase">Fri</span>
+                                <span class="text-sm font-bold">20</span>
+                            </div>
+                            <div class="flex-1 pl-6">
+                                <span class="text-sm font-medium text-gray-900">Najo · O</span>
+                            </div>
+                            <div class="text-right flex items-center gap-8 md:gap-12">
+                                <span class="text-xs text-gray-500 font-medium">2.5h</span>
+                                <span class="text-sm text-gray-600 font-medium w-20">$382.50</span>
+                            </div>
+                        </div>
+                        <div class="entry-row">
+                            <div class="date-col">
+                                <span class="text-[9px] block font-bold text-gray-500 uppercase">Thu</span>
+                                <span class="text-sm font-bold">19</span>
+                            </div>
+                            <div class="flex-1 pl-6">
+                                <span class="text-sm font-medium text-gray-900">Pandora · VO</span>
+                            </div>
+                            <div class="text-right flex items-center gap-8 md:gap-12">
+                                <span class="text-xs text-gray-500 font-medium">2.5h</span>
+                                <span class="text-sm text-gray-600 font-medium w-20">$393.75</span>
+                            </div>
+                        </div>
+                        <div class="entry-row">
+                            <div class="date-col">
+                                <span class="text-[9px] block font-bold text-gray-500 uppercase">Tue</span>
+                                <span class="text-sm font-bold">17</span>
+                            </div>
+                            <div class="flex-1 pl-6">
+                                <span class="text-sm font-medium text-gray-900">Maison Balzac · O</span>
+                            </div>
+                            <div class="text-right flex items-center gap-8 md:gap-12">
+                                <span class="text-xs text-gray-500 font-medium">2.5h</span>
+                                <span class="text-sm text-gray-600 font-medium w-20">$371.25</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: BY WEEK -->
+        <div id="view-by-week" class="view-section">
+            <div class="week-wrapper">
+                <div class="week-header">
+                    <span class="text-gray-900">Mar 23 — Mar 29</span>
+                    <span class="text-sm font-bold text-gray-900">$2,280.00</span>
+                </div>
+                <div class="card">
+                    <div class="entry-row">
+                        <div class="date-col">
+                            <span class="text-[9px] block font-bold text-gray-500 uppercase">Fri</span>
+                            <span class="text-sm font-bold">27</span>
+                        </div>
+                        <div class="flex-1 pl-6">
+                            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mr-3">Testy</span>
+                            <span class="text-sm text-gray-500 italic">No description</span>
+                        </div>
+                        <div class="text-right flex items-center gap-8 md:gap-12">
+                            <span class="text-xs text-gray-500 font-medium">8h</span>
+                            <span class="text-sm text-gray-600 font-medium w-20">$1,200.00</span>
+                        </div>
+                    </div>
+                    <div class="entry-row">
+                        <div class="date-col">
+                            <span class="text-[9px] block font-bold text-gray-500 uppercase">Thu</span>
+                            <span class="text-sm font-bold">26</span>
+                        </div>
+                        <div class="flex-1 pl-6">
+                            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mr-3">Images That Sell</span>
+                            <span class="text-sm font-medium text-gray-900">Just Cuts (LC) · O</span>
+                        </div>
+                        <div class="text-right flex items-center gap-8 md:gap-12">
+                            <span class="text-xs text-gray-500 font-medium">2.5h</span>
+                            <span class="text-sm text-gray-600 font-medium w-20">$360.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="week-wrapper">
+                <div class="week-header">
+                    <span class="text-gray-900">Mar 16 — Mar 22</span>
+                    <span class="text-sm font-bold text-gray-600">$1,552.50</span>
+                </div>
+                <div class="card opacity-70">
+                    <div class="entry-row">
+                        <div class="date-col">
+                            <span class="text-[9px] block font-bold text-gray-500 uppercase">Fri</span>
+                            <span class="text-sm font-bold">20</span>
+                        </div>
+                        <div class="flex-1 pl-6">
+                            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mr-3">Images That Sell</span>
+                            <span class="text-sm font-medium text-gray-900">Najo · O</span>
+                        </div>
+                        <div class="text-right flex items-center gap-8 md:gap-12">
+                            <span class="text-xs text-gray-500 font-medium">2.5h</span>
+                            <span class="text-sm text-gray-600 font-medium w-20">$382.50</span>
+                        </div>
+                    </div>
+                    <div class="entry-row">
+                        <div class="date-col">
+                            <span class="text-[9px] block font-bold text-gray-500 uppercase">Thu</span>
+                            <span class="text-sm font-bold">19</span>
+                        </div>
+                        <div class="flex-1 pl-6">
+                            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mr-3">Images That Sell</span>
+                            <span class="text-sm font-medium text-gray-900">Pandora · VO</span>
+                        </div>
+                        <div class="text-right flex items-center gap-8 md:gap-12">
+                            <span class="text-xs text-gray-500 font-medium">2.5h</span>
+                            <span class="text-sm text-gray-600 font-medium w-20">$393.75</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: NONE -->
+        <div id="view-none" class="view-section">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">All Entries</span>
+                <span class="text-sm font-bold text-gray-900">$3,832.50</span>
+            </div>
+            <div class="card">
+                <div class="entry-row">
+                    <div class="date-col">
+                        <span class="text-[9px] block font-bold text-gray-500 uppercase">Mar 27</span>
+                        <span class="text-sm font-bold">Fri</span>
+                    </div>
+                    <div class="flex-1 pl-6">
+                        <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mr-3">Testy</span>
+                        <span class="text-sm text-gray-500 italic">No description</span>
+                    </div>
+                    <div class="text-right flex items-center gap-8 md:gap-12">
+                        <span class="text-xs text-gray-500 font-medium">8h</span>
+                        <span class="text-sm text-gray-600 font-medium w-20">$1,200.00</span>
+                    </div>
+                </div>
+                <div class="entry-row">
+                    <div class="date-col">
+                        <span class="text-[9px] block font-bold text-gray-500 uppercase">Mar 26</span>
+                        <span class="text-sm font-bold">Thu</span>
+                    </div>
+                    <div class="flex-1 pl-6">
+                        <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mr-3">Images That Sell</span>
+                        <span class="text-sm font-medium text-gray-900">Just Cuts (LC) · O</span>
+                    </div>
+                    <div class="text-right flex items-center gap-8 md:gap-12">
+                        <span class="text-xs text-gray-500 font-medium">2.5h</span>
+                        <span class="text-sm text-gray-600 font-medium w-20">$360.00</span>
+                    </div>
+                </div>
+                <div class="entry-row opacity-70">
+                    <div class="date-col">
+                        <span class="text-[9px] block font-bold text-gray-500 uppercase">Mar 20</span>
+                        <span class="text-sm font-bold">Fri</span>
+                    </div>
+                    <div class="flex-1 pl-6">
+                        <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mr-3">Images That Sell</span>
+                        <span class="text-sm font-medium text-gray-900">Najo · O</span>
+                    </div>
+                    <div class="text-right flex items-center gap-8 md:gap-12">
+                        <span class="text-xs text-gray-500 font-medium">2.5h</span>
+                        <span class="text-sm text-gray-600 font-medium w-20">$382.50</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="h-24"></div>
+    </main>
+
+    <button class="btn-floating">
+        <i data-lucide="plus" class="w-5 h-5"></i>
+    </button>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        lucide.createIcons();
+
+        const toggleBtn = document.getElementById('groupToggleBtn');
+        const dropdown = document.getElementById('groupDropdown');
+        const filterText = document.getElementById('currentFilterText');
+
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', () => {
+            dropdown.classList.remove('show');
+        });
+
+        function setView(viewId) {
+            const labels = {
+                'by-client': 'By Invoice',
+                'by-week': 'By Week',
+                'none': 'None'
+            };
+            filterText.textContent = labels[viewId];
+
+            document.querySelectorAll('.view-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            
+            dropdown.classList.remove('show');
+        }
+    </script>
+</body>
+</html>
