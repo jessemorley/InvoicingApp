@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Invoicing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.446.0/lucide.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fafafa;
+            color: #111;
+        }
+
+        .sidebar-item {
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-item:hover {
+            background-color: #f3f4f6;
+        }
+
+        .sidebar-item.active {
+            background-color: #f3f4f6;
+            font-weight: 500;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Resend-style rounded input containers */
+        .input-container {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 8px 12px;
+            width: 100%;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-container:focus-within {
+            border-color: #000;
+            box-shadow: 0 0 0 1px #000;
+        }
+
+        .input-field-clean {
+            border: none;
+            padding: 0;
+            width: 100%;
+            outline: none;
+            background: transparent;
+            font-size: 0.875rem;
+            color: #111;
+            font-weight: 400; /* Removed bold */
+        }
+
+        .label-text {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #888;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        /* Toggle Switch Styling */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e5e7eb;
+            transition: .3s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        input:checked + .slider {
+            background-color: #000;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(16px);
+        }
+
+        .btn-primary {
+            background: #000;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.8;
+        }
+
+        .section-divider {
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .section-divider:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 border-r border-gray-200 bg-white flex flex-col p-4 fixed h-full overflow-y-auto">
+        <div class="px-3 py-4 mb-6">
+            <h1 class="text-xl font-semibold tracking-tight">Invoicing</h1>
+        </div>
+
+        <nav class="space-y-1 flex-1">
+            <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg">
+                <i data-lucide="calendar" class="w-4 h-4 mr-3"></i>
+                Calendar
+            </a>
+            <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg">
+                <i data-lucide="list" class="w-4 h-4 mr-3"></i>
+                Entries
+            </a>
+            <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg">
+                <i data-lucide="file-text" class="w-4 h-4 mr-3"></i>
+                Invoices
+            </a>
+            <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg">
+                <i data-lucide="users" class="w-4 h-4 mr-3"></i>
+                Clients
+            </a>
+            <a href="#" class="sidebar-item active flex items-center px-3 py-2 text-sm text-gray-900 rounded-lg">
+                <i data-lucide="settings" class="w-4 h-4 mr-3"></i>
+                Settings
+            </a>
+        </nav>
+
+        <div class="mt-auto pt-4 border-t border-gray-100">
+            <a href="#" class="sidebar-item flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg">
+                <i data-lucide="log-out" class="w-4 h-4 mr-3"></i>
+                Sign Out
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 p-8 max-w-5xl mx-auto">
+        <header class="mb-10">
+            <h2 class="text-3xl font-semibold tracking-tight">Settings</h2>
+            
+            <!-- Resend-style Tabs -->
+            <div class="flex space-x-6 mt-8 border-b border-gray-200">
+                <button class="pb-3 text-sm font-medium border-b-2 border-black text-black">General</button>
+                <button class="pb-3 text-sm font-medium text-gray-500 hover:text-black">Preferences</button>
+                <button class="pb-3 text-sm font-medium text-gray-500 hover:text-black">Personal Info</button>
+                <button class="pb-3 text-sm font-medium text-gray-500 hover:text-black">Banking</button>
+            </div>
+        </header>
+
+        <div class="space-y-12">
+            
+            <!-- General Section -->
+            <section>
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">General</h3>
+                <div class="card">
+                    <div class="px-5 py-4 section-divider flex justify-between items-center">
+                        <span class="text-sm font-medium">Invoice Prefix</span>
+                        <input type="text" class="bg-transparent border-none p-0 text-right w-24 text-sm font-normal focus:ring-0 outline-none" value="JM">
+                    </div>
+                    <div class="px-5 py-4 section-divider flex justify-between items-center">
+                        <span class="text-sm font-medium">Next Invoice #</span>
+                        <input type="text" class="bg-transparent border-none p-0 text-right w-24 text-sm font-normal focus:ring-0 outline-none" value="171">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Preferences Section -->
+            <section>
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Preferences</h3>
+                <div class="card">
+                    <div class="px-5 py-4 section-divider flex justify-between items-center">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-medium">Include super in totals</span>
+                            <span class="text-[12px] text-gray-500 mt-0.5">Add superannuation calculations to invoice summaries</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="px-5 py-4 section-divider flex justify-between items-center">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-medium">Mark as issued on PDF export</span>
+                            <span class="text-[12px] text-gray-500 mt-0.5">Automatically update status when downloading</span>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="px-5 py-4 section-divider flex justify-between items-center">
+                        <span class="text-sm font-medium">Due date offset</span>
+                        <div class="flex items-center text-sm text-gray-500">
+                            <span class="font-normal text-black mr-2">30</span> days
+                        </div>
+                    </div>
+                    <div class="px-5 py-4 section-divider flex justify-between items-center">
+                        <span class="text-sm font-medium">Financial year starts</span>
+                        <div class="flex items-center text-sm font-normal cursor-pointer text-gray-900">
+                            Jul <i data-lucide="chevron-down" class="ml-1.5 w-4 h-4 text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Personal Info Section -->
+            <section>
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Personal Info</h3>
+                <div class="card">
+                    <div class="p-6 space-y-6">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <div class="label-text">Name</div>
+                                <div class="input-container">
+                                    <input type="text" class="input-field-clean" value="Jesse Morley">
+                                </div>
+                            </div>
+                            <div>
+                                <div class="label-text">Business Name</div>
+                                <div class="input-container">
+                                    <input type="text" class="input-field-clean" value="Jesse Morley">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="label-text">ABN</div>
+                            <div class="input-container">
+                                <input type="text" class="input-field-clean" value="62 622 680 864">
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="label-text">Address</div>
+                            <div class="input-container">
+                                <textarea class="input-field-clean resize-none leading-relaxed" rows="2">1 Scouller Street, Marrickville NSW 2204</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+                        <span class="text-xs text-gray-500">This information appears on your generated invoices.</span>
+                        <button class="btn-primary">Save Changes</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Banking Section -->
+            <section>
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Banking</h3>
+                <div class="card p-6">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <div class="label-text">BSB</div>
+                            <div class="input-container">
+                                <input type="text" class="input-field-clean" value="313140">
+                            </div>
+                        </div>
+                        <div>
+                            <div class="label-text">Account Number</div>
+                            <div class="input-container">
+                                <input type="text" class="input-field-clean" value="•••• 5678">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+        
+        <div class="h-20"></div> <!-- Bottom spacer -->
+    </main>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
