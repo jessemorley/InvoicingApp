@@ -80,6 +80,7 @@ const TABS = [
 
 function _render() {
     const container = document.getElementById('settingsContent');
+    const header    = document.getElementById('settingsHeader');
     if (!container || !bizData || !seqData) return;
 
     const nextNum    = (seqData.last_number ?? 0) + 1;
@@ -92,11 +93,14 @@ function _render() {
         `<option value="${i+1}" ${fyMonth === i+1 ? 'selected' : ''}>${m}</option>`
     ).join('');
 
-    // Tab bar
-    const tabBar = TABS.map(t => `
-        <button class="stg-tab ${activeTab === t.id ? 'stg-tab-active' : ''}"
-                data-tab="${t.id}">${t.label}</button>
-    `).join('');
+    // Tab bar — rendered into header
+    if (header) {
+        const tabBar = TABS.map(t => `
+            <button class="stg-tab ${activeTab === t.id ? 'stg-tab-active' : ''}"
+                    data-tab="${t.id}">${t.label}</button>
+        `).join('');
+        header.innerHTML = `<h1 class="stg-page-title">Settings</h1><div class="stg-tabs-bar">${tabBar}</div>`;
+    }
 
     // Tab panels
     const panels = {
@@ -246,12 +250,7 @@ function _render() {
         `,
     };
 
-    container.innerHTML = `
-        <div class="stg-tabs-bar">${tabBar}</div>
-        <div id="stgPanels">
-            ${panels[activeTab] || ''}
-        </div>
-    `;
+    container.innerHTML = `<div id="stgPanels">${panels[activeTab] || ''}</div>`;
 
     _bindTabSwitching();
     _bindHandlers();
