@@ -9,6 +9,7 @@ let sb, getState;
 export function init(supabase, stateGetter) {
     sb = supabase;
     getState = stateGetter;
+    _wireNavButtons();
 }
 
 // ── State ────────────────────────────────────
@@ -50,7 +51,6 @@ export async function loadCalendar(year, month) {
     (invoices || []).forEach(inv => { calInvoices[inv.id] = inv; });
 
     _renderCalendar();
-    _wireNavButtons();
 }
 
 // ─────────────────────────────────────────────
