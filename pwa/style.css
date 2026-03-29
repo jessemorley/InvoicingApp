@@ -613,9 +613,8 @@
             .cal-entry-pill { display: none !important; }
             .cal-entry-pill-desktop { display: block !important; }
             .cal-entry-desc { display: block; }
-            .cal-grid { grid-template-rows: auto repeat(6, 1fr) !important; border-radius: 14px; overflow: hidden; }
             #calendarScroll { height: 100dvh !important; }
-            #calendarInner { padding: 0 20px calc(20px + env(safe-area-inset-bottom)); }
+            #calendarInner { padding: 0 20px; }
             .cal-day-cell { padding: 6px 5px !important; }
             /* App shell becomes a row */
             #appShell.active {
