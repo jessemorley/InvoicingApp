@@ -248,8 +248,9 @@ function _showDayEntries(dateStr, entries) {
 }
 
 function _wireNavButtons() {
-    const prev = document.getElementById('calPrevBtn');
-    const next = document.getElementById('calNextBtn');
+    const prev  = document.getElementById('calPrevBtn');
+    const next  = document.getElementById('calNextBtn');
+    const today = document.getElementById('calTodayBtn');
     if (prev) {
         prev.addEventListener('click', () => {
             currentMonth--;
@@ -261,6 +262,14 @@ function _wireNavButtons() {
         next.addEventListener('click', () => {
             currentMonth++;
             if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            loadCalendar();
+        });
+    }
+    if (today) {
+        today.addEventListener('click', () => {
+            const now = new Date();
+            currentYear  = now.getFullYear();
+            currentMonth = now.getMonth();
             loadCalendar();
         });
     }
