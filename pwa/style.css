@@ -611,13 +611,13 @@
 
         .cal-entry-desc { display: none; }
         .cal-entry-pill-desktop { display: none !important; }
-        #calendarInner { padding-bottom: env(safe-area-inset-bottom); }
+        #calendarInner { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
 
         @media (min-width: 768px) {
             .cal-entry-pill { display: none !important; }
             .cal-entry-pill-desktop { display: block !important; }
             .cal-entry-desc { display: block; }
-            #calendarScroll { height: 100dvh !important; background: #fff; }
+            #calendarScroll { background: #fff; }
             #calendarInner { padding: 0 20px; background: #fff; }
             /* Day headers bleed to full width and restore page bg so they float above the white panel */
             .cal-day-headers { background: #F2F3F5; margin: 0 -20px; padding: 0 20px; }

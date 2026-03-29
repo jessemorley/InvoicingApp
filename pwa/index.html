@@ -86,25 +86,27 @@
     <div id="viewSlider">
 
         <!-- ════ VIEW 0: CALENDAR ════ -->
-        <div id="viewCalendar" class="view-pane">
-            <div id="calendarScroll" style="width:100%; height:calc(100dvh - 56px - env(safe-area-inset-bottom)); overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column;">
-                <div style="padding-top:env(safe-area-inset-top); display:flex; flex-direction:column; flex:1;">
-                    <div class="view-content" style="display:flex; flex-direction:column; flex:1;">
-                        <div class="px-5 flex justify-between items-center pt-6 pb-3">
-                            <h1 class="text-3xl font-extrabold text-gray-900">Calendar</h1>
-                            <div class="flex gap-2 items-center">
-                                <span id="calMonthLabel" class="cal-month-label"></span>
-                                <button id="calPrevBtn" class="invoice-sort-btn">
-                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                                </button>
-                                <button id="calTodayBtn" style="height:36px; padding:0 12px; border-radius:10px; border:none; background:rgba(0,0,0,0.06); font-size:13px; font-weight:600; color:#111827; cursor:pointer; flex-shrink:0;">Today</button>
-                                <button id="calNextBtn" class="invoice-sort-btn">
-                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="calendarInner" style="flex:1; display:flex; flex-direction:column;"></div>
+        <div id="viewCalendar" class="view-pane" style="display:flex; flex-direction:column;">
+            <!-- Header: outside the scroll container so it never moves during grid loads -->
+            <div style="padding-top:env(safe-area-inset-top); flex-shrink:0;">
+                <div class="px-5 view-content flex justify-between items-center pt-6 pb-3">
+                    <h1 class="text-3xl font-extrabold text-gray-900">Calendar</h1>
+                    <div class="flex gap-2 items-center">
+                        <span id="calMonthLabel" class="cal-month-label"></span>
+                        <button id="calPrevBtn" class="invoice-sort-btn">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <button id="calTodayBtn" style="height:36px; padding:0 12px; border-radius:10px; border:none; background:rgba(0,0,0,0.06); font-size:13px; font-weight:600; color:#111827; cursor:pointer; flex-shrink:0;">Today</button>
+                        <button id="calNextBtn" class="invoice-sort-btn">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
                     </div>
+                </div>
+            </div>
+            <!-- Grid scroll area only -->
+            <div id="calendarScroll" style="width:100%; flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column;">
+                <div class="view-content" style="flex:1; display:flex; flex-direction:column;">
+                    <div id="calendarInner" style="flex:1; display:flex; flex-direction:column;"></div>
                 </div>
             </div>
         </div><!-- /viewCalendar -->
