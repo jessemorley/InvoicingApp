@@ -7,6 +7,7 @@ import * as Clients  from './modules/clients.js';
 import * as Calendar from './modules/calendar.js';
 import * as Generate from './modules/generate.js';
 import * as Settings from './modules/settings.js';
+import * as Account  from './modules/account.js';
 import { clientDotColor } from './modules/utils.js';
 
 // ── Supabase ─────────────────────────────────
@@ -22,6 +23,7 @@ const VIEW_ENTRIES  = 1;
 const VIEW_INVOICES = 2;
 const VIEW_CLIENTS  = 3;
 const VIEW_SETTINGS = 4;
+const VIEW_ACCOUNT  = 5;
 
 // ── Global state ─────────────────────────────
 let allClients              = [];
@@ -50,6 +52,7 @@ Clients.init(sb, getState);
 Calendar.init(sb, getState);
 Generate.init(sb, getState);
 Settings.init(sb, getState);
+Account.init(sb, getState);
 
 // ─────────────────────────────────────────────
 // AUTH
@@ -73,6 +76,11 @@ function showLogin() {
 function showApp() {
     document.getElementById('loginScreen').classList.remove('active');
     document.getElementById('appShell').classList.add('active');
+    sb.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user?.email) {
+            document.getElementById('sidebarEmail').textContent = session.user.email;
+        }
+    });
     Clients.initHandlers();
     switchView(VIEW_ENTRIES);
 }
@@ -93,6 +101,9 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
         errEl.classList.remove('hidden');
     } else {
         currentUserId = signInData.session.user.id;
+        if (signInData.session.user.email) {
+            document.getElementById('sidebarEmail').textContent = signInData.session.user.email;
+        }
         showApp();
         await loadData();
     }
@@ -258,8 +269,8 @@ document.addEventListener('clients:saved', async () => {
 // ─────────────────────────────────────────────
 // VIEW SWITCHING
 // ─────────────────────────────────────────────
-const TAB_IDS = ['tabCalendarBtn', 'tabEntriesBtn', 'tabInvoicesBtn', 'tabClientsBtn', 'tabSettingsBtn'];
-const SIDEBAR_VIEWS = ['calendar', 'entries', 'invoices', 'clients', 'settings'];
+const TAB_IDS = ['tabCalendarBtn', 'tabEntriesBtn', 'tabInvoicesBtn', 'tabClientsBtn', 'tabSettingsBtn', 'tabAccountBtn'];
+const SIDEBAR_VIEWS = ['calendar', 'entries', 'invoices', 'clients', 'settings', 'account'];
 
 export function switchView(index) {
     currentViewIndex = index;
@@ -267,7 +278,7 @@ export function switchView(index) {
 
     if (isDesktop) {
         // On desktop: show/hide panes directly (no slider transform)
-        ['viewCalendar','viewEntries','viewInvoices','viewClients','viewSettings'].forEach((id, i) => {
+        ['viewCalendar','viewEntries','viewInvoices','viewClients','viewSettings','viewAccount'].forEach((id, i) => {
             const el = document.getElementById(id);
             if (el) el.style.display = i === index ? '' : 'none';
         });
@@ -302,6 +313,9 @@ export function switchView(index) {
     }
     if (index === VIEW_SETTINGS) {
         Settings.loadSettings();
+    }
+    if (index === VIEW_ACCOUNT) {
+        Account.loadAccount();
     }
 }
 // Expose for onclick= attributes in HTML
@@ -342,7 +356,7 @@ window.switchView = switchView;
         if (swipeDir !== 'h') return;
         slider.style.transition = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)';
         const moved = liveOffsetVw - (currentViewIndex * -100);
-        const maxView = 4;
+        const maxView = 5;
         if (moved < -28 && currentViewIndex < maxView) {
             switchView(currentViewIndex + 1);
         } else if (moved > 28 && currentViewIndex > 0) {
@@ -382,4 +396,5 @@ document.getElementById('invoicePreviewPrint').addEventListener('click', () => {
 Entries.initScrollHandlers();
 Invoices.initScrollHandlers();
 
+lucide.createIcons({ attrs: { 'stroke-width': 2.2 } });
 init();
