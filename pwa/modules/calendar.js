@@ -93,11 +93,11 @@ function _renderCalendar() {
 
     // Cells grid — 6 rows only, flex:1 to fill remaining height
     html += `
-    <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:repeat(6,1fr); flex:1; overflow:hidden; background:#fff; border-top:1px solid #f0f0f0; border-left:1px solid #f0f0f0; border-radius:14px;">`;
+    <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:repeat(6,1fr); flex:1; overflow:hidden; background:#fff;">`;
 
     // Empty cells before first day
     for (let i = 0; i < startDow; i++) {
-        html += `<div style="background:#fff; border-right:1px solid #f0f0f0; border-bottom:1px solid #f0f0f0;"></div>`;
+        html += `<div style="background:#fff;"></div>`;
     }
 
     const { businessDetails } = getState();
@@ -140,7 +140,7 @@ function _renderCalendar() {
         });
 
         html += `
-            <div class="cal-day-cell" data-date="${dateStr}" style="background:#fff; padding:4px 3px; cursor:${dayEntries.length ? 'pointer' : 'default'}; min-width:0; overflow:hidden; border-right:1px solid #f0f0f0; border-bottom:1px solid #f0f0f0;">
+            <div class="cal-day-cell" data-date="${dateStr}" style="background:#fff; padding:4px 3px; cursor:${dayEntries.length ? 'pointer' : 'default'}; min-width:0; overflow:hidden;">
             <div style="font-size:12px; font-weight:${isToday ? '800' : '600'}; color:${isToday ? '#2563eb' : isWeekend ? '#6b7280' : '#111827'}; ${isToday ? 'background:#eff6ff; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center;' : ''}">${day}</div>
             ${entriesHtml}
         </div>`;
@@ -151,7 +151,7 @@ function _renderCalendar() {
     const remainder  = totalCells % 7;
     if (remainder !== 0) {
         for (let i = 0; i < 7 - remainder; i++) {
-            html += `<div style="background:#fff; border-right:1px solid #f0f0f0; border-bottom:1px solid #f0f0f0;"></div>`;
+            html += `<div style="background:#fff;"></div>`;
         }
     }
 

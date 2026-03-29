@@ -616,6 +616,7 @@
             #calendarScroll { height: 100dvh !important; }
             #calendarInner { padding: 0 20px; }
             .cal-day-cell { padding: 6px 5px !important; }
+            #viewCalendar .view-content { max-width: none; }
             /* App shell becomes a row */
             #appShell.active {
                 flex-direction: row;
@@ -628,7 +629,7 @@
                 flex-direction: column;
                 width: 240px;
                 flex-shrink: 0;
-                background: #f7f7f7;
+                background: #ffffff;
                 border-right: 1px solid #ededed;
                 padding: 12px;
                 gap: 2px;
@@ -651,7 +652,7 @@
                 display: flex;
                 align-items: center;
                 gap: 10px;
-                padding: 6px 12px;
+                padding: 8px 12px;
                 border-radius: 6px;
                 border: none;
                 background: none;
