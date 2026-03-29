@@ -11,10 +11,13 @@ export async function loadAccount() {
     const { data: { session } } = await sb.auth.getSession();
     const email = session?.user?.email ?? '—';
     el.innerHTML = `
-        <div class="settings-group">
-            <div class="settings-row">
-                <span class="settings-label">Email</span>
-                <span class="settings-value-readonly">${email}</span>
+        <div class="settings-section">
+            <div class="settings-section-header">Account</div>
+            <div class="settings-group">
+                <div class="settings-row">
+                    <span class="settings-label">Email</span>
+                    <span class="settings-value-readonly">${email}</span>
+                </div>
             </div>
         </div>`;
 }

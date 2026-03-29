@@ -45,9 +45,7 @@
     <!-- ── Desktop Sidebar ── -->
     <nav id="sidebar">
         <div id="sidebarBrand">
-            <div id="sidebarBrandIcon">
-                <img src="app_icon.png" width="22" height="22" style="border-radius:4px;">
-            </div>
+            <img src="app_icon.png" width="28" height="28" style="border-radius:4px; flex-shrink:0;">
             Invoicing
         </div>
         <button class="sidebar-btn" data-view="calendar" onclick="switchView(0)">
@@ -71,10 +69,10 @@
                 <i data-lucide="settings" class="w-4 h-4"></i>
                 Settings
             </button>
-            <div id="sidebarUserRow">
+            <div id="sidebarUserRow" onclick="switchView(5)" style="cursor:pointer;">
                 <div id="sidebarAvatar">J</div>
                 <span id="sidebarEmail">jessmorley@gmail.com</span>
-                <i data-lucide="log-out" id="sidebarLogoutIcon" onclick="document.getElementById('sidebarSignOut').click()" class="w-3.5 h-3.5"></i>
+                <i data-lucide="log-out" id="sidebarLogoutIcon" onclick="event.stopPropagation(); document.getElementById('sidebarSignOut').click()" class="w-3.5 h-3.5"></i>
             </div>
         </div>
         <button class="sidebar-btn sidebar-btn-signout" id="sidebarSignOut" style="display:none;">Sign Out</button>
