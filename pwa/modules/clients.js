@@ -156,7 +156,7 @@ function _renderClientForm(client) {
 
     const header = desktop
         ? `<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
-            <h3 style="font-size:15px; font-weight:700; color:#111827; margin:0;">${isNew ? 'New Client' : client.name}</h3>
+            <h3 class="panel-header">${isNew ? 'New Client' : client.name}</h3>
             <button id="cfBackBtn" style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
@@ -174,13 +174,13 @@ function _renderClientForm(client) {
         <!-- Name -->
         <div class="space-y-3">
         <div class="bg-slate-50 rounded-2xl px-5 py-4">
-            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Name</span>
+            <span class="field-label-panel">Name</span>
             <input type="text" id="cfName" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${_esc(client?.name || '')}">
         </div>
 
         <!-- Billing type -->
         <div>
-            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Billing Type</span>
+            <span class="field-label-panel mb-1.5 px-1">Billing Type</span>
             <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr 1fr;">
                 <button class="seg-btn${bt === 'day_rate' ? ' active' : ''}" data-cfbt="day_rate">Day Rate</button>
                 <button class="seg-btn${bt === 'hourly'   ? ' active' : ''}" data-cfbt="hourly">Hourly</button>
@@ -192,11 +192,11 @@ function _renderClientForm(client) {
         <div id="cfDayRateFields" class="${bt === 'day_rate' ? '' : 'hidden'} space-y-3">
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Full Day ($)</span>
+                    <span class="field-label-panel">Full Day ($)</span>
                     <input type="number" id="cfRateFullDay" step="0.01" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${_esc(client?.rate_full_day || '')}">
                 </div>
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Half Day ($)</span>
+                    <span class="field-label-panel">Half Day ($)</span>
                     <input type="number" id="cfRateHalfDay" step="0.01" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${_esc(client?.rate_half_day || '')}">
                 </div>
             </div>
@@ -205,32 +205,32 @@ function _renderClientForm(client) {
         <!-- Hourly fields -->
         <div id="cfHourlyFields" class="${bt === 'hourly' ? '' : 'hidden'} space-y-3">
             <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Hourly Rate ($)</span>
+                <span class="field-label-panel">Hourly Rate ($)</span>
                 <input type="number" id="cfRateHourly" step="0.01" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${_esc(client?.rate_hourly || '')}">
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Photographer ($)</span>
+                    <span class="field-label-panel">Photographer ($)</span>
                     <input type="number" id="cfRatePhotographer" step="0.01" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${_esc(client?.rate_hourly_photographer || '')}">
                 </div>
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Operator ($)</span>
+                    <span class="field-label-panel">Operator ($)</span>
                     <input type="number" id="cfRateOperator" step="0.01" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${_esc(client?.rate_hourly_operator || '')}">
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Default Start</span>
+                    <span class="field-label-panel">Default Start</span>
                     <input type="time" id="cfDefaultStart" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${(client?.default_start_time || '').substring(0,5)}">
                 </div>
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Default Finish</span>
+                    <span class="field-label-panel">Default Finish</span>
                     <input type="time" id="cfDefaultFinish" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${(client?.default_finish_time || '').substring(0,5)}">
                 </div>
             </div>
             <!-- Entry label + show role toggles -->
             <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Entry Label (e.g. "Shoot Client")</span>
+                <span class="field-label-panel">Entry Label (e.g. "Shoot Client")</span>
                 <input type="text" id="cfEntryLabel" class="bg-transparent w-full text-[15px] font-semibold outline-none" placeholder="Leave blank to show description field" value="${_esc(client?.entry_label || '')}">
             </div>
             <div class="bg-white rounded-2xl px-5 py-4 flex items-center justify-between">
@@ -253,13 +253,13 @@ function _renderClientForm(client) {
             </label>
         </div>
         <div id="cfSuperRateRow" class="${client?.pays_super ? '' : 'hidden'} bg-slate-50 rounded-2xl px-5 py-4">
-            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Super Rate</span>
+            <span class="field-label-panel">Super Rate</span>
             <input type="number" id="cfSuperRate" step="0.01" min="0" max="1" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${_esc(client?.super_rate || '0.12')}">
         </div>
 
         <!-- Invoice frequency -->
         <div>
-            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Invoice Frequency</span>
+            <span class="field-label-panel mb-1.5 px-1">Invoice Frequency</span>
             <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                 <button class="seg-btn${(client?.invoice_frequency || 'weekly') === 'weekly' ? ' active' : ''}" data-cffreq="weekly">Weekly</button>
                 <button class="seg-btn${client?.invoice_frequency === 'per_job' ? ' active' : ''}" data-cffreq="per_job">Per Job</button>
@@ -269,19 +269,19 @@ function _renderClientForm(client) {
         <!-- Contact info -->
         <div class="bg-slate-50 rounded-2xl px-5 py-4 space-y-3">
             <div>
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Email</span>
+                <span class="field-label-panel">Email</span>
                 <input type="email" id="cfEmail" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${_esc(client?.email || '')}">
             </div>
             <div>
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Address</span>
+                <span class="field-label-panel">Address</span>
                 <input type="text" id="cfAddress" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${_esc(client?.address || '')}">
             </div>
             <div>
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Suburb</span>
+                <span class="field-label-panel">Suburb</span>
                 <input type="text" id="cfSuburb" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${_esc(client?.suburb || '')}">
             </div>
             <div>
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">ABN</span>
+                <span class="field-label-panel">ABN</span>
                 <input type="text" id="cfAbn" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${_esc(client?.abn || '')}">
             </div>
         </div>
@@ -405,7 +405,7 @@ function _openWorkflowRateForm(rate) {
     container.innerHTML = `
     <div class="bg-slate-50 rounded-2xl p-4 space-y-3">
         <div class="bg-white rounded-2xl px-5 py-4">
-            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Workflow</span>
+            <span class="field-label-panel">Workflow</span>
             <div class="flex gap-1.5 mt-1" id="wfPickerBtns">
                 ${['Apparel','Product','Own Brand'].map(w =>
                     `<button class="workflow-btn${(rate?.workflow || 'Apparel') === w ? ' active' : ''}" data-wfname="${w}">${w}</button>`
@@ -421,20 +421,20 @@ function _openWorkflowRateForm(rate) {
         </div>
         <div id="wfSkuFields" class="${rate?.is_flat_bonus ? 'hidden' : ''} space-y-3">
             <div class="bg-white rounded-2xl px-5 py-4">
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">KPI (SKUs)</span>
+                <span class="field-label-panel">KPI (SKUs)</span>
                 <input type="number" id="wfKpi" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${rate?.kpi || ''}">
             </div>
             <div class="bg-white rounded-2xl px-5 py-4">
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Upper Limit (SKUs)</span>
+                <span class="field-label-panel">Upper Limit (SKUs)</span>
                 <input type="number" id="wfUpperLimit" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${rate?.upper_limit_skus || ''}">
             </div>
             <div class="bg-white rounded-2xl px-5 py-4">
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Incentive per SKU ($)</span>
+                <span class="field-label-panel">Incentive per SKU ($)</span>
                 <input type="number" id="wfIncentiveRate" step="0.01" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${rate?.incentive_rate_per_sku || ''}">
             </div>
         </div>
         <div class="bg-white rounded-2xl px-5 py-4">
-            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Max Bonus ($)</span>
+            <span class="field-label-panel">Max Bonus ($)</span>
             <input type="number" id="wfMaxBonus" step="0.01" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${rate?.max_bonus || ''}">
         </div>
         <div class="flex gap-2 pt-1">

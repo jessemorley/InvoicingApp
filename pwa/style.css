@@ -1,4 +1,30 @@
-        :root { --accent: #007AFF; }
+        :root {
+            --accent: #007AFF;
+
+            /* Typography — panel titles */
+            --panel-title-size: 15px;
+            --panel-title-weight: 700;
+            --panel-title-color: #111827;
+
+            /* Typography — group/section headers */
+            --group-header-size: 11px;
+            --group-header-weight: 700;
+            --group-header-color: #9ca3af;
+            --group-header-tracking: 0.06em;
+
+            /* Typography — field labels (log-entry form, slate) */
+            --label-size: 10px;
+            --label-weight: 600;
+            --label-color: #94a3b8;
+            --label-tracking: 0.05em;
+            --label-gap: 4px;
+
+            /* Typography — field labels (detail-panel forms, blue accent) */
+            --label-panel-weight: 700;
+            --label-panel-color: #60a5fa;
+            --label-panel-tracking: 0.1em;
+            --label-panel-gap: 2px;
+        }
 
         #overlayClientInput::placeholder {
             color: #d1d5db;
@@ -277,11 +303,11 @@
             align-items: baseline;
             padding: 16px 0 0;
             margin-top: 4px;
-            font-size: 11px;
-            font-weight: 700;
+            font-size: var(--group-header-size);
+            font-weight: var(--group-header-weight);
             text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: #9ca3af;
+            letter-spacing: var(--group-header-tracking);
+            color: var(--group-header-color);
         }
         .week-header:first-child {
             margin-top: 0;
@@ -352,6 +378,23 @@
         }
         .entry-detail-inner {
             padding: 0.75rem 1rem 1rem;
+        }
+
+        /* Detail panel title */
+        .panel-header {
+            font-size: var(--panel-title-size);
+            font-weight: var(--panel-title-weight);
+            color: var(--panel-title-color);
+            margin: 0;
+        }
+
+        /* Calendar month navigation label */
+        .cal-month-label {
+            font-size: var(--panel-title-size);
+            font-weight: var(--panel-title-weight);
+            color: var(--panel-title-color);
+            min-width: 110px;
+            text-align: center;
         }
 
         /* Entries tab layout */
@@ -732,12 +775,15 @@
             margin-bottom: 28px;
         }
         .settings-section-header {
-            font-size: 13px;
-            font-weight: 700;
-            color: #6b7280;
+            font-size: var(--group-header-size);
+            font-weight: var(--group-header-weight);
+            color: var(--group-header-color);
             text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: var(--group-header-tracking);
             padding: 0 4px 8px;
+        }
+        .settings-section:first-child .settings-section-header {
+            padding-top: 16px;
         }
         .settings-group {
             background: #fff;
@@ -793,6 +839,28 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-bottom: 4px;
+        }
+
+        /* Form field label — log-entry form (slate, semibold) */
+        .field-label {
+            display: block;
+            font-size: var(--label-size);
+            font-weight: var(--label-weight);
+            color: var(--label-color);
+            text-transform: uppercase;
+            letter-spacing: var(--label-tracking);
+            margin-bottom: var(--label-gap);
+        }
+
+        /* Form field label — detail-panel forms (blue accent, bold) */
+        .field-label-panel {
+            display: block;
+            font-size: var(--label-size);
+            font-weight: var(--label-panel-weight);
+            color: var(--label-panel-color);
+            text-transform: uppercase;
+            letter-spacing: var(--label-panel-tracking);
+            margin-bottom: var(--label-panel-gap);
         }
 
         /* Inputs */

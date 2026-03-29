@@ -176,7 +176,7 @@ function _showDayEntries(dateStr, entries) {
     let html = `
     <div style="padding:20px;">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-            <h3 style="font-size:15px; font-weight:700; color:#111827; margin:0;">${dateLabel}</h3>
+            <h3 class="panel-header">${dateLabel}</h3>
             <button id="dayPanelClose" style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>

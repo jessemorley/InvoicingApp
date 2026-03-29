@@ -478,14 +478,14 @@ function buildNewEntryFormHTML(desktop = false) {
 
             <!-- Date -->
             <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Date</span>
+                <span class="field-label-panel">Date</span>
                 <input type="date" id="newEntryDate" class="bg-transparent w-full text-[15px] font-semibold outline-none">
             </div>
 
             <!-- DAY RATE -->
             <div id="newDayRateFields" class="hidden space-y-3">
                 <div>
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Day Type</span>
+                    <span class="field-label-panel mb-1.5 px-1">Day Type</span>
                     <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                         <button class="seg-btn active" data-newday="full">Full Day</button>
                         <button class="seg-btn" data-newday="half">Half Day</button>
@@ -493,7 +493,7 @@ function buildNewEntryFormHTML(desktop = false) {
                 </div>
                 <div id="newWorkflowSection" class="reveal open space-y-3">
                     <div>
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Workflow</span>
+                        <span class="field-label-panel mb-1.5 px-1">Workflow</span>
                         <div class="flex gap-1.5" id="newWorkflowBtns">
                             <button class="workflow-btn active" data-newwf="Apparel">Apparel</button>
                             <button class="workflow-btn" data-newwf="Product">Product</button>
@@ -502,14 +502,14 @@ function buildNewEntryFormHTML(desktop = false) {
                     </div>
                     <div id="newBrandField" class="hidden">
                         <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Brand</span>
+                            <span class="field-label-panel">Brand</span>
                             <input type="text" id="newBrandInput"
                                 class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400">
                         </div>
                     </div>
                     <div id="newSkuField" class="hidden">
                         <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">SKUs Shot</span>
+                            <span class="field-label-panel">SKUs Shot</span>
                             <input type="number" id="newSkuInput" placeholder="0" min="0"
                                 class="bg-transparent w-full text-[15px] font-semibold outline-none">
                         </div>
@@ -521,12 +521,12 @@ function buildNewEntryFormHTML(desktop = false) {
             <div id="newHourlyFields" class="hidden space-y-3">
                 <div id="newItsFields" class="hidden space-y-3">
                     <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Shoot Client</span>
+                        <span class="field-label-panel">Shoot Client</span>
                         <input type="text" id="newShootClientInput"
                             class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400" placeholder="">
                     </div>
                     <div>
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Role</span>
+                        <span class="field-label-panel mb-1.5 px-1">Role</span>
                         <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                             <button class="seg-btn active" data-newrole="Photographer">Photographer</button>
                             <button class="seg-btn" data-newrole="Operator">Operator</button>
@@ -535,23 +535,23 @@ function buildNewEntryFormHTML(desktop = false) {
                 </div>
                 <div id="newHourlyDescField" class="hidden">
                     <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
+                        <span class="field-label-panel">Description</span>
                         <input type="text" id="newHourlyDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Start</span>
+                        <span class="field-label-panel">Start</span>
                         <input type="time" id="newStartTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative">
                     </div>
                     <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">End</span>
+                        <span class="field-label-panel">End</span>
                         <input type="time" id="newFinishTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative">
                     </div>
                 </div>
                 <div class="bg-slate-50 px-5 py-4 rounded-2xl flex items-center justify-between">
                     <div>
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Break</span>
+                        <span class="field-label-panel">Break</span>
                         <div class="flex items-baseline gap-2">
                             <span id="newBreakDisplay" class="text-2xl font-black text-gray-900">0</span>
                             <span class="text-slate-400 text-[11px] font-bold uppercase">min</span>
@@ -568,11 +568,11 @@ function buildNewEntryFormHTML(desktop = false) {
             <!-- MANUAL -->
             <div id="newManualFields" class="hidden space-y-3">
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
+                    <span class="field-label-panel">Description</span>
                     <input type="text" id="newManualDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none">
                 </div>
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Amount ($)</span>
+                    <span class="field-label-panel">Amount ($)</span>
                     <input type="number" id="newManualAmount" placeholder="0.00" step="0.01" min="0"
                         class="bg-transparent w-full text-[15px] font-semibold outline-none">
                 </div>
@@ -722,7 +722,7 @@ export function openNewEntryDesktop(allClients, clientInvoiceCountMap) {
         <div style="display:flex; flex-direction:column; height:100%;">
             <div style="padding:20px 20px 12px; border-bottom:1px solid #f3f4f6; flex-shrink:0;">
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-                    <h3 style="font-size:15px; font-weight:700; color:#111827; margin:0;">New Entry</h3>
+                    <h3 class="panel-header">New Entry</h3>
                     <button id="desktopNewEntryClose" style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
                         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -761,7 +761,7 @@ function _openNewEntryDesktopWithClient(client) {
     panel.innerHTML = `
         <div id="desktopNewEntryWrap" style="overflow-y:auto; height:100%; box-sizing:border-box;">
             <div style="display:flex; align-items:center; justify-content:space-between; padding:20px 20px 12px;">
-                <h3 style="font-size:15px; font-weight:700; color:#111827; margin:0;">New Entry</h3>
+                <h3 class="panel-header">New Entry</h3>
                 <button id="desktopNewEntryClose" style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
                     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
@@ -1042,7 +1042,7 @@ function openEntryCard(wrap, entry, readOnly = false) {
     const desktopPrefix = desktop ? `
         <div style="padding:20px;">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-            <h3 style="font-size:15px; font-weight:700; color:#111827; margin:0;">Edit Entry</h3>
+            <h3 class="panel-header">Edit Entry</h3>
             <button id="detailPanelClose" style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
@@ -1052,7 +1052,7 @@ function openEntryCard(wrap, entry, readOnly = false) {
     let html = desktopPrefix + `
         <div class="space-y-3">
         <div class="bg-slate-50 rounded-2xl px-5 py-4">
-            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Date</span>
+            <span class="field-label-panel">Date</span>
             <input type="date" id="editDate" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
         </div>`;
 
@@ -1063,7 +1063,7 @@ function openEntryCard(wrap, entry, readOnly = false) {
         html += `
         <div id="editDayRateFields" class="space-y-3">
             <div>
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Day Type</span>
+                <span class="field-label-panel mb-1.5 px-1">Day Type</span>
                 <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                     <button class="seg-btn${editDayType === 'full' ? ' active' : ''}" data-editday="full"${readOnly ? ' disabled' : ''}>Full Day</button>
                     <button class="seg-btn${editDayType === 'half' ? ' active' : ''}" data-editday="half"${readOnly ? ' disabled' : ''}>Half Day</button>
@@ -1071,7 +1071,7 @@ function openEntryCard(wrap, entry, readOnly = false) {
             </div>
             <div id="editWorkflowSection" class="${wfHidden} space-y-3">
                 <div>
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Workflow</span>
+                    <span class="field-label-panel mb-1.5 px-1">Workflow</span>
                     <div class="flex gap-1.5" id="editWorkflowBtns">
                         <button class="workflow-btn${editWorkflow === 'Apparel' ? ' active' : ''}" data-editwf="Apparel"${readOnly ? ' disabled' : ''}>Apparel</button>
                         <button class="workflow-btn${editWorkflow === 'Product' ? ' active' : ''}" data-editwf="Product"${readOnly ? ' disabled' : ''}>Product</button>
@@ -1080,13 +1080,13 @@ function openEntryCard(wrap, entry, readOnly = false) {
                 </div>
                 <div id="editBrandField" class="${brandHidden}">
                     <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Brand</span>
+                        <span class="field-label-panel">Brand</span>
                         <input type="text" id="editBrandInput" class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400"${readOnly ? ' disabled' : ''}>
                     </div>
                 </div>
                 <div id="editSkuField" class="${skuHidden}">
                     <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                        <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">SKUs Shot</span>
+                        <span class="field-label-panel">SKUs Shot</span>
                         <input type="number" id="editSkuInput" placeholder="0" min="0" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
                     </div>
                 </div>
@@ -1098,12 +1098,12 @@ function openEntryCard(wrap, entry, readOnly = false) {
         <div id="editHourlyFields" class="space-y-3">
             <div id="editItsFields" class="${hasLabel ? '' : 'hidden'} space-y-3">
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">${entryFieldLabel}</span>
+                    <span class="field-label-panel">${entryFieldLabel}</span>
                     <input type="text" id="editShootClientInput" class="bg-transparent w-full text-[15px] font-semibold outline-none placeholder-slate-400"${readOnly ? ' disabled' : ''}>
                 </div>
             </div>
             <div id="editRoleSection" class="${showRole ? '' : 'hidden'}">
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-1.5 px-1">Role</span>
+                <span class="field-label-panel mb-1.5 px-1">Role</span>
                 <div class="seg-ctrl" style="grid-template-columns: 1fr 1fr;">
                     <button class="seg-btn${editRole === 'Photographer' ? ' active' : ''}" data-editrole="Photographer"${readOnly ? ' disabled' : ''}>Photographer</button>
                     <button class="seg-btn${editRole === 'Operator' ? ' active' : ''}" data-editrole="Operator"${readOnly ? ' disabled' : ''}>Operator</button>
@@ -1111,23 +1111,23 @@ function openEntryCard(wrap, entry, readOnly = false) {
             </div>
             <div id="editHourlyDescField" class="${hasLabel ? 'hidden' : ''}">
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
+                    <span class="field-label-panel">Description</span>
                     <input type="text" id="editHourlyDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-2">
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Start</span>
+                    <span class="field-label-panel">Start</span>
                     <input type="time" id="editStartTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative"${readOnly ? ' disabled' : ''}>
                 </div>
                 <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">End</span>
+                    <span class="field-label-panel">End</span>
                     <input type="time" id="editFinishTime" class="bg-transparent w-full text-[15px] font-semibold outline-none relative"${readOnly ? ' disabled' : ''}>
                 </div>
             </div>
             <div class="bg-slate-50 px-5 py-4 rounded-2xl flex items-center justify-between">
                 <div>
-                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Break</span>
+                    <span class="field-label-panel">Break</span>
                     <div class="flex items-baseline gap-2">
                         <span id="editBreakDisplay" class="text-2xl font-black text-gray-900">0</span>
                         <span class="text-slate-400 text-[11px] font-bold uppercase">min</span>
@@ -1144,11 +1144,11 @@ function openEntryCard(wrap, entry, readOnly = false) {
         html += `
         <div id="editManualFields" class="space-y-3">
             <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Description</span>
+                <span class="field-label-panel">Description</span>
                 <input type="text" id="editManualDesc" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
             </div>
             <div class="bg-slate-50 rounded-2xl px-5 py-4">
-                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">Amount ($)</span>
+                <span class="field-label-panel">Amount ($)</span>
                 <input type="number" id="editManualAmount" placeholder="0.00" step="0.01" min="0" class="bg-transparent w-full text-[15px] font-semibold outline-none"${readOnly ? ' disabled' : ''}>
             </div>
         </div>`;

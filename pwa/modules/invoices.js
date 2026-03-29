@@ -271,7 +271,7 @@ async function _openInvoiceDesktop(wrap, inv) {
     panel.innerHTML = `
         <div style="padding:20px; overflow-y:auto; height:100%; box-sizing:border-box;">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
-                <h3 style="font-size:15px; font-weight:700; color:#111827; margin:0;">${inv.invoice_number}</h3>
+                <h3 class="panel-header">${inv.invoice_number}</h3>
                 <button id="invoicePanelClose" style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
                     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
