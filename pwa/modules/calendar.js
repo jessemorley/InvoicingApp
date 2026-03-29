@@ -89,7 +89,7 @@ function _renderCalendar() {
     // Day-of-week header row (Sat/Sun columns slightly dimmer)
     dayHeaders.forEach((d, i) => {
         const isWknd = i >= 5;
-        html += `<div style="background:#F2F3F5; text-align:center; padding:6px 0; font-size:10px; font-weight:700; color:${isWknd ? '#b0b7c3' : '#9ca3af'}; text-transform:uppercase; min-width:0; overflow:hidden; border-right:1px solid #f0f0f0; border-bottom:1px solid #f0f0f0;">${d}</div>`;
+        html += `<div style="background:#fff; text-align:center; padding:6px 0; font-size:10px; font-weight:700; color:${isWknd ? '#b0b7c3' : '#9ca3af'}; text-transform:uppercase; min-width:0; overflow:hidden; border-right:1px solid #f0f0f0; border-bottom:1px solid #f0f0f0;">${d}</div>`;
     });
 
     // Empty cells before first day
