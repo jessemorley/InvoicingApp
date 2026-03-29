@@ -141,8 +141,10 @@ function updateLoadMoreSentinel() {
 function renderEntries(list, data, startCardIndex, beforeSentinel = false) {
     if (entriesViewMode === 'client-week') {
         renderEntryClientWeeks(list, data, startCardIndex, beforeSentinel);
-    } else {
+    } else if (entriesViewMode === 'week') {
         renderEntryWeeks(list, data, startCardIndex, beforeSentinel);
+    } else {
+        renderEntryFlat(list, data, startCardIndex, beforeSentinel);
     }
 }
 
@@ -347,6 +349,81 @@ function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
             list.appendChild(group);
         }
     });
+}
+
+function renderEntryFlat(list, data, startCardIndex, beforeSentinel = false) {
+    const { businessDetails, invoiceChipColors } = getState();
+    const includeSuperInTotals = businessDetails?.include_super_in_totals ?? true;
+
+    const sentinel = document.getElementById('entriesLoadMore');
+
+    // Reuse existing flat group so infinite-load batches don't create gaps
+    let group = list.querySelector('.week-group.flat-group');
+    if (!group) {
+        group = document.createElement('div');
+        group.className = 'week-group flat-group';
+    }
+
+    let cardIndex = startCardIndex;
+    data.forEach(entry => {
+        const clientName  = entry.clients?.name || 'Unknown';
+        const badgeColor  = clientBadgeColor(clientName);
+        const description = entryDescription(entry);
+        const total       = entry.total_amount || 0;
+        const amount      = fmt(includeSuperInTotals ? total : total - (entry.super_amount || 0));
+        const inv         = entry.invoices;
+        const isInvoiced  = !!entry.invoice_id;
+
+        const chipHtml = inv ? (() => {
+            const chipColor = invoiceChipColors[inv.status] || 'bg-slate-100 text-slate-500';
+            return `<span class="invoice-chip ${chipColor}">${inv.invoice_number}</span>`;
+        })() : '';
+
+        const el = document.createElement('div');
+        el.className = 'entry-row' + (isInvoiced ? ' entry-row-invoiced' : ' entry-row-tappable');
+        const dateParts = formatEntryDateParts(entry.date);
+        const dowColor  = clientDowColor(clientName);
+        el.innerHTML = `
+            <div class="entry-date-col">
+                <span class="dow ${dowColor}">${dateParts.dow}</span>
+                <span class="day-num">${dateParts.day}</span>
+                <span class="mon">${dateParts.mon}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 mb-1.5">
+                    <span class="client-badge ${badgeColor}">${clientName}</span>
+                </div>
+                <p class="text-[15px] font-semibold text-gray-800 truncate">${description}</p>
+            </div>
+            <div class="flex flex-col items-end gap-1 shrink-0">
+                ${chipHtml || '<span class="h-[18px]"></span>'}
+                <span class="text-[16px] font-bold text-gray-800 tracking-tight">${amount}</span>
+            </div>`;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'entry-card-wrap';
+        wrap.style.animationDelay = `${Math.min(cardIndex, 6) * 40}ms`;
+        cardIndex++;
+
+        const detailPanel = document.createElement('div');
+        detailPanel.className = 'entry-detail-panel';
+        const detailInner = document.createElement('div');
+        detailInner.className = 'entry-detail-inner';
+        detailPanel.appendChild(detailInner);
+
+        el.addEventListener('click', () => openEntryCard(wrap, entry, isInvoiced));
+        wrap.appendChild(el);
+        wrap.appendChild(detailPanel);
+        group.appendChild(wrap);
+    });
+
+    if (!group.parentElement) {
+        if (beforeSentinel && sentinel) {
+            list.insertBefore(group, sentinel);
+        } else {
+            list.appendChild(group);
+        }
+    }
 }
 
 // ─────────────────────────────────────────────
