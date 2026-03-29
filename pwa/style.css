@@ -11,6 +11,7 @@
             --group-header-weight: 700;
             --group-header-color: #9ca3af;
             --group-header-tracking: 0.06em;
+            --group-header-gap: 8px;
 
             /* Typography — field labels (log-entry form, slate) */
             --label-size: 10px;
@@ -317,6 +318,7 @@
             flex-direction: column;
             gap: 12px;
             padding-top: 0;
+            margin-top: var(--group-header-gap);
         }
         /* Connected card style for entry groups */
         #recentList .week-group {
@@ -780,7 +782,7 @@
             color: var(--group-header-color);
             text-transform: uppercase;
             letter-spacing: var(--group-header-tracking);
-            padding: 0 4px 8px;
+            padding: 0 4px var(--group-header-gap);
         }
         .settings-section:first-child .settings-section-header {
             padding-top: 16px;
