@@ -84,7 +84,7 @@ function _renderCalendar() {
     if (monthLabel) monthLabel.textContent = `${monthNames[currentMonth]} ${currentYear}`;
 
     let html = `
-    <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:auto repeat(6,1fr); flex:1; overflow:hidden;">`;
+    <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:auto repeat(6,1fr); flex:1; overflow:hidden; background:#fff;">`;
 
     // Day-of-week header row (Sat/Sun columns slightly dimmer)
     dayHeaders.forEach((d, i) => {
