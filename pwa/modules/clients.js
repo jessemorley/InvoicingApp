@@ -2,7 +2,7 @@
 // CLIENTS MODULE
 // Handles: client list, add/edit client form, workflow rates
 // ─────────────────────────────────────────────
-import { clientBadgeColor } from './utils.js';
+import { clientDotColor } from './utils.js';
 
 let sb, getState;
 
@@ -77,16 +77,17 @@ function renderClientsList() {
         const grp = document.createElement('div');
         grp.className = 'week-group';
         clients.forEach(client => {
-            const badgeColor   = clientBadgeColor(client.name);
+            const dotColor     = clientDotColor(client.name);
             const billingLabel = { day_rate: 'Day Rate', hourly: 'Hourly', manual: 'Manual' }[client.billing_type] || client.billing_type;
             const invCount     = invoiceCountMap[client.id] || 0;
             const invText      = invCount === 1 ? '1 invoice' : `${invCount} invoices`;
             const row = document.createElement('div');
             row.className = 'client-list-row';
             row.innerHTML = `
+                <div style="flex-shrink:0; width:10px; height:10px; border-radius:50%; background:${dotColor};"></div>
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center justify-between mb-0.5">
-                        <span class="client-badge ${badgeColor}">${client.name}</span>
+                        <span class="text-[15px] font-semibold text-gray-900">${client.name}</span>
                         <span class="text-[12px] font-medium text-gray-400">${billingLabel}</span>
                     </div>
                     <p class="text-[13px] text-gray-400">${invText}${client.is_active ? '' : ' · Inactive'}</p>
