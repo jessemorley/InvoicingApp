@@ -28,6 +28,13 @@ export async function loadCalendar(year, month) {
 
     const inner = document.getElementById('calendarInner');
     if (!inner) return;
+
+    // Update month label immediately so the header is stable during the async fetch
+    const _monthNames = ['January','February','March','April','May','June',
+                         'July','August','September','October','November','December'];
+    const _label = document.getElementById('calMonthLabel');
+    if (_label) _label.textContent = `${_monthNames[currentMonth]} ${currentYear}`;
+
     inner.innerHTML = '<div class="spinner"></div>';
 
     // Date range for the displayed month

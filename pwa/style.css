@@ -617,8 +617,10 @@
             .cal-entry-pill { display: none !important; }
             .cal-entry-pill-desktop { display: block !important; }
             .cal-entry-desc { display: block; }
-            #calendarScroll { height: 100dvh !important; }
-            #calendarInner { padding: 0 20px; }
+            #calendarScroll { height: 100dvh !important; background: #fff; }
+            #calendarInner { padding: 0 20px; background: #fff; }
+            /* Day headers bleed to full width and restore page bg so they float above the white panel */
+            .cal-day-headers { background: #F2F3F5; margin: 0 -20px; padding: 0 20px; }
             .cal-day-cell { padding: 6px 5px !important; }
             #viewCalendar .view-content { max-width: none; }
             /* App shell becomes a row */
@@ -662,7 +664,7 @@
                 background: none;
                 color: #71717a;
                 font-size: 13.5px;
-                font-weight: 500;
+                font-weight: 510;
                 cursor: pointer;
                 font-family: inherit;
                 transition: background 0.15s, color 0.15s;
