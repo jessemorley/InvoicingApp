@@ -84,17 +84,17 @@ function _renderCalendar() {
     if (monthLabel) monthLabel.textContent = `${monthNames[currentMonth]} ${currentYear}`;
 
     let html = `
-    <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:auto repeat(6,1fr); flex:1; overflow:hidden; background:#fff;">`;
+    <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:auto repeat(6,1fr); flex:1; overflow:hidden; background:#fff; border-top:1px solid #f0f0f0; border-left:1px solid #f0f0f0;">`;
 
     // Day-of-week header row (Sat/Sun columns slightly dimmer)
     dayHeaders.forEach((d, i) => {
         const isWknd = i >= 5;
-        html += `<div style="background:#F2F3F5; text-align:center; padding:6px 0; font-size:10px; font-weight:700; color:${isWknd ? '#b0b7c3' : '#9ca3af'}; text-transform:uppercase; min-width:0; overflow:hidden;">${d}</div>`;
+        html += `<div style="background:#F2F3F5; text-align:center; padding:6px 0; font-size:10px; font-weight:700; color:${isWknd ? '#b0b7c3' : '#9ca3af'}; text-transform:uppercase; min-width:0; overflow:hidden; border-right:1px solid #f0f0f0; border-bottom:1px solid #f0f0f0;">${d}</div>`;
     });
 
     // Empty cells before first day
     for (let i = 0; i < startDow; i++) {
-        html += `<div style="background:#fff;"></div>`;
+        html += `<div style="background:#fff; border-right:1px solid #f0f0f0; border-bottom:1px solid #f0f0f0;"></div>`;
     }
 
     const { businessDetails } = getState();
@@ -137,7 +137,7 @@ function _renderCalendar() {
         });
 
         html += `
-            <div class="cal-day-cell" data-date="${dateStr}" style="background:#fff; padding:4px 3px; cursor:${dayEntries.length ? 'pointer' : 'default'}; min-width:0; overflow:hidden;">
+            <div class="cal-day-cell" data-date="${dateStr}" style="background:#fff; padding:4px 3px; cursor:${dayEntries.length ? 'pointer' : 'default'}; min-width:0; overflow:hidden; border-right:1px solid #f0f0f0; border-bottom:1px solid #f0f0f0;">
             <div style="font-size:12px; font-weight:${isToday ? '800' : '600'}; color:${isToday ? '#2563eb' : isWeekend ? '#6b7280' : '#111827'}; ${isToday ? 'background:#eff6ff; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center;' : ''}">${day}</div>
             ${entriesHtml}
         </div>`;
@@ -148,7 +148,7 @@ function _renderCalendar() {
     const remainder  = totalCells % 7;
     if (remainder !== 0) {
         for (let i = 0; i < 7 - remainder; i++) {
-            html += `<div style="background:#fff;"></div>`;
+            html += `<div style="background:#fff; border-right:1px solid #f0f0f0; border-bottom:1px solid #f0f0f0;"></div>`;
         }
     }
 
