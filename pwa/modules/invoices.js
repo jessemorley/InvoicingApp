@@ -108,6 +108,13 @@ function renderInvoices(data) {
     const list = document.getElementById('invoicesList');
     list.innerHTML = '';
     expandedInvoiceWrap = null;
+    const panel = document.getElementById('detailPanel');
+    if (panel?.dataset.invoiceId) {
+        panel.classList.remove('open');
+        panel.innerHTML = '';
+        delete panel.dataset.invoiceId;
+        document.getElementById('viewSlider')?.classList.remove('detail-open');
+    }
 
     if (invoicesSortMode === 'status') {
         const unpaid = data.filter(inv => inv.status !== 'paid');
@@ -220,7 +227,14 @@ function buildInvoiceCard(inv, index) {
     return wrap;
 }
 
+function _isDesktop() { return window.innerWidth >= 768; }
+
 async function toggleInvoiceCard(wrap, inv) {
+    if (_isDesktop()) {
+        await _openInvoiceDesktop(wrap, inv);
+        return;
+    }
+
     if (expandedInvoiceWrap && expandedInvoiceWrap !== wrap) {
         collapseInvoiceCard(expandedInvoiceWrap);
     }
@@ -231,35 +245,83 @@ async function toggleInvoiceCard(wrap, inv) {
 
     expandedInvoiceWrap = wrap;
     wrap.classList.add('expanded');
+    await _populateInvoiceDetail(wrap.querySelector('.invoice-detail-inner'), inv);
+}
 
-    const inner = wrap.querySelector('.invoice-detail-inner');
-    const hasFullData = inv.entries?.some(e => e.total_amount != null);
-    if (!hasFullData) {
-        inner.innerHTML = '<div class="spinner" style="margin:16px auto;width:24px;height:24px;"></div>';
-        const { data: fullInv, error } = await sb
-            .from('invoices')
-            .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly, entry_label), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand, start_time, finish_time, break_minutes)')
-            .eq('id', inv.id)
-            .single();
-        if (!error && fullInv) {
-            const idx = invoicesCache.findIndex(i => i.id === inv.id);
-            if (idx !== -1) invoicesCache[idx] = fullInv;
-            Object.assign(inv, fullInv);
-        }
-    }
+async function _openInvoiceDesktop(wrap, inv) {
+    const panel = document.getElementById('detailPanel');
+    if (!panel) return;
 
-    const entries = inv.entries;
-    if (!entries?.length) {
-        inner.innerHTML = '<p class="text-gray-400 text-sm py-4 text-center">No entries linked</p>';
+    // Deselect previous
+    document.querySelectorAll('.invoice-selected').forEach(el => el.classList.remove('invoice-selected'));
+
+    // If clicking same invoice again, close
+    if (panel.dataset.invoiceId === inv.id && panel.classList.contains('open')) {
+        panel.classList.remove('open');
+        panel.innerHTML = '';
+        delete panel.dataset.invoiceId;
+        document.getElementById('viewSlider')?.classList.remove('detail-open');
         return;
     }
 
+    wrap.classList.add('invoice-selected');
+    panel.dataset.invoiceId = inv.id;
+
+    // Show header + spinner immediately
+    panel.innerHTML = `
+        <div style="padding:20px; overflow-y:auto; height:100%; box-sizing:border-box;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+                <h3 style="font-size:15px; font-weight:700; color:#111827; margin:0;">${inv.invoice_number}</h3>
+                <button id="invoicePanelClose" style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div id="invoicePanelBody"><div class="spinner" style="margin:24px auto;width:24px;height:24px;"></div></div>
+        </div>`;
+    panel.classList.add('open');
+    document.getElementById('viewSlider')?.classList.add('detail-open');
+
+    panel.querySelector('#invoicePanelClose').addEventListener('click', () => {
+        panel.classList.remove('open');
+        panel.innerHTML = '';
+        delete panel.dataset.invoiceId;
+        document.getElementById('viewSlider')?.classList.remove('detail-open');
+        document.querySelectorAll('.invoice-selected').forEach(el => el.classList.remove('invoice-selected'));
+    });
+
+    await _fetchFullInvoice(inv);
+    const body = panel.querySelector('#invoicePanelBody');
+    if (!body) return; // panel was closed while loading
+    _renderInvoicePanelBody(body, inv);
+}
+
+async function _fetchFullInvoice(inv) {
+    const hasFullData = inv.entries?.some(e => e.total_amount != null);
+    if (hasFullData) return;
+    const { data: fullInv, error } = await sb
+        .from('invoices')
+        .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly, entry_label), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand, start_time, finish_time, break_minutes)')
+        .eq('id', inv.id)
+        .single();
+    if (!error && fullInv) {
+        const idx = invoicesCache.findIndex(i => i.id === inv.id);
+        if (idx !== -1) invoicesCache[idx] = fullInv;
+        Object.assign(inv, fullInv);
+    }
+}
+
+function _renderInvoicePanelBody(container, inv) {
+    const entries = inv.entries;
+    if (!entries?.length) {
+        container.innerHTML = '<p class="text-gray-400 text-sm py-4 text-center">No entries linked</p>';
+        return;
+    }
     const sorted = [...entries].sort((a, b) => a.date < b.date ? -1 : 1);
-    let html = '<div class="space-y-0 pt-3">';
+    const { businessDetails } = getState();
+    const includeSuperInTotals = businessDetails?.include_super_in_totals ?? true;
+    let html = '<div class="space-y-0">';
     sorted.forEach(e => {
         const desc   = entryDescription(e);
-        const { businessDetails } = getState();
-        const includeSuperInTotals = businessDetails?.include_super_in_totals ?? true;
         const total  = e.total_amount || 0;
         const amount = fmt(includeSuperInTotals ? total : total - (e.super_amount || 0));
         const date   = formatEntryDate(e.date);
@@ -272,7 +334,6 @@ async function toggleInvoiceCard(wrap, inv) {
                 <span class="text-[14px] font-bold text-gray-700 shrink-0">${amount}</span>
             </div>`;
     });
-
     const subtotal = invoiceSubtotal(inv);
     html += `
         <div class="flex justify-between items-center pt-3 pb-1">
@@ -289,9 +350,15 @@ async function toggleInvoiceCard(wrap, inv) {
         Delete Invoice
     </button>`;
 
-    inner.innerHTML = html;
+    container.innerHTML = html;
     document.getElementById(`previewBtn_${inv.id}`).addEventListener('click', () => openInvoicePreview(inv));
     document.getElementById(`deleteBtn_${inv.id}`).addEventListener('click', () => openDeleteSheet(inv));
+}
+
+async function _populateInvoiceDetail(inner, inv) {
+    inner.innerHTML = '<div class="spinner" style="margin:16px auto;width:24px;height:24px;"></div>';
+    await _fetchFullInvoice(inv);
+    _renderInvoicePanelBody(inner, inv);
 }
 
 function collapseInvoiceCard(wrap) {

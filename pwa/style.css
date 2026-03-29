@@ -690,6 +690,11 @@
             .client-list-row.client-selected {
                 background: #f0f4ff;
             }
+
+            /* Selected invoice row highlight */
+            .invoice-selected .invoice-row {
+                background: #f0f4ff;
+            }
         }
 
         /* Client form panel (used in Clients view) */
