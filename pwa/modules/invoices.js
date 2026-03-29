@@ -205,8 +205,8 @@ function buildInvoiceCard(inv, index) {
     row.innerHTML = `
         <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1.5">
-                <span class="client-badge ${badgeColor}">${clientName}</span>
                 <span class="text-[15px] font-bold text-gray-800">${inv.invoice_number}</span>
+                <span class="client-badge ${badgeColor}">${clientName}</span>
             </div>
             ${dateRange ? `<p class="text-[13px] text-gray-400 truncate">${dateRange}</p>` : ''}
         </div>
