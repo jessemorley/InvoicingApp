@@ -655,6 +655,12 @@
                 min-width: 0;
             }
 
+            .view-content {
+                max-width: 800px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
             /* Desktop detail panel */
             .detail-panel {
                 display: flex;
