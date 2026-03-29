@@ -173,10 +173,12 @@ function invoiceSubtotal(inv) {
         return includeSuperInTotals ? inv.total || inv.subtotal : inv.subtotal;
     }
     if (!inv.entries?.length) return includeSuperInTotals ? inv.total || inv.subtotal || 0 : inv.subtotal || 0;
-    return inv.entries.reduce((s, e) => {
+    const entriesTotal = inv.entries.reduce((s, e) => {
         const total = e.total_amount || 0;
         return s + (includeSuperInTotals ? total : total - (e.super_amount || 0));
     }, 0);
+    const lineItemsTotal = (inv.invoice_line_items || []).reduce((s, li) => s + (parseFloat(li.amount) || 0), 0);
+    return entriesTotal + lineItemsTotal;
 }
 
 function invoiceDateRange(inv) {
@@ -300,7 +302,7 @@ async function _fetchFullInvoice(inv) {
     if (hasFullData) return;
     const { data: fullInv, error } = await sb
         .from('invoices')
-        .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly, entry_label), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand, start_time, finish_time, break_minutes)')
+        .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly, entry_label), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand, start_time, finish_time, break_minutes), invoice_line_items(id, description, quantity, amount, sort_order)')
         .eq('id', inv.id)
         .single();
     if (!error && fullInv) {
@@ -308,6 +310,95 @@ async function _fetchFullInvoice(inv) {
         if (idx !== -1) invoicesCache[idx] = fullInv;
         Object.assign(inv, fullInv);
     }
+}
+
+async function _recalcAndSaveInvoiceTotals(inv) {
+    const { data: lineItems } = await sb.from('invoice_line_items').select('amount').eq('invoice_id', inv.id);
+    const liTotal       = (lineItems || []).reduce((s, li) => s + (parseFloat(li.amount) || 0), 0);
+    const entrySubtotal = (inv.entries || []).reduce((s, e) => s + (parseFloat(e.base_amount) || 0) + (parseFloat(e.bonus_amount) || 0), 0);
+    const newSubtotal   = entrySubtotal + liTotal;
+    const newTotal      = newSubtotal + (parseFloat(inv.super_amount) || 0);
+    const { error }     = await sb.from('invoices').update({ subtotal: newSubtotal, total: newTotal }).eq('id', inv.id);
+    if (error) throw error;
+    inv.subtotal = newSubtotal;
+    inv.total    = newTotal;
+    const cached = invoicesCache.find(i => i.id === inv.id);
+    if (cached) { cached.subtotal = newSubtotal; cached.total = newTotal; }
+}
+
+function _showAddLineItemForm(inv, container) {
+    if (document.getElementById('lineItemForm')) return;
+    const addBtn = document.getElementById(`addLineItemBtn_${inv.id}`);
+    const form = document.createElement('div');
+    form.id = 'lineItemForm';
+    form.style.cssText = 'margin-top:8px; padding:12px; background:#f9fafb; border-radius:10px; border:1px solid #e5e7eb;';
+    form.innerHTML = `
+        <input id="li_desc" placeholder="Description (e.g. Hire: Ronin R5)"
+               style="width:100%;padding:9px 10px;border:1px solid #e5e7eb;border-radius:8px;
+                      font-size:14px;font-family:inherit;margin-bottom:8px;box-sizing:border-box;outline:none;"/>
+        <div style="display:flex;gap:8px;margin-bottom:10px;min-width:0;">
+            <input id="li_qty" placeholder="Qty (optional)" type="number" min="0" step="any"
+                   style="flex:1;min-width:0;padding:9px 10px;border:1px solid #e5e7eb;border-radius:8px;
+                          font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;"/>
+            <input id="li_amount" placeholder="Amount ($)" type="number" min="0" step="0.01"
+                   style="flex:1;min-width:0;padding:9px 10px;border:1px solid #e5e7eb;border-radius:8px;
+                          font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;"/>
+        </div>
+        <div style="display:flex;gap:8px;">
+            <button id="li_save" style="flex:1;padding:10px;background:#111827;color:#fff;
+                    border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">
+                Add
+            </button>
+            <button id="li_cancel" style="flex:1;padding:10px;background:#fff;color:#6b7280;
+                    border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-weight:600;
+                    cursor:pointer;font-family:inherit;">
+                Cancel
+            </button>
+        </div>`;
+    addBtn.insertAdjacentElement('beforebegin', form);
+    document.getElementById('li_desc').focus();
+    document.getElementById('li_cancel').addEventListener('click', () => form.remove());
+    document.getElementById('li_save').addEventListener('click', () => _saveLineItem(inv, form, container));
+}
+
+async function _saveLineItem(inv, formEl, container) {
+    const desc   = document.getElementById('li_desc').value.trim();
+    const qty    = document.getElementById('li_qty').value;
+    const amount = parseFloat(document.getElementById('li_amount').value);
+    if (!desc)              { document.getElementById('li_desc').focus();   return; }
+    if (isNaN(amount) || amount <= 0) { document.getElementById('li_amount').focus(); return; }
+    const saveBtn = document.getElementById('li_save');
+    saveBtn.disabled = true;
+    saveBtn.textContent = '…';
+    try {
+        const { data: { user } } = await sb.auth.getUser();
+        const { error } = await sb.from('invoice_line_items').insert({
+            invoice_id:  inv.id,
+            user_id:     user.id,
+            description: desc,
+            quantity:    qty !== '' ? parseFloat(qty) : null,
+            amount:      amount,
+            sort_order:  inv.invoice_line_items?.length ?? 0,
+        });
+        if (error) throw error;
+        await _recalcAndSaveInvoiceTotals(inv);
+        formEl.remove();
+        inv.entries = null; // force re-fetch to get new line item with server id
+        await _fetchFullInvoice(inv);
+        _renderInvoicePanelBody(container, inv);
+    } catch (err) {
+        alert('Error adding line item: ' + err.message);
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Add';
+    }
+}
+
+async function _deleteLineItem(inv, lineItemId, container) {
+    const { error } = await sb.from('invoice_line_items').delete().eq('id', lineItemId);
+    if (error) { alert('Error removing line item: ' + error.message); return; }
+    inv.invoice_line_items = (inv.invoice_line_items || []).filter(li => li.id !== lineItemId);
+    await _recalcAndSaveInvoiceTotals(inv);
+    _renderInvoicePanelBody(container, inv);
 }
 
 function _renderInvoicePanelBody(container, inv) {
@@ -334,6 +425,28 @@ function _renderInvoicePanelBody(container, inv) {
                 <span class="text-[14px] font-bold text-gray-700 shrink-0">${amount}</span>
             </div>`;
     });
+
+    // Custom line items
+    const lineItems = [...(inv.invoice_line_items || [])].sort((a, b) => a.sort_order - b.sort_order);
+    lineItems.forEach(li => {
+        const qtyLabel = li.quantity != null ? ` ×${li.quantity}` : '';
+        html += `
+            <div class="flex justify-between items-center py-2.5 border-b border-slate-50">
+                <div class="flex-1 min-w-0 mr-2">
+                    <p class="text-[14px] font-semibold text-gray-800 truncate">${li.description}${qtyLabel}</p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-[14px] font-bold text-gray-700">${fmt(parseFloat(li.amount))}</span>
+                    <button class="li-delete-btn" data-li-id="${li.id}"
+                        style="background:none;border:none;cursor:pointer;padding:4px;color:#d1d5db;line-height:0;">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>`;
+    });
+
     const subtotal = invoiceSubtotal(inv);
     html += `
         <div class="flex justify-between items-center pt-3 pb-1">
@@ -341,7 +454,11 @@ function _renderInvoicePanelBody(container, inv) {
             <span class="text-[16px] font-bold text-gray-900">${fmt(subtotal)}</span>
         </div>
     </div>
-    <button id="previewBtn_${inv.id}" style="margin-top:12px; margin-bottom:4px; width:100%; padding:12px; background:#111827; color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
+    <button id="addLineItemBtn_${inv.id}" style="margin-top:10px; width:100%; padding:10px; background:transparent; color:#374151; border:1.5px solid #e5e7eb; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:6px;">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Add line item
+    </button>
+    <button id="previewBtn_${inv.id}" style="margin-top:8px; margin-bottom:4px; width:100%; padding:12px; background:#111827; color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Preview Invoice
     </button>
@@ -351,6 +468,10 @@ function _renderInvoicePanelBody(container, inv) {
     </button>`;
 
     container.innerHTML = html;
+    container.querySelectorAll('.li-delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => _deleteLineItem(inv, btn.dataset.liId, container));
+    });
+    document.getElementById(`addLineItemBtn_${inv.id}`).addEventListener('click', () => _showAddLineItemForm(inv, container));
     document.getElementById(`previewBtn_${inv.id}`).addEventListener('click', () => openInvoicePreview(inv));
     document.getElementById(`deleteBtn_${inv.id}`).addEventListener('click', () => openDeleteSheet(inv));
 }
@@ -415,6 +536,11 @@ function buildInvoiceLineItemsHTML(inv) {
             if (e.break_minutes) subLine += ` (${e.break_minutes}m)`;
             html += `<tr><td class="col-date"></td><td class="col-item" style="color:#555;font-size:0.75em;padding-top:0">${subLine}</td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount"></td></tr>\n`;
         }
+    }
+    const customLineItems = [...(inv.invoice_line_items || [])].sort((a, b) => a.sort_order - b.sort_order);
+    for (const li of customLineItems) {
+        const qtyStr = li.quantity != null ? `${li.quantity}×` : '';
+        html += `<tr><td class="col-date">—</td><td class="col-item">${li.description}</td><td class="col-qty">${qtyStr}</td><td class="col-rate"></td><td class="col-amount">${fmtInvoiceAmount(li.amount)}</td></tr>\n`;
     }
     return html;
 }
