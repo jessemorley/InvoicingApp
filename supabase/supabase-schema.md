@@ -151,6 +151,22 @@ One row per user. Freelancer's own business info for PDF invoices.
 
 ---
 
+### `invoice_line_items`
+Custom line items attached to an invoice (free-form, not linked to entries). Cascade-deleted when invoice is deleted.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid PK | `gen_random_uuid()` |
+| `invoice_id` | uuid FK → `invoices.id` ON DELETE CASCADE | |
+| `user_id` | uuid FK → `auth.users.id` ON DELETE CASCADE | RLS owner |
+| `description` | text NOT NULL | Line item description |
+| `quantity` | numeric? | Optional quantity |
+| `amount` | numeric NOT NULL | Line item amount |
+| `sort_order` | integer | Display order (default 0) |
+| `created_at` | timestamptz NOT NULL | |
+
+---
+
 ## RPC Functions
 
 ### `next_invoice_number() → integer`
@@ -176,7 +192,8 @@ auth.users
   │     ├── clients (client_id)
   │     └── invoices (invoice_id)  ← null until invoiced
   ├── invoices (user_id)
-  │     └── clients (client_id)
+  │     ├── clients (client_id)
+  │     └── invoice_line_items (invoice_id, cascade delete)
   ├── invoice_sequence (user_id, 1:1)
   └── business_details (user_id, 1:1)
 ```
