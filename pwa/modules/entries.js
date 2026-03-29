@@ -1443,6 +1443,9 @@ export function initScrollHandlers() {
         const mode = e.target.value;
         if (mode === entriesViewMode) return;
         entriesViewMode = mode;
+        const labels = { 'client-week': 'By Client', 'week': 'By Week', 'none': 'None' };
+        const labelEl = document.getElementById('entriesToggleLabel');
+        if (labelEl) labelEl.textContent = labels[mode] ?? mode;
         // Re-render from cache without refetch
         if (entriesRawCache.length) {
             const list = document.getElementById('recentList');
