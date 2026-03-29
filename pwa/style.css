@@ -292,7 +292,7 @@
             gap: 12px;
             padding-top: 0;
         }
-        /* Connected card style only for entry groups */
+        /* Connected card style for entry groups */
         #recentList .week-group {
             gap: 0;
             border-radius: 14px;
@@ -309,6 +309,30 @@
             border-radius: 0 0 14px 14px;
         }
         #recentList .week-group .entry-card-wrap:first-child:last-child .entry-row {
+            border-radius: 14px;
+        }
+
+        /* Connected card style for client groups */
+        #clientsList .week-group {
+            gap: 0;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        #clientsList .week-group .client-list-row {
+            border-radius: 0;
+            box-shadow: none;
+        }
+        #clientsList .week-group .client-list-row:not(:last-child) {
+            border-bottom: 1px solid #f0f0f0;
+        }
+        #clientsList .week-group .client-list-row:first-child {
+            border-radius: 14px 14px 0 0;
+        }
+        #clientsList .week-group .client-list-row:last-child {
+            border-radius: 0 0 14px 14px;
+        }
+        #clientsList .week-group .client-list-row:first-child:last-child {
             border-radius: 14px;
         }
 

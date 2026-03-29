@@ -13,6 +13,7 @@ export function init(supabase, stateGetter) {
 
 // ── State ────────────────────────────────────
 let allClientsLocal    = [];  // includes inactive
+let invoiceCountMap    = {};  // client_id → invoice count
 let editingClient      = null;
 let isNewClient        = false;
 let workflowRatesLocal = [];  // rates for currently editing client
@@ -35,10 +36,10 @@ async function _fetchAndRender() {
     if (!list) return;
     list.innerHTML = '<div class="spinner"></div>';
 
-    const { data, error } = await sb
-        .from('clients')
-        .select('*')
-        .order('name');
+    const [{ data, error }, { data: invData }] = await Promise.all([
+        sb.from('clients').select('*').order('name'),
+        sb.from('invoices').select('client_id'),
+    ]);
 
     if (error) {
         list.innerHTML = `<p class="text-red-500 text-sm py-4">${error.message}</p>`;
@@ -46,6 +47,10 @@ async function _fetchAndRender() {
     }
 
     allClientsLocal = data || [];
+    invoiceCountMap = {};
+    (invData || []).forEach(inv => {
+        invoiceCountMap[inv.client_id] = (invoiceCountMap[inv.client_id] || 0) + 1;
+    });
     renderClientsList();
 }
 
@@ -72,18 +77,21 @@ function renderClientsList() {
         const grp = document.createElement('div');
         grp.className = 'week-group';
         clients.forEach(client => {
-            const badgeColor = clientBadgeColor(client.name);
+            const badgeColor   = clientBadgeColor(client.name);
             const billingLabel = { day_rate: 'Day Rate', hourly: 'Hourly', manual: 'Manual' }[client.billing_type] || client.billing_type;
+            const invCount     = invoiceCountMap[client.id] || 0;
+            const invText      = invCount === 1 ? '1 invoice' : `${invCount} invoices`;
             const row = document.createElement('div');
             row.className = 'client-list-row';
             row.innerHTML = `
                 <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-0.5">
+                    <div class="flex items-center justify-between mb-0.5">
                         <span class="client-badge ${badgeColor}">${client.name}</span>
+                        <span class="text-[12px] font-medium text-gray-400">${billingLabel}</span>
                     </div>
-                    <p class="text-[13px] text-gray-400">${billingLabel}${client.is_active ? '' : ' · Inactive'}</p>
+                    <p class="text-[13px] text-gray-400">${invText}${client.is_active ? '' : ' · Inactive'}</p>
                 </div>
-                <svg width="16" height="16" fill="none" stroke="#c7c7cc" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;">
+                <svg width="16" height="16" fill="none" stroke="#c7c7cc" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0; margin-left:8px;">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/>
                 </svg>`;
             row.addEventListener('click', () => openClientForm(client, row));
