@@ -142,7 +142,7 @@ async function openClientForm(client, rowEl) {
 function _closeClientForm() {
     if (window.innerWidth >= 768) {
         const panel = document.getElementById('detailPanel');
-        if (panel) { panel.classList.remove('open'); panel.innerHTML = ''; }
+        if (panel) { panel.classList.remove('open'); panel.innerHTML = ''; document.getElementById('viewSlider')?.classList.remove('detail-open'); }
         document.querySelectorAll('.client-selected').forEach(el => el.classList.remove('client-selected'));
     }
     clientsLoaded = false;
@@ -322,6 +322,7 @@ function _renderClientForm(client) {
         const panel = document.getElementById('detailPanel');
         panel.innerHTML = `<div style="padding:20px; overflow-y:auto; height:100%;">${formHtml}</div>`;
         panel.classList.add('open');
+        document.getElementById('viewSlider')?.classList.add('detail-open');
     } else {
         list.innerHTML = formHtml;
     }

@@ -643,6 +643,11 @@
                 min-width: 0;
                 width: auto;   /* override the 400vw */
                 height: 100%;
+                padding-right: 0;
+                transition: padding-right 0.3s cubic-bezier(0.4,0,0.2,1);
+            }
+            #viewSlider.detail-open {
+                padding-right: 380px;
             }
 
             .view-pane {
@@ -654,17 +659,21 @@
             .detail-panel {
                 display: flex;
                 flex-direction: column;
-                width: 0;
-                flex-shrink: 0;
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 380px;
+                height: 100%;
                 border-left: 1px solid #e5e7eb;
                 background: #fff;
                 overflow-y: auto;
                 overflow-x: hidden;
-                transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
-                height: 100%;
+                transform: translateX(100%);
+                transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+                z-index: 10;
             }
             .detail-panel.open {
-                width: 380px;
+                transform: translateX(0);
             }
 
             /* On desktop: disable expand-in-place for entries */

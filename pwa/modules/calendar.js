@@ -219,8 +219,10 @@ function _showDayEntries(dateStr, entries) {
     if (isDesktop && panel) {
         panel.innerHTML = html;
         panel.classList.add('open');
+        document.getElementById('viewSlider')?.classList.add('detail-open');
         panel.querySelector('#dayPanelClose').addEventListener('click', () => {
             panel.classList.remove('open');
+            document.getElementById('viewSlider')?.classList.remove('detail-open');
         });
     } else {
         // Mobile: use a simple bottom overlay

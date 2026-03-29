@@ -658,10 +658,12 @@ export function openNewEntryDesktop(allClients, clientInvoiceCountMap) {
         </div>`;
 
     panel.classList.add('open');
+    document.getElementById('viewSlider')?.classList.add('detail-open');
 
     panel.querySelector('#desktopNewEntryClose').addEventListener('click', () => {
         panel.classList.remove('open');
         panel.innerHTML = '';
+        document.getElementById('viewSlider')?.classList.remove('detail-open');
     });
 
     const searchInput = panel.querySelector('#desktopClientSearch');
@@ -691,6 +693,7 @@ function _openNewEntryDesktopWithClient(client) {
         </div>`;
 
     panel.classList.add('open');
+    document.getElementById('viewSlider')?.classList.add('detail-open');
 
     // Point newEntryWrap at the panel container so wireNewEntryForm can find buttons
     newEntryWrap = panel.querySelector('#desktopNewEntryWrap');
@@ -698,6 +701,7 @@ function _openNewEntryDesktopWithClient(client) {
     panel.querySelector('#desktopNewEntryClose').addEventListener('click', () => {
         panel.classList.remove('open');
         panel.innerHTML = '';
+        document.getElementById('viewSlider')?.classList.remove('detail-open');
         newEntrySelectedClient = null;
         newEntryWrap = null;
         // Rebuild mobile form
@@ -915,7 +919,7 @@ function _isDesktop() {
 function closeEntryCard(wrap) {
     if (_isDesktop()) {
         const panel = document.getElementById('detailPanel');
-        if (panel) { panel.classList.remove('open'); panel.innerHTML = ''; }
+        if (panel) { panel.classList.remove('open'); panel.innerHTML = ''; document.getElementById('viewSlider')?.classList.remove('detail-open'); }
         if (wrap) wrap.classList.remove('entry-selected');
     } else {
         const row = wrap.querySelector('.entry-row');
@@ -1180,6 +1184,7 @@ function openEntryCard(wrap, entry, readOnly = false) {
         document.querySelectorAll('.entry-selected').forEach(el => el.classList.remove('entry-selected'));
         wrap.classList.add('entry-selected');
         panel.classList.add('open');
+        document.getElementById('viewSlider')?.classList.add('detail-open');
     } else {
         wrap.classList.add('expanded');
         const tabRecent = document.getElementById('entriesScroll');
