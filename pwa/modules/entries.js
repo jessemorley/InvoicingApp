@@ -23,7 +23,7 @@ let entriesAllLoaded   = false;
 let entriesScrollLoading = false;
 
 // ── View mode ────────────────────────────────
-let entriesViewMode = 'client-week'; // 'client-week' | 'week'
+let entriesViewMode = localStorage.getItem('entries_view_mode') || 'client-week'; // 'client-week' | 'week'
 let entriesRawCache = [];            // last-fetched data for re-render without refetch
 
 // ── New entry card state ─────────────────────
@@ -1438,11 +1438,20 @@ async function deleteEntryEntry() {
 // ─────────────────────────────────────────────
 
 export function initScrollHandlers() {
-    // View mode toggle
-    document.getElementById('entriesViewToggle')?.addEventListener('change', e => {
+    // View mode toggle — restore persisted value
+    const toggle = document.getElementById('entriesViewToggle');
+    if (toggle) {
+        toggle.value = entriesViewMode;
+        const labels = { 'client-week': 'By Client', 'week': 'By Week', 'none': 'None' };
+        const labelEl = document.getElementById('entriesToggleLabel');
+        if (labelEl) labelEl.textContent = labels[entriesViewMode] ?? entriesViewMode;
+    }
+
+    toggle?.addEventListener('change', e => {
         const mode = e.target.value;
         if (mode === entriesViewMode) return;
         entriesViewMode = mode;
+        localStorage.setItem('entries_view_mode', mode);
         const labels = { 'client-week': 'By Client', 'week': 'By Week', 'none': 'None' };
         const labelEl = document.getElementById('entriesToggleLabel');
         if (labelEl) labelEl.textContent = labels[mode] ?? mode;
