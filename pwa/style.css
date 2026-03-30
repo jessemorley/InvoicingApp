@@ -407,6 +407,23 @@
             overflow-x: hidden;
         }
 
+        /* Loading */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+        #loadingScreen {
+            background: #fff;
+            min-height: 100dvh;
+            align-items: center;
+            justify-content: center;
+        }
+        #loadingSpinner {
+            width: 48px;
+            height: 48px;
+            animation: spin 0.8s linear infinite;
+        }
+
         /* Login */
         #loginScreen {
             background: #fff;

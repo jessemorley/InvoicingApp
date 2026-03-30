@@ -59,6 +59,7 @@ Account.init(sb, getState);
 // ─────────────────────────────────────────────
 async function init() {
     const { data: { session } } = await sb.auth.getSession();
+    document.getElementById('loadingScreen').classList.remove('active');
     if (session) {
         currentUserId = session.user.id;
         showApp();
