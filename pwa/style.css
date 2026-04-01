@@ -480,7 +480,7 @@
         ───────────────────────────────────────────── */
         #viewSlider {
             display: flex;
-            width: 500vw;
+            width: 700vw;
             height: 100%;
             /* transition added by JS after swipe ends */
         }
@@ -749,8 +749,8 @@
                 opacity: 1;
             }
 
-            /* Hide mobile tab bar on desktop */
-            #tabBar { display: none; }
+            /* Hide mobile tab bar and overflow sheet on desktop */
+            #tabBar, #overflowBackdrop, #overflowSheet { display: none !important; }
 
             /* FAB moves to bottom-right of mainContent */
             #newEntryFab {

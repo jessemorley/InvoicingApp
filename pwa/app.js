@@ -1,6 +1,7 @@
 // ─────────────────────────────────────────────
 // APP SHELL — auth, routing, global state, data loading
 // ─────────────────────────────────────────────
+import * as Dashboard from './modules/dashboard.js';
 import * as Entries  from './modules/entries.js';
 import * as Invoices from './modules/invoices.js';
 import * as Clients  from './modules/clients.js';
@@ -18,12 +19,13 @@ const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ── View constants ────────────────────────────
-const VIEW_CALENDAR = 0;
-const VIEW_ENTRIES  = 1;
-const VIEW_INVOICES = 2;
-const VIEW_CLIENTS  = 3;
-const VIEW_SETTINGS = 4;
-const VIEW_ACCOUNT  = 5;
+const VIEW_DASHBOARD = 0;
+const VIEW_ENTRIES   = 1;
+const VIEW_INVOICES  = 2;
+const VIEW_SETTINGS  = 3;
+const VIEW_CALENDAR  = 4;
+const VIEW_CLIENTS   = 5;
+const VIEW_ACCOUNT   = 6;
 
 // ── Global state ─────────────────────────────
 let allClients              = [];
@@ -46,6 +48,7 @@ const invoiceChipColors = {
 };
 
 // Initialise modules
+Dashboard.init(sb, getState);
 Entries.init(sb, getState);
 Invoices.init(sb, getState);
 Clients.init(sb, getState);
@@ -270,16 +273,34 @@ document.addEventListener('clients:saved', async () => {
 // ─────────────────────────────────────────────
 // VIEW SWITCHING
 // ─────────────────────────────────────────────
-const TAB_IDS = ['tabCalendarBtn', 'tabEntriesBtn', 'tabInvoicesBtn', 'tabClientsBtn', 'tabSettingsBtn', 'tabAccountBtn'];
-const SIDEBAR_VIEWS = ['calendar', 'entries', 'invoices', 'clients', 'settings', 'account'];
+const TAB_IDS = ['tabDashboardBtn', 'tabEntriesBtn', 'tabInvoicesBtn', 'tabSettingsBtn'];
+const SIDEBAR_VIEWS = ['dashboard', 'entries', 'invoices', 'settings', 'calendar', 'clients', 'account'];
+
+function openOverflowMenu() {
+    const backdrop = document.getElementById('overflowBackdrop');
+    const sheet    = document.getElementById('overflowSheet');
+    backdrop.style.opacity      = '1';
+    backdrop.style.pointerEvents = 'auto';
+    sheet.style.transform = 'translateY(0)';
+}
+function closeOverflowMenu() {
+    const backdrop = document.getElementById('overflowBackdrop');
+    const sheet    = document.getElementById('overflowSheet');
+    backdrop.style.opacity      = '0';
+    backdrop.style.pointerEvents = 'none';
+    sheet.style.transform = 'translateY(100%)';
+}
+window.openOverflowMenu  = openOverflowMenu;
+window.closeOverflowMenu = closeOverflowMenu;
 
 export function switchView(index) {
     currentViewIndex = index;
+    closeOverflowMenu();
     const isDesktop = window.innerWidth >= 768;
 
     if (isDesktop) {
         // On desktop: show/hide panes directly (no slider transform)
-        ['viewCalendar','viewEntries','viewInvoices','viewClients','viewSettings','viewAccount'].forEach((id, i) => {
+        ['viewDashboard','viewEntries','viewInvoices','viewSettings','viewCalendar','viewClients','viewAccount'].forEach((id, i) => {
             const el = document.getElementById(id);
             if (el) el.style.display = i === index ? '' : 'none';
         });
@@ -296,28 +317,24 @@ export function switchView(index) {
             const el = document.getElementById(id);
             if (el) el.classList.toggle('active', i === index);
         });
+        // Highlight hamburger when an overflow view is active
+        const overflowBtn = document.getElementById('tabOverflowBtn');
+        if (overflowBtn) overflowBtn.classList.toggle('active', index >= TAB_IDS.length);
     }
 
     // FAB: only on Entries view
     document.getElementById('newEntryFab').style.display = index === VIEW_ENTRIES ? 'flex' : 'none';
 
     // Lazy-load
+    if (index === VIEW_DASHBOARD) Dashboard.loadDashboard();
     if (index === VIEW_INVOICES) {
         if (!Invoices.isLoaded()) Invoices.loadInvoices();
         Generate.scanAndRender();
     }
-    if (index === VIEW_CALENDAR) {
-        Calendar.loadCalendar();
-    }
-    if (index === VIEW_CLIENTS) {
-        Clients.loadClients();
-    }
-    if (index === VIEW_SETTINGS) {
-        Settings.loadSettings();
-    }
-    if (index === VIEW_ACCOUNT) {
-        Account.loadAccount();
-    }
+    if (index === VIEW_CALENDAR) Calendar.loadCalendar();
+    if (index === VIEW_CLIENTS)  Clients.loadClients();
+    if (index === VIEW_SETTINGS) Settings.loadSettings();
+    if (index === VIEW_ACCOUNT)  Account.loadAccount();
 }
 // Expose for onclick= attributes in HTML
 window.switchView = switchView;
@@ -348,7 +365,7 @@ window.switchView = switchView;
         e.preventDefault();
         const baseVw  = currentViewIndex * -100;
         const dragVw  = (dx / window.innerWidth) * 100;
-        const totalVw = Math.max(-400, Math.min(0, baseVw + dragVw));
+        const totalVw = Math.max(-600, Math.min(0, baseVw + dragVw));
         liveOffsetVw  = totalVw;
         slider.style.transform = `translateX(${totalVw}vw)`;
     }, { passive: false });
@@ -357,7 +374,7 @@ window.switchView = switchView;
         if (swipeDir !== 'h') return;
         slider.style.transition = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)';
         const moved = liveOffsetVw - (currentViewIndex * -100);
-        const maxView = 5;
+        const maxView = 6;
         if (moved < -28 && currentViewIndex < maxView) {
             switchView(currentViewIndex + 1);
         } else if (moved > 28 && currentViewIndex > 0) {

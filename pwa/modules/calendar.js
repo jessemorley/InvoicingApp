@@ -100,7 +100,7 @@ function _renderCalendar() {
 
     // Cells grid — 6 rows only, flex:1 to fill remaining height
     html += `
-    <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:repeat(6,1fr); flex:1; overflow:hidden; background:#fff;">`;
+    <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:repeat(6,1fr); flex:1; min-height:0; overflow:hidden; background:#fff;">`;
 
     // Empty cells before first day
     for (let i = 0; i < startDow; i++) {
