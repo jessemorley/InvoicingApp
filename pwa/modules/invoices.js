@@ -287,7 +287,7 @@ async function _openInvoiceDesktop(wrap, inv) {
     panel.innerHTML = `
         <div style="padding:20px; overflow-y:auto; height:100%; box-sizing:border-box;">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
-                <h3 class="panel-header">${inv.invoice_number}</h3>
+                <h3 id="invoicePanelHeader" class="panel-header">${inv.invoice_number}</h3>
                 <button id="invoicePanelClose" style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
                     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
@@ -296,6 +296,10 @@ async function _openInvoiceDesktop(wrap, inv) {
         </div>`;
     panel.classList.add('open');
     document.getElementById('viewSlider')?.classList.add('detail-open');
+
+    if (inv.status === 'draft') {
+        _wireHeaderEdit(panel, inv);
+    }
 
     panel.querySelector('#invoicePanelClose').addEventListener('click', () => {
         panel.classList.remove('open');
@@ -424,16 +428,7 @@ function _renderInvoicePanelBody(container, inv) {
     const sorted = [...entries].sort((a, b) => a.date < b.date ? -1 : 1);
     const { businessDetails } = getState();
     const includeSuperInTotals = businessDetails?.include_super_in_totals ?? true;
-    let html = '';
-    if (inv.status === 'draft') {
-        html += `
-        <div class="bg-slate-50 rounded-2xl px-5 py-3 flex items-center justify-between gap-3" style="margin-bottom:12px;">
-            <span style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;">Invoice #</span>
-            <input id="invoiceNumberInput_${inv.id}" value="${inv.invoice_number}"
-                style="background:transparent;border:none;outline:none;font-size:15px;font-weight:700;color:#111827;text-align:right;font-family:inherit;width:100%;max-width:160px;" />
-        </div>`;
-    }
-    html += '<div class="space-y-0">';
+    let html = '<div class="space-y-0">';
     sorted.forEach(e => {
         const desc   = entryDescription(e);
         const total  = e.total_amount || 0;
@@ -506,11 +501,6 @@ function _renderInvoicePanelBody(container, inv) {
     </button>`;
 
     container.innerHTML = html;
-    const numInput = document.getElementById(`invoiceNumberInput_${inv.id}`);
-    if (numInput) {
-        numInput.addEventListener('blur', () => _updateInvoiceNumber(inv, numInput.value));
-        numInput.addEventListener('keydown', e => { if (e.key === 'Enter') numInput.blur(); });
-    }
     const issuedInput = document.getElementById(`issuedDateInput_${inv.id}`);
     if (issuedInput) issuedInput.addEventListener('change', () => _updateInvoiceDate(inv, 'issued_date', issuedInput.value));
     const paidInput = document.getElementById(`paidDateInput_${inv.id}`);
@@ -524,6 +514,39 @@ function _renderInvoicePanelBody(container, inv) {
     });
     document.getElementById(`previewBtn_${inv.id}`).addEventListener('click', () => openInvoicePreview(inv));
     document.getElementById(`deleteBtn_${inv.id}`).addEventListener('click', () => openDeleteSheet(inv));
+}
+
+function _wireHeaderEdit(panel, inv) {
+    const headerEl = panel.querySelector('#invoicePanelHeader');
+    if (!headerEl) return;
+    headerEl.style.cursor = inv.status === 'draft' ? 'text' : '';
+    headerEl.addEventListener('click', function onClick() {
+        if (inv.status !== 'draft') return;
+        const currentH3 = panel.querySelector('#invoicePanelHeader');
+        if (!currentH3) return;
+        const input = document.createElement('input');
+        input.value = inv.invoice_number;
+        input.style.cssText = 'font-size:15px;font-weight:700;color:#111827;font-family:inherit;border:none;outline:none;background:transparent;width:100%;padding:0;margin:0;';
+        currentH3.replaceWith(input);
+        input.focus();
+        input.select();
+        const restore = (save) => {
+            const newVal = input.value.trim();
+            if (save && newVal && newVal !== inv.invoice_number) _updateInvoiceNumber(inv, newVal);
+            const h3 = document.createElement('h3');
+            h3.id = 'invoicePanelHeader';
+            h3.className = 'panel-header';
+            h3.style.cursor = inv.status === 'draft' ? 'text' : '';
+            h3.textContent = (save && newVal) ? newVal : inv.invoice_number;
+            input.replaceWith(h3);
+            h3.addEventListener('click', onClick);
+        };
+        input.addEventListener('blur', () => restore(true));
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') input.blur();
+            if (e.key === 'Escape') { input.value = inv.invoice_number; restore(false); }
+        });
+    });
 }
 
 async function _updateInvoiceDate(inv, field, value) {
@@ -585,6 +608,9 @@ async function _updateInvoiceStatus(inv, newStatus, container) {
     row?.querySelectorAll('.status-btn').forEach(btn => {
         btn.addEventListener('click', () => _updateInvoiceStatus(inv, btn.dataset.status, container));
     });
+    // Update header cursor to reflect new editability
+    const panelHeader = document.querySelector('#detailPanel #invoicePanelHeader');
+    if (panelHeader) panelHeader.style.cursor = newStatus === 'draft' ? 'text' : '';
     // Update the chip on the invoice card
     const chip = document.querySelector(`.invoice-selected .invoice-chip`) ||
                  document.querySelector(`.expanded .invoice-chip`);
