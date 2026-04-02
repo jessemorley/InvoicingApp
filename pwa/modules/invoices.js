@@ -393,15 +393,8 @@ function _showAddLineItemForm(inv, container) {
                           font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;"/>
         </div>
         <div style="display:flex;gap:8px;">
-            <button id="li_save" style="flex:1;padding:10px;background:#111827;color:#fff;
-                    border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">
-                Add
-            </button>
-            <button id="li_cancel" style="flex:1;padding:10px;background:#fff;color:#6b7280;
-                    border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-weight:600;
-                    cursor:pointer;font-family:inherit;">
-                Cancel
-            </button>
+            <button id="li_save" class="btn-row-action">Add</button>
+            <button id="li_cancel" class="btn-row-cancel">Cancel</button>
         </div>`;
     addBtn.insertAdjacentElement('beforebegin', form);
     document.getElementById('li_desc').focus();
@@ -521,16 +514,16 @@ function _renderInvoicePanelBody(container, inv) {
                 style="background:transparent;border:none;outline:none;font-size:13px;font-weight:600;color:#111827;font-family:inherit;width:100%;padding:0;" />
         </div>
     </div>
-    <button id="previewBtn_${inv.id}" style="margin-top:8px; margin-bottom:4px; width:100%; padding:12px; background:#111827; color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
+    <button id="previewBtn_${inv.id}" class="btn-primary" style="margin-top:8px;margin-bottom:4px;">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Preview Invoice
     </button>
-    <button id="emailBtn_${inv.id}" style="margin-top:6px; margin-bottom:4px; width:100%; padding:12px; background:transparent; color:#111827; border:1.5px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
+    <button id="emailBtn_${inv.id}" class="btn-secondary" style="margin-top:6px;margin-bottom:4px;">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         Email Invoice
     </button>
     <div id="scheduledEmailBanner_${inv.id}"></div>
-    <button id="deleteBtn_${inv.id}" style="margin-top:6px; margin-bottom:4px; width:100%; padding:12px; background:transparent; color:#ef4444; border:1.5px solid #fecaca; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
+    <button id="deleteBtn_${inv.id}" class="btn-destructive" style="margin-top:6px;margin-bottom:4px;">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         Delete Invoice
     </button>`;
@@ -929,10 +922,8 @@ function openEmailComposeSheet(inv, prefill = null) {
                     <span style="font-size:14px;font-weight:500;color:#374151;">Mark as Issued after sending</span>
                 </label>
                 <div id="emailButtons">
-                    <button id="emailCancelBtn" style="flex:1;padding:14px;background:#f9fafb;border:none;border-radius:12px;font-size:15px;font-weight:600;color:#6b7280;cursor:pointer;font-family:inherit;">
-                        Cancel
-                    </button>
-                    <button id="emailSendBtn" style="flex:1;padding:14px;background:#111827;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <button id="emailCancelBtn" class="btn-ghost" style="flex:1;">Cancel</button>
+                    <button id="emailSendBtn" class="btn-primary" style="flex:1;">
                         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                         Send
                     </button>
@@ -1119,9 +1110,9 @@ async function _loadScheduledEmailBanner(inv, container) {
                     Scheduled to send ${escText(dateStr)}
                 </p>
                 <div id="schedBannerButtons" style="display:none;gap:8px;margin-top:10px;">
-                    <button id="schedBannerSendNow" style="flex:1;padding:8px 0;background:#fff;border:1.5px solid #fed7aa;border-radius:8px;font-size:13px;font-weight:600;color:#c2410c;cursor:pointer;font-family:inherit;">Send now</button>
-                    <button id="schedBannerEdit"    style="flex:1;padding:8px 0;background:#fff;border:1.5px solid #fed7aa;border-radius:8px;font-size:13px;font-weight:600;color:#c2410c;cursor:pointer;font-family:inherit;">Edit</button>
-                    <button id="schedBannerCancel"  style="flex:1;padding:8px 0;background:#fff;border:1.5px solid #fed7aa;border-radius:8px;font-size:13px;font-weight:600;color:#c2410c;cursor:pointer;font-family:inherit;">Cancel</button>
+                    <button id="schedBannerSendNow" class="btn-banner-warn">Send now</button>
+                    <button id="schedBannerEdit"    class="btn-banner-warn">Edit</button>
+                    <button id="schedBannerCancel"  class="btn-banner-warn">Cancel</button>
                 </div>
             </div>`;
 
@@ -1170,8 +1161,8 @@ async function _loadScheduledEmailBanner(inv, container) {
                 </p>
                 ${row.error ? `<p style="font-size:12px;color:#ef4444;margin:0 0 10px;">${escText(row.error)}</p>` : '<p style="margin:0 0 10px;"></p>'}
                 <div style="display:flex;gap:8px;">
-                    <button id="schedBannerEdit"   style="flex:1;padding:8px 0;background:#fff;border:1.5px solid #fecaca;border-radius:8px;font-size:13px;font-weight:600;color:#dc2626;cursor:pointer;font-family:inherit;">Retry / Edit</button>
-                    <button id="schedBannerCancel" style="flex:1;padding:8px 0;background:#fff;border:1.5px solid #fecaca;border-radius:8px;font-size:13px;font-weight:600;color:#dc2626;cursor:pointer;font-family:inherit;">Dismiss</button>
+                    <button id="schedBannerEdit"   class="btn-banner-error">Retry / Edit</button>
+                    <button id="schedBannerCancel" class="btn-banner-error">Dismiss</button>
                 </div>
             </div>`;
 
@@ -1209,15 +1200,13 @@ function openDeleteSheet(inv) {
         <div id="invoiceDeleteBackdrop" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s;"></div>
         <div id="invoiceDeletePanel" style="position:relative;background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 40px;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);">
             <p style="font-size:13px;font-weight:600;color:#9ca3af;text-align:center;margin:0 0 16px;letter-spacing:0.05em;text-transform:uppercase;">Delete ${inv.invoice_number}</p>
-            <button id="deleteInvoiceOnly" style="width:100%;padding:14px;margin-bottom:10px;background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;font-size:15px;font-weight:600;color:#111827;cursor:pointer;font-family:inherit;">
+            <button id="deleteInvoiceOnly" class="btn-secondary" style="margin-bottom:10px;">
                 Delete invoice only (keep entries)
             </button>
-            <button id="deleteInvoiceAndEntries" style="width:100%;padding:14px;margin-bottom:16px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;font-size:15px;font-weight:600;color:#ef4444;cursor:pointer;font-family:inherit;">
+            <button id="deleteInvoiceAndEntries" class="btn-destructive" style="margin-bottom:16px;">
                 Delete invoice and entries
             </button>
-            <button id="deleteInvoiceCancel" style="width:100%;padding:14px;background:#f9fafb;border:none;border-radius:12px;font-size:15px;font-weight:600;color:#6b7280;cursor:pointer;font-family:inherit;">
-                Cancel
-            </button>
+            <button id="deleteInvoiceCancel" class="btn-ghost">Cancel</button>
         </div>`;
 
     document.body.appendChild(sheet);

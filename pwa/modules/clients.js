@@ -304,7 +304,7 @@ function _renderClientForm(client) {
         <div id="cfWorkflowRatesSection" class="${bt === 'day_rate' ? '' : 'hidden'}">
             <div class="week-header" style="padding-top:20px;"><span>Workflow Rates</span></div>
             <div id="cfWorkflowRatesList" class="space-y-2 mt-2"></div>
-            <button id="cfAddWfRateBtn" class="mt-3 w-full rounded-2xl text-[14px] font-bold text-blue-500 bg-blue-50 border-none cursor-pointer py-3">
+            <button id="cfAddWfRateBtn" class="btn-add mt-3">
                 + Add Workflow Rate
             </button>
         </div>
@@ -313,9 +313,7 @@ function _renderClientForm(client) {
         <div class="pt-2 pb-2 space-y-2">
             <button id="cfSaveBtn" class="btn-primary">Save Client</button>
             ${!isNew ? `
-            <button id="cfDeleteBtn" style="width:100%;padding:12px;background:transparent;color:#ef4444;border:1.5px solid #fecaca;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:-0.2px;">
-                Delete Client
-            </button>` : ''}
+            <button id="cfDeleteBtn" class="btn-destructive">Delete Client</button>` : ''}
         </div>
         </div>
     </div>`;
@@ -442,9 +440,9 @@ function _openWorkflowRateForm(rate) {
             <input type="number" id="wfMaxBonus" step="0.01" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${rate?.max_bonus || ''}">
         </div>
         <div class="flex gap-2 pt-1">
-            <button id="wfCancelBtn" class="flex-1 rounded-2xl text-[14px] font-bold text-gray-500 bg-gray-100 border-none cursor-pointer py-3">Cancel</button>
-            ${!isNew ? `<button id="wfDeleteBtn" class="flex-1 rounded-2xl text-[14px] font-bold text-red-500 bg-red-50 border-none cursor-pointer py-3">Delete</button>` : ''}
-            <button id="wfSaveRateBtn" class="flex-1 rounded-2xl text-[14px] font-bold text-white bg-gray-900 border-none cursor-pointer py-3">Save</button>
+            <button id="wfCancelBtn" class="btn-row-cancel">Cancel</button>
+            ${!isNew ? `<button id="wfDeleteBtn" class="btn-row-destructive">Delete</button>` : ''}
+            <button id="wfSaveRateBtn" class="btn-row-action">Save</button>
         </div>
     </div>`;
 
@@ -526,12 +524,8 @@ async function _openClientDeleteSheet(client) {
         <div id="clientDeletePanel" style="position:relative;background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 40px;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);">
             <p style="font-size:13px;font-weight:600;color:#9ca3af;text-align:center;margin:0 0 4px;letter-spacing:0.05em;text-transform:uppercase;">Delete ${_esc(client.name)}</p>
             <p style="font-size:14px;color:#374151;text-align:center;margin:0 0 16px;">Client has ${summary}.</p>
-            <button id="deleteClientAndData" style="width:100%;padding:14px;margin-bottom:10px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;font-size:15px;font-weight:600;color:#ef4444;cursor:pointer;font-family:inherit;">
-                Delete
-            </button>
-            <button id="deleteClientCancel" style="width:100%;padding:14px;background:#f9fafb;border:none;border-radius:12px;font-size:15px;font-weight:600;color:#6b7280;cursor:pointer;font-family:inherit;">
-                Cancel
-            </button>
+            <button id="deleteClientAndData" class="btn-destructive" style="margin-bottom:10px;">Delete</button>
+            <button id="deleteClientCancel" class="btn-ghost">Cancel</button>
         </div>`;
 
     document.body.appendChild(sheet);

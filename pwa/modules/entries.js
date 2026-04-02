@@ -560,8 +560,8 @@ function buildNewEntryFormHTML(desktop = false) {
                         <input type="hidden" id="newBreakMinutes" value="0">
                     </div>
                     <div class="flex gap-2">
-                        <button data-newbreakadj="-15" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all">-15</button>
-                        <button data-newbreakadj="15" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all">+15</button>
+                        <button data-newbreakadj="-15" class="btn-stepper">-15</button>
+                        <button data-newbreakadj="15" class="btn-stepper">+15</button>
                     </div>
                 </div>
             </div>
@@ -1136,8 +1136,8 @@ function openEntryCard(wrap, entry, readOnly = false) {
                     <input type="hidden" id="editBreakMinutes" value="0">
                 </div>
                 <div class="flex gap-2">
-                    <button data-editbreakadj="-15" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all"${readOnly ? ' disabled' : ''}>-15</button>
-                    <button data-editbreakadj="15" class="h-9 px-3 bg-white hover:bg-gray-100 text-gray-900 font-bold rounded-xl shadow-sm border border-gray-100 text-[12px] transition-all"${readOnly ? ' disabled' : ''}>+15</button>
+                    <button data-editbreakadj="-15" class="btn-stepper"${readOnly ? ' disabled' : ''}>-15</button>
+                    <button data-editbreakadj="15" class="btn-stepper"${readOnly ? ' disabled' : ''}>+15</button>
                 </div>
             </div>
         </div>`;
@@ -1189,7 +1189,7 @@ function openEntryCard(wrap, entry, readOnly = false) {
         html += `
         <div class="space-y-2 pt-1" id="editActionBtns">
             <button id="editSaveBtn" class="btn-primary">Save Changes</button>
-            <button id="editDeleteBtn" class="w-full rounded-2xl text-[15px] font-bold text-red-500 bg-red-50 active:bg-red-100 transition-colors border-none cursor-pointer" style="padding: 18px 14px;">Delete Entry</button>
+            <button id="editDeleteBtn" class="btn-destructive">Delete Entry</button>
         </div>`;
     }
     if (entry.invoice_id && entry.invoices) {

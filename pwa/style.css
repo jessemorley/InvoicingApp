@@ -113,17 +113,201 @@
             color: #fff;
             font-weight: 700;
             font-size: 15px;
-            border-radius: 1rem;
-            padding: 18px 14px;
+            letter-spacing: -0.2px;
+            border-radius: 14px;
+            padding: 14px;
             width: 100%;
             border: none;
             cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             transition: transform 0.1s, background 0.2s;
             box-shadow: none;
+            box-sizing: border-box;
         }
         .btn-primary:active { transform: scale(0.98); }
         .btn-primary.success { background: #34c759; box-shadow: 0 4px 16px rgba(52,199,89,0.3); }
         .btn-primary:disabled { background: #d1d5db; box-shadow: none; cursor: default; }
+
+        /* Secondary button — outline dark */
+        .btn-secondary {
+            background: transparent;
+            color: #111827;
+            border: 1.5px solid #e5e7eb;
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: -0.2px;
+            border-radius: 14px;
+            padding: 14px;
+            width: 100%;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.1s;
+            box-sizing: border-box;
+        }
+        .btn-secondary:active { transform: scale(0.98); }
+
+        /* Destructive button — outline red */
+        .btn-destructive {
+            background: transparent;
+            color: #ef4444;
+            border: 1.5px solid #fecaca;
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: -0.2px;
+            border-radius: 14px;
+            padding: 14px;
+            width: 100%;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.1s;
+            box-sizing: border-box;
+        }
+        .btn-destructive:active { transform: scale(0.98); }
+
+        /* Ghost button — no border, subtle bg, gray text */
+        .btn-ghost {
+            background: #f9fafb;
+            color: #6b7280;
+            border: none;
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: -0.2px;
+            border-radius: 14px;
+            padding: 14px;
+            width: 100%;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.1s;
+            box-sizing: border-box;
+        }
+        .btn-ghost:active { transform: scale(0.98); }
+
+        /* Compact paired row buttons */
+        .btn-row-action {
+            flex: 1;
+            padding: 12px;
+            background: #111827;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            letter-spacing: -0.2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.1s;
+        }
+        .btn-row-action:active { transform: scale(0.98); }
+        .btn-row-cancel {
+            flex: 1;
+            padding: 12px;
+            background: #f3f4f6;
+            color: #6b7280;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            letter-spacing: -0.2px;
+            transition: transform 0.1s;
+        }
+        .btn-row-cancel:active { transform: scale(0.98); }
+        .btn-row-destructive {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            color: #ef4444;
+            border: 1.5px solid #fecaca;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            letter-spacing: -0.2px;
+            transition: transform 0.1s;
+            box-sizing: border-box;
+        }
+        .btn-row-destructive:active { transform: scale(0.98); }
+
+        /* Scheduled email banner buttons */
+        .btn-banner-warn {
+            flex: 1;
+            padding: 8px 0;
+            background: #fff;
+            border: 1.5px solid #fed7aa;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #c2410c;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-banner-error {
+            flex: 1;
+            padding: 8px 0;
+            background: #fff;
+            border: 1.5px solid #fecaca;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #dc2626;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        /* Break time stepper (+/- 15 min) */
+        .btn-stepper {
+            height: 36px;
+            padding: 0 12px;
+            background: #fff;
+            border: 1px solid #f3f4f6;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #111827;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        }
+        .btn-stepper:active { background: #f3f4f6; }
+        .btn-stepper:disabled { opacity: 0.4; cursor: default; }
+
+        /* Add / create action */
+        .btn-add {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0,122,255,0.08);
+            color: #007AFF;
+            border: none;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            letter-spacing: -0.2px;
+        }
+        .btn-add:active { background: rgba(0,122,255,0.14); }
 
         /* FAB */
         .fab {
