@@ -298,15 +298,6 @@ final class ImportService {
                 dueDate = issuedDate
             }
 
-            // weekEnding = weekStarting + 6 days for weekly clients
-            let weekEnding: String?
-            if client.invoiceFrequency == .weekly, let startDate = dateFormatter.date(from: inv.weekStarting) {
-                let endDate = Calendar.current.date(byAdding: .day, value: 6, to: startDate) ?? startDate
-                weekEnding = dateFormatter.string(from: endDate)
-            } else {
-                weekEnding = nil
-            }
-
             // Map status: "invoiced" → .issued
             let status: InvoiceStatus
             switch inv.status {
@@ -322,7 +313,6 @@ final class ImportService {
                 clientId: client.id,
                 issuedDate: issuedDate,
                 dueDate: dueDate,
-                weekEnding: weekEnding,
                 subtotal: inv.subtotal,
                 superAmount: inv.superAmount,
                 total: inv.total,

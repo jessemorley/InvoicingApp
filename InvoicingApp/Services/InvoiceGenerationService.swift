@@ -78,7 +78,6 @@ final class InvoiceGenerationService {
             let now = Date()
 
             let dueDate = Calendar.current.date(byAdding: .day, value: settings.dueDateOffsetDays, to: now) ?? now
-            let weekEnd = group.client.invoiceFrequency == .weekly ? weekEndingDate(for: group.entries) : nil
 
             let userId = try await supabase.currentUserId()
             let invoice = Invoice(
@@ -88,7 +87,6 @@ final class InvoiceGenerationService {
                 clientId: group.client.id,
                 issuedDate: Invoice.dateString(from: now),
                 dueDate: Invoice.dateString(from: dueDate),
-                weekEnding: weekEnd.map { Invoice.dateString(from: $0) },
                 subtotal: group.subtotal,
                 superAmount: group.superTotal,
                 total: group.total,
@@ -111,12 +109,4 @@ final class InvoiceGenerationService {
         return invoices
     }
 
-    private func weekEndingDate(for entries: [Entry]) -> Date? {
-        guard let lastDate = entries.map(\.dateValue).max() else { return nil }
-        let calendar = Calendar.current
-        let weekday = calendar.component(.weekday, from: lastDate)
-        // Sunday = 1, so days until Sunday
-        let daysUntilSunday = (8 - weekday) % 7
-        return calendar.date(byAdding: .day, value: daysUntilSunday, to: lastDate)
-    }
 }

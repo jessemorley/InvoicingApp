@@ -13,7 +13,6 @@ struct Invoice: Codable, Identifiable, Hashable, Sendable {
     var clientId: UUID
     var issuedDate: String
     var dueDate: String
-    var weekEnding: String?
     var subtotal: Decimal
     var superAmount: Decimal
     var total: Decimal
@@ -28,7 +27,6 @@ struct Invoice: Codable, Identifiable, Hashable, Sendable {
         case clientId = "client_id"
         case issuedDate = "issued_date"
         case dueDate = "due_date"
-        case weekEnding = "week_ending"
         case superAmount = "super_amount"
         case createdAt = "created_at"
     }
