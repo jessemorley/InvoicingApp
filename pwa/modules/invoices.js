@@ -850,18 +850,16 @@ function openEmailComposeSheet(inv) {
     const client = inv.clients || {};
 
     const defaultTo      = client.email || '';
-    const defaultSubject = `Invoice ${inv.invoice_number} from ${biz.business_name || biz.name || ''}`;
-    const dueStr         = formatInvoiceDate(inv.due_date);
-    const defaultBody    = `Hi ${client.name || ''},\n\nPlease find Invoice ${inv.invoice_number} attached${dueStr ? `, due ${dueStr}` : ''}.\n\nKind regards,\n${biz.name || biz.business_name || ''}`.trim();
+    const defaultSubject = `Invoice ${inv.invoice_number}`;
+    const defaultBody    = `Hi ${client.name || ''},\n\nPlease find Invoice ${inv.invoice_number} attached.\n\nKind regards,\n${biz.name || biz.business_name || ''}`.trim();
 
     const isCurrentlyDraft = inv.status === 'draft';
 
     const sheet = document.createElement('div');
     sheet.id = 'invoiceEmailSheet';
-    sheet.style.cssText = 'position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;justify-content:flex-end;';
+    sheet.style.cssText = 'position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;';
     sheet.innerHTML = `
-        <div id="invoiceEmailBackdrop" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s;"></div>
-        <div id="invoiceEmailPanel" style="position:relative;background:#fff;border-radius:20px 20px 0 0;padding:24px 20px calc(32px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);max-height:90vh;overflow-y:auto;">
+        <div id="invoiceEmailPanel" style="position:relative;background:#fff;flex:1;display:flex;flex-direction:column;padding:calc(24px + env(safe-area-inset-top)) 20px calc(32px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;">
             <p style="font-size:13px;font-weight:600;color:#9ca3af;text-align:center;margin:0 0 20px;letter-spacing:0.05em;text-transform:uppercase;">Email ${inv.invoice_number}</p>
 
             <div style="margin-bottom:12px;">
@@ -876,40 +874,39 @@ function openEmailComposeSheet(inv) {
                     style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:inherit;color:#111827;outline:none;box-sizing:border-box;" />
             </div>
 
-            <div style="margin-bottom:16px;">
+            <div style="flex:1;display:flex;flex-direction:column;margin-bottom:16px;">
                 <label style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px;">Message</label>
-                <textarea id="emailBody" rows="5"
-                    style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:inherit;color:#111827;outline:none;box-sizing:border-box;resize:none;line-height:1.5;">${escText(defaultBody)}</textarea>
+                <textarea id="emailBody"
+                    style="flex:1;width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:inherit;color:#111827;outline:none;box-sizing:border-box;resize:none;line-height:1.5;">${escText(defaultBody)}</textarea>
             </div>
 
-            <label style="display:flex;align-items:center;gap:10px;margin-bottom:20px;cursor:pointer;">
+            <label style="display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer;">
                 <input id="emailMarkIssued" type="checkbox" ${isCurrentlyDraft ? 'checked' : ''}
                     style="width:18px;height:18px;accent-color:#111827;cursor:pointer;flex-shrink:0;" />
                 <span style="font-size:14px;font-weight:500;color:#374151;">Mark as Issued after sending</span>
             </label>
 
-            <button id="emailSendBtn" style="width:100%;padding:14px;margin-bottom:10px;background:#111827;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                Send
-            </button>
-            <button id="emailCancelBtn" style="width:100%;padding:14px;background:#f9fafb;border:none;border-radius:12px;font-size:15px;font-weight:600;color:#6b7280;cursor:pointer;font-family:inherit;">
-                Cancel
-            </button>
+            <div style="display:flex;gap:10px;">
+                <button id="emailCancelBtn" style="flex:1;padding:14px;background:#f9fafb;border:none;border-radius:12px;font-size:15px;font-weight:600;color:#6b7280;cursor:pointer;font-family:inherit;">
+                    Cancel
+                </button>
+                <button id="emailSendBtn" style="flex:2;padding:14px;background:#111827;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    Send
+                </button>
+            </div>
         </div>`;
 
     document.body.appendChild(sheet);
     requestAnimationFrame(() => requestAnimationFrame(() => {
-        document.getElementById('invoiceEmailBackdrop').style.opacity = '1';
         document.getElementById('invoiceEmailPanel').style.transform = 'translateY(0)';
     }));
 
     const close = () => {
-        document.getElementById('invoiceEmailBackdrop').style.opacity = '0';
         document.getElementById('invoiceEmailPanel').style.transform = 'translateY(100%)';
         setTimeout(() => sheet.remove(), 300);
     };
 
-    document.getElementById('invoiceEmailBackdrop').addEventListener('click', close);
     document.getElementById('emailCancelBtn').addEventListener('click', close);
     document.getElementById('emailSendBtn').addEventListener('click', async () => {
         const to         = document.getElementById('emailTo').value.trim();
