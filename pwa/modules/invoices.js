@@ -880,20 +880,31 @@ function openEmailComposeSheet(inv) {
                     style="flex:1;width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:inherit;color:#111827;outline:none;box-sizing:border-box;resize:none;line-height:1.5;">${escText(defaultBody)}</textarea>
             </div>
 
-            <label style="display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer;">
-                <input id="emailMarkIssued" type="checkbox" ${isCurrentlyDraft ? 'checked' : ''}
-                    style="width:18px;height:18px;accent-color:#111827;cursor:pointer;flex-shrink:0;" />
-                <span style="font-size:14px;font-weight:500;color:#374151;">Mark as Issued after sending</span>
-            </label>
-
-            <div style="display:flex;gap:10px;">
-                <button id="emailCancelBtn" style="flex:1;padding:14px;background:#f9fafb;border:none;border-radius:12px;font-size:15px;font-weight:600;color:#6b7280;cursor:pointer;font-family:inherit;">
-                    Cancel
-                </button>
-                <button id="emailSendBtn" style="flex:2;padding:14px;background:#111827;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    Send
-                </button>
+            <style>
+                #emailBottomRow { display:flex; flex-direction:column; gap:10px; }
+                #emailButtons   { display:flex; gap:10px; }
+                @media (min-width: 640px) {
+                    #emailBottomRow { flex-direction:row; align-items:center; }
+                    #emailMarkIssued-label { margin-bottom:0; flex:1; }
+                    #emailButtons { flex-shrink:0; }
+                    #emailButtons button { width:120px; }
+                }
+            </style>
+            <div id="emailBottomRow">
+                <label id="emailMarkIssued-label" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                    <input id="emailMarkIssued" type="checkbox" ${isCurrentlyDraft ? 'checked' : ''}
+                        style="width:18px;height:18px;accent-color:#111827;cursor:pointer;flex-shrink:0;" />
+                    <span style="font-size:14px;font-weight:500;color:#374151;">Mark as Issued after sending</span>
+                </label>
+                <div id="emailButtons">
+                    <button id="emailCancelBtn" style="flex:1;padding:14px;background:#f9fafb;border:none;border-radius:12px;font-size:15px;font-weight:600;color:#6b7280;cursor:pointer;font-family:inherit;">
+                        Cancel
+                    </button>
+                    <button id="emailSendBtn" style="flex:1;padding:14px;background:#111827;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        Send
+                    </button>
+                </div>
             </div>
         </div>`;
 
