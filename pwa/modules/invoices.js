@@ -458,6 +458,9 @@ function _renderInvoicePanelBody(container, inv) {
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
         Add line item
     </button>
+    <div id="statusRow_${inv.id}" style="margin-top:10px; display:flex; gap:8px;">
+        ${_buildStatusButtons(inv.status)}
+    </div>
     <button id="previewBtn_${inv.id}" style="margin-top:8px; margin-bottom:4px; width:100%; padding:12px; background:#111827; color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Preview Invoice
@@ -472,8 +475,50 @@ function _renderInvoicePanelBody(container, inv) {
         btn.addEventListener('click', () => _deleteLineItem(inv, btn.dataset.liId, container));
     });
     document.getElementById(`addLineItemBtn_${inv.id}`).addEventListener('click', () => _showAddLineItemForm(inv, container));
+    container.querySelectorAll('.status-btn').forEach(btn => {
+        btn.addEventListener('click', () => _updateInvoiceStatus(inv, btn.dataset.status, container));
+    });
     document.getElementById(`previewBtn_${inv.id}`).addEventListener('click', () => openInvoicePreview(inv));
     document.getElementById(`deleteBtn_${inv.id}`).addEventListener('click', () => openDeleteSheet(inv));
+}
+
+function _buildStatusButtons(currentStatus) {
+    const statuses = [
+        { value: 'draft',  label: 'Draft',  active: 'background:#f3f4f6;color:#6b7280;border-color:#d1d5db;', inactive: 'background:#fff;color:#9ca3af;border-color:#e5e7eb;' },
+        { value: 'issued', label: 'Issued', active: 'background:#fff7ed;color:#ea580c;border-color:#fed7aa;', inactive: 'background:#fff;color:#9ca3af;border-color:#e5e7eb;' },
+        { value: 'paid',   label: 'Paid',   active: 'background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;', inactive: 'background:#fff;color:#9ca3af;border-color:#e5e7eb;' },
+    ];
+    return statuses.map(s => {
+        const style = s.value === currentStatus ? s.active : s.inactive;
+        const weight = s.value === currentStatus ? '700' : '500';
+        return `<button class="status-btn" data-status="${s.value}"
+            style="flex:1;padding:9px 0;border:1.5px solid;border-radius:10px;font-size:13px;font-weight:${weight};cursor:pointer;font-family:inherit;${style}">
+            ${s.label}
+        </button>`;
+    }).join('');
+}
+
+async function _updateInvoiceStatus(inv, newStatus, container) {
+    if (inv.status === newStatus) return;
+    const { error } = await sb.from('invoices').update({ status: newStatus }).eq('id', inv.id);
+    if (error) { alert('Error updating status: ' + error.message); return; }
+    inv.status = newStatus;
+    const cached = invoicesCache.find(i => i.id === inv.id);
+    if (cached) cached.status = newStatus;
+    // Update status buttons in place
+    const row = document.getElementById(`statusRow_${inv.id}`);
+    if (row) row.innerHTML = _buildStatusButtons(newStatus);
+    row?.querySelectorAll('.status-btn').forEach(btn => {
+        btn.addEventListener('click', () => _updateInvoiceStatus(inv, btn.dataset.status, container));
+    });
+    // Update the chip on the invoice card
+    const chip = document.querySelector(`.invoice-selected .invoice-chip`) ||
+                 document.querySelector(`.expanded .invoice-chip`);
+    if (chip) {
+        const colors = { draft: 'bg-gray-100 text-gray-500', issued: 'bg-orange-100 text-orange-600', paid: 'bg-green-100 text-green-600' };
+        chip.className = `invoice-chip ${colors[newStatus] || 'bg-gray-100 text-gray-500'}`;
+        chip.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+    }
 }
 
 async function _populateInvoiceDetail(inner, inv) {
