@@ -882,6 +882,7 @@ function setNewEntryRole(role) {
     newEntryWrap.querySelectorAll('[data-newrole]').forEach(b => {
         b.classList.toggle('active', b.dataset.newrole === role);
     });
+    newEntryRecalculate();
 }
 
 function newEntryRecalculate() {
