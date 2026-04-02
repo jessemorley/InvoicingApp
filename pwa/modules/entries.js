@@ -215,7 +215,8 @@ function renderEntryClientWeeks(list, data, startCardIndex, beforeSentinel = fal
             const dowColor    = clientDowColor(clientName);
 
             const el = document.createElement('div');
-            el.className = 'entry-row' + (isInvoiced ? ' entry-row-invoiced' : ' entry-row-tappable');
+            const locked = !!entry.invoice_id && entry.invoices?.status !== 'draft';
+            el.className = 'entry-row' + (locked ? ' entry-row-invoiced' : ' entry-row-tappable');
             const dateParts = formatEntryDateParts(entry.date);
             el.innerHTML = `
                 <div class="entry-date-col">
@@ -241,7 +242,7 @@ function renderEntryClientWeeks(list, data, startCardIndex, beforeSentinel = fal
             detailInner.className = 'entry-detail-inner';
             detailPanel.appendChild(detailInner);
 
-            el.addEventListener('click', () => openEntryCard(wrap, entry, isInvoiced));
+            el.addEventListener('click', () => openEntryCard(wrap, entry, locked));
             wrap.appendChild(el);
             wrap.appendChild(detailPanel);
             group.appendChild(wrap);
@@ -296,7 +297,7 @@ function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
             const description = entryDescription(entry);
             const total       = fmt(entryAmt(entry));
             const inv         = entry.invoices;
-            const isInvoiced  = !!entry.invoice_id;
+            const locked      = !!entry.invoice_id && inv?.status !== 'draft';
 
             const chipHtml = inv ? (() => {
                 const chipColor = invoiceChipColors[inv.status] || 'bg-slate-100 text-slate-500';
@@ -304,7 +305,7 @@ function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
             })() : '';
 
             const el = document.createElement('div');
-            el.className = 'entry-row' + (isInvoiced ? ' entry-row-invoiced' : ' entry-row-tappable');
+            el.className = 'entry-row' + (locked ? ' entry-row-invoiced' : ' entry-row-tappable');
             const dateParts = formatEntryDateParts(entry.date);
             const dowColor  = clientDowColor(clientName);
             el.innerHTML = `
@@ -335,7 +336,7 @@ function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
             detailInner.className = 'entry-detail-inner';
             detailPanel.appendChild(detailInner);
 
-            el.addEventListener('click', () => openEntryCard(wrap, entry, isInvoiced));
+            el.addEventListener('click', () => openEntryCard(wrap, entry, locked));
             wrap.appendChild(el);
             wrap.appendChild(detailPanel);
             group.appendChild(wrap);
@@ -372,7 +373,7 @@ function renderEntryFlat(list, data, startCardIndex, beforeSentinel = false) {
         const total       = entry.total_amount || 0;
         const amount      = fmt(includeSuperInTotals ? total : total - (entry.super_amount || 0));
         const inv         = entry.invoices;
-        const isInvoiced  = !!entry.invoice_id;
+        const locked      = !!entry.invoice_id && inv?.status !== 'draft';
 
         const chipHtml = inv ? (() => {
             const chipColor = invoiceChipColors[inv.status] || 'bg-slate-100 text-slate-500';
@@ -380,7 +381,7 @@ function renderEntryFlat(list, data, startCardIndex, beforeSentinel = false) {
         })() : '';
 
         const el = document.createElement('div');
-        el.className = 'entry-row' + (isInvoiced ? ' entry-row-invoiced' : ' entry-row-tappable');
+        el.className = 'entry-row' + (locked ? ' entry-row-invoiced' : ' entry-row-tappable');
         const dateParts = formatEntryDateParts(entry.date);
         const dowColor  = clientDowColor(clientName);
         el.innerHTML = `
@@ -411,7 +412,7 @@ function renderEntryFlat(list, data, startCardIndex, beforeSentinel = false) {
         detailInner.className = 'entry-detail-inner';
         detailPanel.appendChild(detailInner);
 
-        el.addEventListener('click', () => openEntryCard(wrap, entry, isInvoiced));
+        el.addEventListener('click', () => openEntryCard(wrap, entry, locked));
         wrap.appendChild(el);
         wrap.appendChild(detailPanel);
         group.appendChild(wrap);
