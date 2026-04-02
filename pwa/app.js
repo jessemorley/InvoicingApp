@@ -338,6 +338,15 @@ export function switchView(index) {
 }
 // Expose for onclick= attributes in HTML
 window.switchView = switchView;
+window.navigateToInvoice = (id) => {
+    if (Invoices.isLoaded()) {
+        switchView(VIEW_INVOICES);
+        Invoices.openInvoiceById(id);
+    } else {
+        Invoices.queueOpen(id);
+        switchView(VIEW_INVOICES);
+    }
+};
 
 // ─────────────────────────────────────────────
 // VIEW SWIPE GESTURE

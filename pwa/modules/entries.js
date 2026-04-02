@@ -6,7 +6,7 @@ import {
     fmt, localDateStr, weeksAgoDateStr, weeksAgoDateStr_before,
     formatEntryDate, formatEntryDateParts, isoWeekKey, isoWeekStart,
     formatWeekLabel, clientBadgeColor, clientDowColor, clientDotColor, entryDescription,
-    calcDayRate, calcHourly, calcManual,
+    calcDayRate, calcHourly, calcManual, invoiceChipColors,
 } from './utils.js';
 
 // State injected from app.js via init()
@@ -1191,6 +1191,18 @@ function openEntryCard(wrap, entry, readOnly = false) {
             <button id="editDeleteBtn" class="w-full rounded-2xl text-[15px] font-bold text-red-500 bg-red-50 active:bg-red-100 transition-colors border-none cursor-pointer" style="padding: 18px 14px;">Delete Entry</button>
         </div>`;
     }
+    if (entry.invoice_id && entry.invoices) {
+        const inv = entry.invoices;
+        const chipColor = invoiceChipColors[inv.status] || 'bg-gray-100 text-gray-500';
+        html += `
+        <button id="entryInvoiceLink" style="width:100%;padding:14px 16px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:inherit;margin-top:4px;">
+            <span style="font-size:13px;font-weight:600;color:#6b7280;">Invoice</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span class="invoice-chip ${chipColor}">${inv.invoice_number}</span>
+                <svg width="14" height="14" fill="none" stroke="#9ca3af" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </div>
+        </button>`;
+    }
     html += `</div>` + desktopSuffix;
     inner.innerHTML = html;
 
@@ -1250,6 +1262,11 @@ function openEntryCard(wrap, entry, readOnly = false) {
     if (!readOnly) {
         document.getElementById('editSaveBtn').addEventListener('click', saveEdit);
         document.getElementById('editDeleteBtn').addEventListener('click', deleteEntryEntry);
+    }
+
+    const invoiceLink = document.getElementById('entryInvoiceLink');
+    if (invoiceLink) {
+        invoiceLink.addEventListener('click', () => window.navigateToInvoice(entry.invoice_id));
     }
 
     editRecalculate();

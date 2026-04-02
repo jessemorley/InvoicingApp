@@ -24,6 +24,7 @@ export let invoicesCache  = [];
 let invoicesRenderedCount = 0;
 const INVOICES_PAGE_SIZE  = 18;
 let currentPreviewHTML    = null;
+let pendingOpenId         = null;
 
 const ICON_GROUP = `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M11 18h2"/></svg>`;
 const ICON_LIST  = `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>`;
@@ -34,6 +35,13 @@ const ICON_LIST  = `<svg width="17" height="17" fill="none" stroke="currentColor
 
 export function markStale() { invoicesLoaded = false; }
 export function isLoaded()  { return invoicesLoaded; }
+export function queueOpen(id) { pendingOpenId = id; }
+export async function openInvoiceById(id) {
+    const inv = invoicesCache.find(i => i.id === id);
+    if (!inv) return;
+    const wrap = document.querySelector(`.invoice-card-wrap[data-invoice-id="${id}"]`);
+    if (wrap) await toggleInvoiceCard(wrap, inv);
+}
 
 export async function loadInvoices() {
     invoicesLoaded        = true;
@@ -56,6 +64,11 @@ export async function loadInvoices() {
     invoicesCache = data;
     updateSortBtnIcon();
     renderInvoices(invoicesCache);
+    if (pendingOpenId) {
+        const id = pendingOpenId;
+        pendingOpenId = null;
+        openInvoiceById(id);
+    }
 }
 
 function loadMoreInvoices() {
@@ -201,6 +214,7 @@ function buildInvoiceCard(inv, index) {
     const wrap = document.createElement('div');
     wrap.className = 'invoice-card-wrap';
     wrap.style.animationDelay = `${index * 40}ms`;
+    wrap.dataset.invoiceId = inv.id;
 
     const row = document.createElement('div');
     row.className = 'invoice-row';
