@@ -37,6 +37,7 @@ Data flows: **Views → ViewModels → Services → Supabase**
 - `InvoicingApp/ViewModels/` — one per screen
 - `InvoicingApp/Views/` — SwiftUI views grouped by feature
 - `supabase/migrations/` — numbered SQL files (enums, tables, seeds, RLS, functions)
+-  `supabase/supabase-schema.md` – overview of supabase schema. Reference file for all supabase changes
 - `plan.md` — full product spec with all business logic, rates, client details
 
 ## Key Gotchas

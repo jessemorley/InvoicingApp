@@ -269,6 +269,10 @@ function _renderClientForm(client) {
         <!-- Contact info -->
         <div class="bg-slate-50 rounded-2xl px-5 py-4 space-y-3">
             <div>
+                <span class="field-label-panel">Contact Name</span>
+                <input type="text" id="cfContactName" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${_esc(client?.contact_name || '')}">
+            </div>
+            <div>
                 <span class="field-label-panel">Email</span>
                 <input type="email" id="cfEmail" class="bg-transparent w-full text-[15px] font-semibold outline-none" value="${_esc(client?.email || '')}">
             </div>
@@ -585,6 +589,7 @@ async function _saveClient() {
         pays_super:       document.getElementById('cfPaysSuper').checked,
         super_rate:       parseFloat(document.getElementById('cfSuperRate').value) || 0.12,
         invoice_frequency:invoiceFrequency,
+        contact_name:     document.getElementById('cfContactName').value.trim() || null,
         email:            document.getElementById('cfEmail').value.trim() || '',
         address:          document.getElementById('cfAddress').value.trim() || '',
         suburb:           document.getElementById('cfSuburb').value.trim() || '',

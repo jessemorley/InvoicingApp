@@ -320,7 +320,7 @@ async function _fetchFullInvoice(inv) {
     if (hasFullData) return;
     const { data: fullInv, error } = await sb
         .from('invoices')
-        .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly, rate_hourly_photographer, rate_hourly_operator, entry_label, show_role), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand, start_time, finish_time, break_minutes), invoice_line_items(id, description, quantity, amount, sort_order)')
+        .select('*, clients(name, contact_name, email, address, suburb, pays_super, super_rate, rate_hourly, rate_hourly_photographer, rate_hourly_operator, entry_label, show_role), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand, start_time, finish_time, break_minutes), invoice_line_items(id, description, quantity, amount, sort_order)')
         .eq('id', inv.id)
         .single();
     if (!error && fullInv) {
@@ -714,7 +714,7 @@ function buildInvoiceHTML(inv) {
     const superRow = paysSuper
         ? `<div class="totals-row"><span class="label">Super (${superRatePct}%)</span><span class="value">${fmtInvoiceAmount(inv.super_amount)}</span></div>`
         : '';
-    const clientLines = [client.name, client.email, client.address, client.suburb]
+    const clientLines = [client.email, client.address, client.suburb]
         .filter(Boolean).map(l => `<p>${l}</p>`).join('');
     const biz = businessDetails || {};
     const superMetaLines = paysSuper && biz.super_fund
@@ -851,7 +851,7 @@ function openEmailComposeSheet(inv) {
 
     const defaultTo      = client.email || '';
     const defaultSubject = `Invoice ${inv.invoice_number}`;
-    const defaultBody    = `Hi ${client.name || ''},\n\nPlease find Invoice ${inv.invoice_number} attached.\n\nKind regards,\n${biz.name || biz.business_name || ''}`.trim();
+    const defaultBody    = `Hi ${client.contact_name || client.name || ''},\n\nPlease find Invoice ${inv.invoice_number} attached.\n\nKind regards,\n${biz.name || biz.business_name || ''}`.trim();
 
     const isCurrentlyDraft = inv.status === 'draft';
 

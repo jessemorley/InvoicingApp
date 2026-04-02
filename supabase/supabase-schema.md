@@ -42,6 +42,7 @@ Stores each billing client. ~11 rows.
 | `default_finish_time` | time? | Pre-fills finish time on new entries |
 | `address` | text | Client address |
 | `suburb` | text | Client suburb |
+| `contact_name` | text? | Contact person's name (used in email greeting) |
 | `email` | text | Client email |
 | `abn` | text? | Client ABN (Australian Business Number) |
 | `notes` | text? | Free-form notes |
