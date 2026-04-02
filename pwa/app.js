@@ -86,7 +86,8 @@ function showApp() {
         }
     });
     Clients.initHandlers();
-    switchView(VIEW_ENTRIES);
+    const saved = parseInt(sessionStorage.getItem('activeView'));
+    switchView(Number.isFinite(saved) ? saved : VIEW_ENTRIES);
 }
 
 document.getElementById('loginBtn').addEventListener('click', async () => {
@@ -248,10 +249,9 @@ document.addEventListener('entries:openClientPicker', () => {
     }
 });
 
-// After invoice generation: reload entries + mark invoices stale + re-scan
+// After invoice generation: reload entries + invoices + re-scan
 document.addEventListener('generate:done', async () => {
-    Invoices.markStale();
-    await Entries.loadRecentEntries();
+    await Promise.all([Entries.loadRecentEntries(), Invoices.loadInvoices()]);
     Generate.scanAndRender();
 });
 
@@ -295,6 +295,7 @@ window.closeOverflowMenu = closeOverflowMenu;
 
 export function switchView(index) {
     currentViewIndex = index;
+    sessionStorage.setItem('activeView', index);
     closeOverflowMenu();
     const isDesktop = window.innerWidth >= 768;
 
