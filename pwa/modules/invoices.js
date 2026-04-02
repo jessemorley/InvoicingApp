@@ -54,6 +54,7 @@ export async function loadInvoices() {
     const { data, error } = await sb
         .from('invoices')
         .select('id, invoice_number, status, issued_date, subtotal, clients(name), entries(date)')
+        .order('created_at', { ascending: false })
         .order('issued_date', { ascending: false });
 
     if (error || !data?.length) {
