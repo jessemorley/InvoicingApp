@@ -495,6 +495,10 @@ function _renderInvoicePanelBody(container, inv) {
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Preview Invoice
     </button>
+    <button id="emailBtn_${inv.id}" style="margin-top:6px; margin-bottom:4px; width:100%; padding:12px; background:transparent; color:#111827; border:1.5px solid #e5e7eb; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        Email Invoice
+    </button>
     <button id="deleteBtn_${inv.id}" style="margin-top:6px; margin-bottom:4px; width:100%; padding:12px; background:transparent; color:#ef4444; border:1.5px solid #fecaca; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         Delete Invoice
@@ -513,6 +517,7 @@ function _renderInvoicePanelBody(container, inv) {
         btn.addEventListener('click', () => _updateInvoiceStatus(inv, btn.dataset.status, container));
     });
     document.getElementById(`previewBtn_${inv.id}`).addEventListener('click', () => openInvoicePreview(inv));
+    document.getElementById(`emailBtn_${inv.id}`).addEventListener('click', () => openEmailComposeSheet(inv));
     document.getElementById(`deleteBtn_${inv.id}`).addEventListener('click', () => openDeleteSheet(inv));
 }
 
@@ -831,6 +836,183 @@ function openInvoicePreview(inv) {
 }
 
 export function getPrintHTML() { return currentPreviewHTML; }
+
+// ─────────────────────────────────────────────
+// EMAIL INVOICE
+// ─────────────────────────────────────────────
+
+function openEmailComposeSheet(inv) {
+    const existing = document.getElementById('invoiceEmailSheet');
+    if (existing) existing.remove();
+
+    const { businessDetails } = getState();
+    const biz    = businessDetails || {};
+    const client = inv.clients || {};
+
+    const defaultTo      = client.email || '';
+    const defaultSubject = `Invoice ${inv.invoice_number} from ${biz.business_name || biz.name || ''}`;
+    const dueStr         = formatInvoiceDate(inv.due_date);
+    const defaultBody    = `Hi ${client.name || ''},\n\nPlease find Invoice ${inv.invoice_number} attached${dueStr ? `, due ${dueStr}` : ''}.\n\nKind regards,\n${biz.name || biz.business_name || ''}`.trim();
+
+    const isCurrentlyDraft = inv.status === 'draft';
+
+    const sheet = document.createElement('div');
+    sheet.id = 'invoiceEmailSheet';
+    sheet.style.cssText = 'position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;justify-content:flex-end;';
+    sheet.innerHTML = `
+        <div id="invoiceEmailBackdrop" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s;"></div>
+        <div id="invoiceEmailPanel" style="position:relative;background:#fff;border-radius:20px 20px 0 0;padding:24px 20px calc(32px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);max-height:90vh;overflow-y:auto;">
+            <p style="font-size:13px;font-weight:600;color:#9ca3af;text-align:center;margin:0 0 20px;letter-spacing:0.05em;text-transform:uppercase;">Email ${inv.invoice_number}</p>
+
+            <div style="margin-bottom:12px;">
+                <label style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px;">To</label>
+                <input id="emailTo" type="email" value="${escAttr(defaultTo)}"
+                    style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:inherit;color:#111827;outline:none;box-sizing:border-box;" />
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <label style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px;">Subject</label>
+                <input id="emailSubject" type="text" value="${escAttr(defaultSubject)}"
+                    style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:inherit;color:#111827;outline:none;box-sizing:border-box;" />
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:4px;">Message</label>
+                <textarea id="emailBody" rows="5"
+                    style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:inherit;color:#111827;outline:none;box-sizing:border-box;resize:none;line-height:1.5;">${escText(defaultBody)}</textarea>
+            </div>
+
+            <label style="display:flex;align-items:center;gap:10px;margin-bottom:20px;cursor:pointer;">
+                <input id="emailMarkIssued" type="checkbox" ${isCurrentlyDraft ? 'checked' : ''}
+                    style="width:18px;height:18px;accent-color:#111827;cursor:pointer;flex-shrink:0;" />
+                <span style="font-size:14px;font-weight:500;color:#374151;">Mark as Issued after sending</span>
+            </label>
+
+            <button id="emailSendBtn" style="width:100%;padding:14px;margin-bottom:10px;background:#111827;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                Send
+            </button>
+            <button id="emailCancelBtn" style="width:100%;padding:14px;background:#f9fafb;border:none;border-radius:12px;font-size:15px;font-weight:600;color:#6b7280;cursor:pointer;font-family:inherit;">
+                Cancel
+            </button>
+        </div>`;
+
+    document.body.appendChild(sheet);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.getElementById('invoiceEmailBackdrop').style.opacity = '1';
+        document.getElementById('invoiceEmailPanel').style.transform = 'translateY(0)';
+    }));
+
+    const close = () => {
+        document.getElementById('invoiceEmailBackdrop').style.opacity = '0';
+        document.getElementById('invoiceEmailPanel').style.transform = 'translateY(100%)';
+        setTimeout(() => sheet.remove(), 300);
+    };
+
+    document.getElementById('invoiceEmailBackdrop').addEventListener('click', close);
+    document.getElementById('emailCancelBtn').addEventListener('click', close);
+    document.getElementById('emailSendBtn').addEventListener('click', async () => {
+        const to         = document.getElementById('emailTo').value.trim();
+        const subject    = document.getElementById('emailSubject').value.trim();
+        const bodyText   = document.getElementById('emailBody').value.trim();
+        const markIssued = document.getElementById('emailMarkIssued').checked;
+
+        if (!to)      { document.getElementById('emailTo').focus();      return; }
+        if (!subject) { document.getElementById('emailSubject').focus(); return; }
+
+        const sendBtn = document.getElementById('emailSendBtn');
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="animation:spin 0.8s linear infinite"><path stroke-linecap="round" stroke-linejoin="round" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16 8 8 0 01-8-8z"/></svg> Sending…';
+
+        const err = await _sendInvoiceEmail(inv, to, subject, bodyText, markIssued);
+        if (err) {
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> Send';
+            alert('Failed to send: ' + err);
+            return;
+        }
+
+        close();
+        _showToast(`Invoice emailed to ${to}`);
+    });
+}
+
+async function _sendInvoiceEmail(inv, to, subject, bodyText, markIssued) {
+    const supabaseUrl = 'https://cmbycqzjlwvydemaxrtb.supabase.co';
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return 'Not authenticated';
+
+    const invoiceHTML = buildInvoiceHTML(inv);
+    const filename    = `${inv.invoice_number}.pdf`;
+
+    try {
+        const res = await fetch(`${supabaseUrl}/functions/v1/send-invoice-email`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ to, subject, body_text: bodyText, invoice_html: invoiceHTML, filename }),
+        });
+        const json = await res.json();
+        if (!res.ok || json.error) return json.error || `Server error ${res.status}`;
+    } catch (err) {
+        return err.message;
+    }
+
+    if (markIssued && inv.status !== 'issued') {
+        const { error } = await sb.from('invoices').update({ status: 'issued' }).eq('id', inv.id);
+        if (!error) {
+            inv.status = 'issued';
+            const cached = invoicesCache.find(i => i.id === inv.id);
+            if (cached) cached.status = 'issued';
+            // Refresh the status buttons if the panel is still open
+            const statusRow = document.getElementById(`statusRow_${inv.id}`);
+            if (statusRow) {
+                statusRow.innerHTML = _buildStatusButtons('issued');
+                statusRow.querySelectorAll('.status-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const body = document.getElementById(`invoicePanelBody`) ||
+                                     statusRow.closest('.invoice-detail-inner');
+                        _updateInvoiceStatus(inv, btn.dataset.status, body);
+                    });
+                });
+            }
+            // Update card chip
+            const chip = document.querySelector(`.invoice-selected .invoice-chip`) ||
+                         document.querySelector(`.expanded .invoice-chip`);
+            if (chip) {
+                chip.className = 'invoice-chip bg-orange-100 text-orange-600';
+                chip.textContent = 'Issued';
+            }
+        }
+    }
+
+    return null; // success
+}
+
+function _showToast(message) {
+    const existing = document.getElementById('invoiceToast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.id = 'invoiceToast';
+    toast.textContent = message;
+    toast.style.cssText = 'position:fixed;bottom:calc(5.5rem + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;font-weight:500;font-family:inherit;z-index:2000;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.18);opacity:0;transition:opacity 0.2s;pointer-events:none;';
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => requestAnimationFrame(() => { toast.style.opacity = '1'; }));
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 200);
+    }, 3000);
+}
+
+function escAttr(str) {
+    return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function escText(str) {
+    return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 // ─────────────────────────────────────────────
 // DELETE INVOICE
