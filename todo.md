@@ -1,7 +1,7 @@
 ## MacOS App
 
 ### Login page
-Immediate feedback on button press (login or signup) - maybe spinner
+- [ ] Update loading animation (pulsing?)
 
 ### Entries View
 - [ ] Add start finish and break times to list view where applicable
@@ -31,34 +31,14 @@ Immediate feedback on button press (login or signup) - maybe spinner
 - [ ] Add line items to invoice (e.g. gear hire)
 
 ## PWA
-- [ ] Bug: pull to refresh: two loaders appear when activated (the lower spinner indicating the feature and another above it indicating activation). Look at this function, correct and polish. 
+- [ ] Add link to invoice from entries detail view
+- [ ] Allow entries from previously-invoiced invoices, once...
+- [ ] Add search
+- [ ] Filter invoices by status
+- [ ] Record issues and paid dates in database
+- [ ] Print to initiate PDF download instead of html page to print
+- [ ] Invoice preview to be scollable/resize on desktop
+- [ ] Bug: after generating an invoice 
 
 ## App Name Ideas
 Docket, Daybook, Remit, Sole, Dayrate
-
----
-
-## Code Quality (from audit 2026-03-24)
-
-### P0 — Crashes / Broken behaviour
-- [x] **CalendarView.swift:98** — Force unwrap on `cal.range(of:in:for:)!` crashes if calendar returns nil. Replace with `guard let`.
-- [x] **app.js:1305** — `dx` computed as `clientX - clientX` (always zero). Removed the dead line.
-- [ ] **app.js:184** — `loadInitialData` Promise.all has no error handling; any failed fetch leaves globals in partial/null state and UI breaks silently.
-
-### P1 — Data integrity / silent failures
-- [x] **app.js:1762 vs 192** — `businessDetails` `let` declared at line 1762 but assigned at line 192. Moved declaration to top of file with other globals.
-- [ ] **SupabaseService.swift:261** — `updateEntries()` fires one UPDATE per entry; a mid-loop failure leaves orphaned entries with no invoice_id. Batch with `IN (...)`.
-- [ ] **app.js:623-699** — Race condition: `loadRecentEntries()` and `loadMoreEntries()` both read/write `entriesOldestDate` concurrently. Add a loading guard flag.
-- [x] **app.js:1476** — `invoicesScrollLoading` flag never checked (load is synchronous from cache). Removed unused variable.
-
-### P2 — Silent errors, maintainability
-- [ ] **Entry.swift:51, Invoice.swift:46** — `dateValue` silently returns `Date()` on parse failure. Should log or return optional.
-- [ ] **UserSettings.swift:71-83** — `save()` uses `try?`, `load()` returns defaults on any decode error — no indication of corruption.
-- [ ] **Duplicated calc logic** — `CalculationService.swift` and `app.js calcDayRate()` implement the same ICONIC bonus logic. Any rule change must be made twice.
-
-### P3 — Config / dead code
-- [x] Add `.swiftlint.yml` whitelisting `vm`, `f`, `x`, `y` short-name conventions. SwiftLint findings: 91 → 22.
-- [ ] Add `package.json` to `pwa/` for dependency pinning; add subresource integrity hash to CDN `<script>` tag in `index.html`.
-- [x] **app.js:1765** — `fmtInvoiceCurrency` defined but never called. Deleted.
-- [x] **app.js:2184** — `bonusHidden` assigned but never read. Deleted.
-- [ ] **app.js:818** — `_list` and `_cardIndex` params unused; rename with `_` prefix to signal intent consistently.
