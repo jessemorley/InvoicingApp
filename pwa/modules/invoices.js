@@ -906,6 +906,12 @@ function openEmailComposeSheet(inv) {
                     </button>
                 </div>
             </div>
+
+            <div style="margin-top:16px;border-top:1px solid #f3f4f6;padding-top:14px;">
+                <label style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:6px;">Schedule for later (optional)</label>
+                <input type="datetime-local" id="emailScheduleTime"
+                    style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:inherit;color:#111827;outline:none;box-sizing:border-box;" />
+            </div>
         </div>`;
 
     document.body.appendChild(sheet);
@@ -919,33 +925,54 @@ function openEmailComposeSheet(inv) {
     };
 
     document.getElementById('emailCancelBtn').addEventListener('click', close);
+
+    // Update Send button label when schedule time changes
+    document.getElementById('emailScheduleTime').addEventListener('input', () => {
+        const val = document.getElementById('emailScheduleTime').value;
+        const sendBtn = document.getElementById('emailSendBtn');
+        if (val) {
+            const d = new Date(val);
+            const label = d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+            sendBtn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg> Send ${label}`;
+        } else {
+            sendBtn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> Send`;
+        }
+    });
+
     document.getElementById('emailSendBtn').addEventListener('click', async () => {
-        const to         = document.getElementById('emailTo').value.trim();
-        const subject    = document.getElementById('emailSubject').value.trim();
-        const bodyText   = document.getElementById('emailBody').value.trim();
-        const markIssued = document.getElementById('emailMarkIssued').checked;
+        const to           = document.getElementById('emailTo').value.trim();
+        const subject      = document.getElementById('emailSubject').value.trim();
+        const bodyText     = document.getElementById('emailBody').value.trim();
+        const markIssued   = document.getElementById('emailMarkIssued').checked;
+        const scheduleVal  = document.getElementById('emailScheduleTime').value;
+        const scheduledFor = scheduleVal ? new Date(scheduleVal).toISOString() : null;
 
         if (!to)      { document.getElementById('emailTo').focus();      return; }
         if (!subject) { document.getElementById('emailSubject').focus(); return; }
 
         const sendBtn = document.getElementById('emailSendBtn');
         sendBtn.disabled = true;
-        sendBtn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="animation:spin 0.8s linear infinite"><path stroke-linecap="round" stroke-linejoin="round" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16 8 8 0 01-8-8z"/></svg> Sending…';
+        sendBtn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="animation:spin 0.8s linear infinite"><path stroke-linecap="round" stroke-linejoin="round" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16 8 8 0 01-8-8z"/></svg> ' + (scheduledFor ? 'Scheduling…' : 'Sending…');
 
-        const err = await _sendInvoiceEmail(inv, to, subject, bodyText, markIssued);
+        const err = await _sendInvoiceEmail(inv, to, subject, bodyText, markIssued, scheduledFor);
         if (err) {
             sendBtn.disabled = false;
-            sendBtn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> Send';
-            alert('Failed to send: ' + err);
+            sendBtn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> Send`;
+            alert('Failed: ' + err);
             return;
         }
 
         close();
-        _showToast(`Invoice emailed to ${to}`);
+        if (scheduledFor) {
+            const d = new Date(scheduleVal);
+            _showToast(`Scheduled for ${d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`);
+        } else {
+            _showToast(`Invoice emailed to ${to}`);
+        }
     });
 }
 
-async function _sendInvoiceEmail(inv, to, subject, bodyText, markIssued) {
+async function _sendInvoiceEmail(inv, to, subject, bodyText, markIssued, scheduledFor = null) {
     const supabaseUrl = 'https://cmbycqzjlwvydemaxrtb.supabase.co';
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return 'Not authenticated';
@@ -954,16 +981,16 @@ async function _sendInvoiceEmail(inv, to, subject, bodyText, markIssued) {
     const filename    = `${inv.invoice_number}.pdf`;
 
     try {
+        const payload = { to, subject, body_text: bodyText, invoice_html: invoiceHTML, filename, invoice_id: inv.id };
+        if (scheduledFor) { payload.scheduled_for = scheduledFor; payload.mark_issued = markIssued; }
         const res = await fetch(`${supabaseUrl}/functions/v1/send-invoice-email`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({ to, subject, body_text: bodyText, invoice_html: invoiceHTML, filename }),
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+            body: JSON.stringify(payload),
         });
         const json = await res.json();
         if (!res.ok || json.error) return json.error || `Server error ${res.status}`;
+        if (json.scheduled) return null; // scheduled — skip the mark-issued block below
     } catch (err) {
         return err.message;
     }
