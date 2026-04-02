@@ -1075,17 +1075,23 @@ async function _loadScheduledEmailBanner(inv, container) {
         const d = new Date(row.scheduled_for);
         const dateStr = d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
         slot.innerHTML = `
-            <div style="margin-top:6px;margin-bottom:4px;padding:12px 14px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;">
-                <p style="font-size:13px;font-weight:600;color:#c2410c;margin:0 0 10px;display:flex;align-items:center;gap:6px;">
+            <div id="schedBannerWrap" style="margin-top:6px;margin-bottom:4px;padding:12px 14px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;cursor:pointer;">
+                <p style="font-size:13px;font-weight:600;color:#c2410c;margin:0;display:flex;align-items:center;gap:6px;">
                     <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>
                     Scheduled to send ${escText(dateStr)}
                 </p>
-                <div style="display:flex;gap:8px;">
+                <div id="schedBannerButtons" style="display:none;gap:8px;margin-top:10px;">
                     <button id="schedBannerSendNow" style="flex:1;padding:8px 0;background:#fff;border:1.5px solid #fed7aa;border-radius:8px;font-size:13px;font-weight:600;color:#c2410c;cursor:pointer;font-family:inherit;">Send now</button>
                     <button id="schedBannerEdit"    style="flex:1;padding:8px 0;background:#fff;border:1.5px solid #fed7aa;border-radius:8px;font-size:13px;font-weight:600;color:#c2410c;cursor:pointer;font-family:inherit;">Edit</button>
                     <button id="schedBannerCancel"  style="flex:1;padding:8px 0;background:#fff;border:1.5px solid #fed7aa;border-radius:8px;font-size:13px;font-weight:600;color:#c2410c;cursor:pointer;font-family:inherit;">Cancel</button>
                 </div>
             </div>`;
+
+        slot.querySelector('#schedBannerWrap').addEventListener('click', (e) => {
+            if (e.target.closest('button')) return; // let button clicks pass through
+            const btns = slot.querySelector('#schedBannerButtons');
+            btns.style.display = btns.style.display === 'none' ? 'flex' : 'none';
+        });
 
         slot.querySelector('#schedBannerSendNow').addEventListener('click', async () => {
             const btn = slot.querySelector('#schedBannerSendNow');
