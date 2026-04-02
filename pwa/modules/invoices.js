@@ -216,9 +216,9 @@ function buildInvoiceCard(inv, index) {
     const hasPending  = emailRows.some(e => e.status === 'pending');
     const hasSent     = !hasPending && emailRows.some(e => e.status === 'sent');
     const emailIcon   = hasPending
-        ? `<svg width="13" height="13" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>`
+        ? `<span style="padding:2px 7px;border-radius:20px;background:#f3f4f6;display:inline-flex;align-items:center;"><svg width="10" height="10" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg></span>`
         : hasSent
-        ? `<svg width="13" height="13" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m16 19 2 2 4-4"/></svg>`
+        ? `<span style="padding:2px 7px;border-radius:20px;background:#f0fdf4;display:inline-flex;align-items:center;"><svg width="10" height="10" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m16 19 2 2 4-4"/></svg></span>`
         : '';
 
     const wrap = document.createElement('div');
@@ -266,9 +266,9 @@ function _updateCardEmailIcon(invId) {
     const chip = wrap.querySelector('.invoice-chip');
     wrap.innerHTML = '';
     if (hasPending) {
-        wrap.insertAdjacentHTML('beforeend', `<svg width="13" height="13" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>`);
+        wrap.insertAdjacentHTML('beforeend', `<span style="padding:2px 7px;border-radius:20px;background:#f3f4f6;display:inline-flex;align-items:center;"><svg width="10" height="10" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg></span>`);
     } else if (hasSent) {
-        wrap.insertAdjacentHTML('beforeend', `<svg width="13" height="13" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m16 19 2 2 4-4"/></svg>`);
+        wrap.insertAdjacentHTML('beforeend', `<span style="padding:2px 7px;border-radius:20px;background:#f0fdf4;display:inline-flex;align-items:center;"><svg width="10" height="10" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m16 19 2 2 4-4"/></svg></span>`);
     }
     if (chip) wrap.appendChild(chip);
 }
