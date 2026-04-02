@@ -499,6 +499,7 @@ function _renderInvoicePanelBody(container, inv) {
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         Email Invoice
     </button>
+    <div id="scheduledEmailBanner_${inv.id}"></div>
     <button id="deleteBtn_${inv.id}" style="margin-top:6px; margin-bottom:4px; width:100%; padding:12px; background:transparent; color:#ef4444; border:1.5px solid #fecaca; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         Delete Invoice
@@ -519,6 +520,7 @@ function _renderInvoicePanelBody(container, inv) {
     document.getElementById(`previewBtn_${inv.id}`).addEventListener('click', () => openInvoicePreview(inv));
     document.getElementById(`emailBtn_${inv.id}`).addEventListener('click', () => openEmailComposeSheet(inv));
     document.getElementById(`deleteBtn_${inv.id}`).addEventListener('click', () => openDeleteSheet(inv));
+    _loadScheduledEmailBanner(inv, container);
 }
 
 function _wireHeaderEdit(panel, inv) {
@@ -841,7 +843,7 @@ export function getPrintHTML() { return currentPreviewHTML; }
 // EMAIL INVOICE
 // ─────────────────────────────────────────────
 
-function openEmailComposeSheet(inv) {
+function openEmailComposeSheet(inv, prefill = null) {
     const existing = document.getElementById('invoiceEmailSheet');
     if (existing) existing.remove();
 
@@ -849,9 +851,9 @@ function openEmailComposeSheet(inv) {
     const biz    = businessDetails || {};
     const client = inv.clients || {};
 
-    const defaultTo      = client.email || '';
-    const defaultSubject = `Invoice ${inv.invoice_number}`;
-    const defaultBody    = `Hi ${client.contact_name || client.name || ''},\n\nPlease find Invoice ${inv.invoice_number} attached.\n\nKind regards,\n${biz.name || biz.business_name || ''}`.trim();
+    const defaultTo      = prefill?.to      || client.email || '';
+    const defaultSubject = prefill?.subject  || `Invoice ${inv.invoice_number}`;
+    const defaultBody    = prefill?.body     || `Hi ${client.contact_name || client.name || ''},\n\nPlease find Invoice ${inv.invoice_number} attached.\n\nKind regards,\n${biz.name || biz.business_name || ''}`.trim();
 
     const isCurrentlyDraft = inv.status === 'draft';
 
@@ -1047,6 +1049,90 @@ function escAttr(str) {
 
 function escText(str) {
     return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ─────────────────────────────────────────────
+// SCHEDULED EMAIL BANNER
+// ─────────────────────────────────────────────
+
+async function _loadScheduledEmailBanner(inv, container) {
+    if (!inv.id) return;
+    const slot = document.getElementById(`scheduledEmailBanner_${inv.id}`);
+    if (!slot) return;
+
+    const { data } = await sb
+        .from('scheduled_emails')
+        .select('id, to_address, subject, body_text, scheduled_for, status, error')
+        .eq('invoice_id', inv.id)
+        .in('status', ['pending', 'failed'])
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+    const row = data?.[0];
+    if (!row) return;
+
+    if (row.status === 'pending') {
+        const d = new Date(row.scheduled_for);
+        const dateStr = d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        slot.innerHTML = `
+            <div style="margin-top:6px;margin-bottom:4px;padding:12px 14px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;">
+                <p style="font-size:13px;font-weight:600;color:#c2410c;margin:0 0 10px;display:flex;align-items:center;gap:6px;">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>
+                    Scheduled to send ${escText(dateStr)}
+                </p>
+                <div style="display:flex;gap:8px;">
+                    <button id="schedBannerSendNow" style="flex:1;padding:8px 0;background:#fff;border:1.5px solid #fed7aa;border-radius:8px;font-size:13px;font-weight:600;color:#c2410c;cursor:pointer;font-family:inherit;">Send now</button>
+                    <button id="schedBannerEdit"    style="flex:1;padding:8px 0;background:#fff;border:1.5px solid #fed7aa;border-radius:8px;font-size:13px;font-weight:600;color:#c2410c;cursor:pointer;font-family:inherit;">Edit</button>
+                    <button id="schedBannerCancel"  style="flex:1;padding:8px 0;background:#fff;border:1.5px solid #fed7aa;border-radius:8px;font-size:13px;font-weight:600;color:#c2410c;cursor:pointer;font-family:inherit;">Cancel</button>
+                </div>
+            </div>`;
+
+        slot.querySelector('#schedBannerSendNow').addEventListener('click', async () => {
+            const btn = slot.querySelector('#schedBannerSendNow');
+            btn.disabled = true; btn.textContent = 'Sending…';
+            const err = await _sendInvoiceEmail(inv, row.to_address, row.subject, row.body_text, false, null);
+            if (err) { btn.disabled = false; btn.textContent = 'Send now'; alert('Failed to send: ' + err); return; }
+            await sb.from('scheduled_emails').update({ status: 'cancelled' }).eq('id', row.id);
+            slot.innerHTML = '';
+            _showToast(`Invoice emailed to ${row.to_address}`);
+        });
+
+        slot.querySelector('#schedBannerEdit').addEventListener('click', async () => {
+            await sb.from('scheduled_emails').update({ status: 'cancelled' }).eq('id', row.id);
+            slot.innerHTML = '';
+            openEmailComposeSheet(inv, { to: row.to_address, subject: row.subject, body: row.body_text });
+        });
+
+        slot.querySelector('#schedBannerCancel').addEventListener('click', async () => {
+            await sb.from('scheduled_emails').update({ status: 'cancelled' }).eq('id', row.id);
+            slot.innerHTML = '';
+        });
+
+    } else { // failed
+        slot.innerHTML = `
+            <div style="margin-top:6px;margin-bottom:4px;padding:12px 14px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;">
+                <p style="font-size:13px;font-weight:600;color:#dc2626;margin:0 0 4px;display:flex;align-items:center;gap:6px;">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01"/></svg>
+                    Scheduled send failed
+                </p>
+                ${row.error ? `<p style="font-size:12px;color:#ef4444;margin:0 0 10px;">${escText(row.error)}</p>` : '<p style="margin:0 0 10px;"></p>'}
+                <div style="display:flex;gap:8px;">
+                    <button id="schedBannerEdit"   style="flex:1;padding:8px 0;background:#fff;border:1.5px solid #fecaca;border-radius:8px;font-size:13px;font-weight:600;color:#dc2626;cursor:pointer;font-family:inherit;">Retry / Edit</button>
+                    <button id="schedBannerCancel" style="flex:1;padding:8px 0;background:#fff;border:1.5px solid #fecaca;border-radius:8px;font-size:13px;font-weight:600;color:#dc2626;cursor:pointer;font-family:inherit;">Dismiss</button>
+                </div>
+            </div>`;
+
+        slot.querySelector('#schedBannerEdit').addEventListener('click', async () => {
+            await sb.from('scheduled_emails').update({ status: 'cancelled' }).eq('id', row.id);
+            slot.innerHTML = '';
+            openEmailComposeSheet(inv, { to: row.to_address, subject: row.subject, body: row.body_text });
+        });
+
+        slot.querySelector('#schedBannerCancel').addEventListener('click', async () => {
+            await sb.from('scheduled_emails').update({ status: 'cancelled' }).eq('id', row.id);
+            slot.innerHTML = '';
+        });
+    }
 }
 
 // ─────────────────────────────────────────────
