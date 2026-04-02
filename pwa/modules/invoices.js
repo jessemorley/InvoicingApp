@@ -53,7 +53,7 @@ export async function loadInvoices() {
 
     const { data, error } = await sb
         .from('invoices')
-        .select('id, invoice_number, status, issued_date, subtotal, clients(name), entries(date)')
+        .select('id, invoice_number, status, issued_date, subtotal, clients(name), entries(date), scheduled_emails(status)')
         .order('created_at', { ascending: false })
         .order('issued_date', { ascending: false });
 
@@ -212,6 +212,15 @@ function buildInvoiceCard(inv, index) {
     const total       = fmt(invoiceSubtotal(inv));
     const dateRange   = invoiceDateRange(inv);
 
+    const emailRows   = inv.scheduled_emails || [];
+    const hasPending  = emailRows.some(e => e.status === 'pending');
+    const hasSent     = !hasPending && emailRows.some(e => e.status === 'sent');
+    const emailIcon   = hasPending
+        ? `<svg width="13" height="13" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>`
+        : hasSent
+        ? `<svg width="13" height="13" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m16 19 2 2 4-4"/></svg>`
+        : '';
+
     const wrap = document.createElement('div');
     wrap.className = 'invoice-card-wrap';
     wrap.style.animationDelay = `${index * 40}ms`;
@@ -228,7 +237,10 @@ function buildInvoiceCard(inv, index) {
             ${dateRange ? `<p class="text-[13px] text-gray-400 truncate">${dateRange}</p>` : ''}
         </div>
         <div class="flex flex-col items-end gap-1 shrink-0">
-            <span class="invoice-chip ${chipColor}">${statusLabel}</span>
+            <div id="emailIconWrap_${inv.id}" class="flex items-center gap-1.5">
+                ${emailIcon}
+                <span class="invoice-chip ${chipColor}">${statusLabel}</span>
+            </div>
             <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
         </div>`;
 
@@ -242,6 +254,23 @@ function buildInvoiceCard(inv, index) {
     wrap.appendChild(row);
     wrap.appendChild(detailPanel);
     return wrap;
+}
+
+function _updateCardEmailIcon(invId) {
+    const wrap = document.getElementById(`emailIconWrap_${invId}`);
+    if (!wrap) return;
+    const cached = invoicesCache.find(i => i.id === invId);
+    const emailRows = cached?.scheduled_emails || [];
+    const hasPending = emailRows.some(e => e.status === 'pending');
+    const hasSent    = !hasPending && emailRows.some(e => e.status === 'sent');
+    const chip = wrap.querySelector('.invoice-chip');
+    wrap.innerHTML = '';
+    if (hasPending) {
+        wrap.insertAdjacentHTML('beforeend', `<svg width="13" height="13" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>`);
+    } else if (hasSent) {
+        wrap.insertAdjacentHTML('beforeend', `<svg width="13" height="13" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m16 19 2 2 4-4"/></svg>`);
+    }
+    if (chip) wrap.appendChild(chip);
 }
 
 function _isDesktop() { return window.innerWidth >= 768; }
@@ -993,7 +1022,12 @@ async function _sendInvoiceEmail(inv, to, subject, bodyText, markIssued, schedul
         });
         const json = await res.json();
         if (!res.ok || json.error) return json.error || `Server error ${res.status}`;
-        if (json.scheduled) return null; // scheduled — skip the mark-issued block below
+        if (json.scheduled) {
+            const cached = invoicesCache.find(i => i.id === inv.id);
+            if (cached) { if (!cached.scheduled_emails) cached.scheduled_emails = []; cached.scheduled_emails.push({ status: 'pending' }); }
+            _updateCardEmailIcon(inv.id);
+            return null; // scheduled — skip the mark-issued block below
+        }
     } catch (err) {
         return err.message;
     }
@@ -1026,6 +1060,9 @@ async function _sendInvoiceEmail(inv, to, subject, bodyText, markIssued, schedul
         }
     }
 
+    const cachedForSent = invoicesCache.find(i => i.id === inv.id);
+    if (cachedForSent) { if (!cachedForSent.scheduled_emails) cachedForSent.scheduled_emails = []; cachedForSent.scheduled_emails.push({ status: 'sent' }); }
+    _updateCardEmailIcon(inv.id);
     return null; // success
 }
 
@@ -1100,18 +1137,27 @@ async function _loadScheduledEmailBanner(inv, container) {
             const err = await _sendInvoiceEmail(inv, row.to_address, row.subject, row.body_text, false, null);
             if (err) { btn.disabled = false; btn.textContent = 'Send now'; alert('Failed to send: ' + err); return; }
             await sb.from('scheduled_emails').update({ status: 'cancelled' }).eq('id', row.id);
+            const cachedSN = invoicesCache.find(i => i.id === inv.id);
+            if (cachedSN) cachedSN.scheduled_emails = (cachedSN.scheduled_emails || []).filter(e => e.status !== 'pending');
+            _updateCardEmailIcon(inv.id);
             slot.innerHTML = '';
             _showToast(`Invoice emailed to ${row.to_address}`);
         });
 
         slot.querySelector('#schedBannerEdit').addEventListener('click', async () => {
             await sb.from('scheduled_emails').update({ status: 'cancelled' }).eq('id', row.id);
+            const cachedEdit = invoicesCache.find(i => i.id === inv.id);
+            if (cachedEdit) cachedEdit.scheduled_emails = (cachedEdit.scheduled_emails || []).filter(e => e.status !== 'pending');
+            _updateCardEmailIcon(inv.id);
             slot.innerHTML = '';
             openEmailComposeSheet(inv, { to: row.to_address, subject: row.subject, body: row.body_text });
         });
 
         slot.querySelector('#schedBannerCancel').addEventListener('click', async () => {
             await sb.from('scheduled_emails').update({ status: 'cancelled' }).eq('id', row.id);
+            const cachedCancel = invoicesCache.find(i => i.id === inv.id);
+            if (cachedCancel) cachedCancel.scheduled_emails = (cachedCancel.scheduled_emails || []).filter(e => e.status !== 'pending');
+            _updateCardEmailIcon(inv.id);
             slot.innerHTML = '';
         });
 
@@ -1131,12 +1177,18 @@ async function _loadScheduledEmailBanner(inv, container) {
 
         slot.querySelector('#schedBannerEdit').addEventListener('click', async () => {
             await sb.from('scheduled_emails').update({ status: 'cancelled' }).eq('id', row.id);
+            const cachedEdit = invoicesCache.find(i => i.id === inv.id);
+            if (cachedEdit) cachedEdit.scheduled_emails = (cachedEdit.scheduled_emails || []).filter(e => e.status !== 'pending');
+            _updateCardEmailIcon(inv.id);
             slot.innerHTML = '';
             openEmailComposeSheet(inv, { to: row.to_address, subject: row.subject, body: row.body_text });
         });
 
         slot.querySelector('#schedBannerCancel').addEventListener('click', async () => {
             await sb.from('scheduled_emails').update({ status: 'cancelled' }).eq('id', row.id);
+            const cachedCancel = invoicesCache.find(i => i.id === inv.id);
+            if (cachedCancel) cachedCancel.scheduled_emails = (cachedCancel.scheduled_emails || []).filter(e => e.status !== 'pending');
+            _updateCardEmailIcon(inv.id);
             slot.innerHTML = '';
         });
     }
