@@ -424,7 +424,16 @@ function _renderInvoicePanelBody(container, inv) {
     const sorted = [...entries].sort((a, b) => a.date < b.date ? -1 : 1);
     const { businessDetails } = getState();
     const includeSuperInTotals = businessDetails?.include_super_in_totals ?? true;
-    let html = '<div class="space-y-0">';
+    let html = '';
+    if (inv.status === 'draft') {
+        html += `
+        <div class="bg-slate-50 rounded-2xl px-5 py-3 flex items-center justify-between gap-3" style="margin-bottom:12px;">
+            <span style="font-size:12px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;">Invoice #</span>
+            <input id="invoiceNumberInput_${inv.id}" value="${inv.invoice_number}"
+                style="background:transparent;border:none;outline:none;font-size:15px;font-weight:700;color:#111827;text-align:right;font-family:inherit;width:100%;max-width:160px;" />
+        </div>`;
+    }
+    html += '<div class="space-y-0">';
     sorted.forEach(e => {
         const desc   = entryDescription(e);
         const total  = e.total_amount || 0;
@@ -485,6 +494,11 @@ function _renderInvoicePanelBody(container, inv) {
     </button>`;
 
     container.innerHTML = html;
+    const numInput = document.getElementById(`invoiceNumberInput_${inv.id}`);
+    if (numInput) {
+        numInput.addEventListener('blur', () => _updateInvoiceNumber(inv, numInput.value));
+        numInput.addEventListener('keydown', e => { if (e.key === 'Enter') numInput.blur(); });
+    }
     container.querySelectorAll('.li-delete-btn').forEach(btn => {
         btn.addEventListener('click', () => _deleteLineItem(inv, btn.dataset.liId, container));
     });
@@ -494,6 +508,27 @@ function _renderInvoicePanelBody(container, inv) {
     });
     document.getElementById(`previewBtn_${inv.id}`).addEventListener('click', () => openInvoicePreview(inv));
     document.getElementById(`deleteBtn_${inv.id}`).addEventListener('click', () => openDeleteSheet(inv));
+}
+
+async function _updateInvoiceNumber(inv, newNumber) {
+    newNumber = (newNumber || '').trim();
+    if (!newNumber || newNumber === inv.invoice_number) return;
+    const { error } = await sb.from('invoices').update({ invoice_number: newNumber }).eq('id', inv.id);
+    if (error) {
+        const input = document.getElementById(`invoiceNumberInput_${inv.id}`);
+        if (input) input.value = inv.invoice_number;
+        alert('Could not update invoice number: ' + (error.message.includes('unique') ? 'that number is already in use.' : error.message));
+        return;
+    }
+    inv.invoice_number = newNumber;
+    const cached = invoicesCache.find(i => i.id === inv.id);
+    if (cached) cached.invoice_number = newNumber;
+    // Update card row
+    const cardSpan = document.querySelector(`.invoice-card-wrap[data-invoice-id="${inv.id}"] .text-\\[15px\\].font-bold`);
+    if (cardSpan) cardSpan.textContent = newNumber;
+    // Update desktop panel header
+    const header = document.querySelector('#detailPanel .panel-header');
+    if (header) header.textContent = newNumber;
 }
 
 function _buildStatusButtons(currentStatus) {
