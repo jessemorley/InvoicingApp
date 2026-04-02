@@ -302,7 +302,7 @@ async function _fetchFullInvoice(inv) {
     if (hasFullData) return;
     const { data: fullInv, error } = await sb
         .from('invoices')
-        .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly, entry_label), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand, start_time, finish_time, break_minutes), invoice_line_items(id, description, quantity, amount, sort_order)')
+        .select('*, clients(name, email, address, suburb, pays_super, super_rate, rate_hourly, rate_hourly_photographer, rate_hourly_operator, entry_label, show_role), entries(id, date, description, total_amount, super_amount, base_amount, bonus_amount, day_type, workflow_type, shoot_client, role, hours_worked, billing_type_snapshot, skus, brand, start_time, finish_time, break_minutes), invoice_line_items(id, description, quantity, amount, sort_order)')
         .eq('id', inv.id)
         .single();
     if (!error && fullInv) {
@@ -517,7 +517,14 @@ function buildInvoiceLineItemsHTML(inv) {
             const label = e.shoot_client || e.description || '';
             description = e.role ? `${label} (${abbreviateRole(e.role)})` : label;
             hours = e.hours_worked != null ? String(e.hours_worked) : '';
-            const rateHourly = parseFloat(client.rate_hourly) || 0;
+            let rateHourly;
+            if (client.show_role && e.role) {
+                rateHourly = e.role.toLowerCase() === 'operator'
+                    ? parseFloat(client.rate_hourly_operator) || parseFloat(client.rate_hourly) || 0
+                    : parseFloat(client.rate_hourly_photographer) || parseFloat(client.rate_hourly) || 0;
+            } else {
+                rateHourly = parseFloat(client.rate_hourly) || 0;
+            }
             rate = rateHourly ? fmtInvoiceRate(rateHourly) : '';
             amount = fmtInvoiceAmount(e.base_amount);
         } else {
