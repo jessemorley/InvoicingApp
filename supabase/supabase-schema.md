@@ -106,6 +106,7 @@ Invoice headers. ~51 rows.
 | `invoice_number` | text UNIQUE | e.g. `"INV-042"` |
 | `issued_date` | date | Date invoice was issued (`"YYYY-MM-DD"`) |
 | `due_date` | date | Payment due date (`"YYYY-MM-DD"`) |
+| `paid_date` | date? | Date payment was received (`"YYYY-MM-DD"`) |
 | `week_ending` | date? | Week ending date for weekly invoices |
 | `subtotal` | numeric | Sum of entry base+bonus amounts (excl. super) |
 | `super_amount` | numeric | Total super across entries |

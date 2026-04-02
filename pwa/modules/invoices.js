@@ -484,6 +484,18 @@ function _renderInvoicePanelBody(container, inv) {
     <div id="statusRow_${inv.id}" style="margin-top:10px; display:flex; gap:8px;">
         ${_buildStatusButtons(inv.status)}
     </div>
+    <div style="margin-top:8px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <div style="background:#f9fafb; border-radius:12px; padding:10px 12px;">
+            <div style="font-size:11px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Issued</div>
+            <input type="date" id="issuedDateInput_${inv.id}" value="${inv.issued_date || ''}"
+                style="background:transparent;border:none;outline:none;font-size:13px;font-weight:600;color:#111827;font-family:inherit;width:100%;padding:0;" />
+        </div>
+        <div style="background:#f9fafb; border-radius:12px; padding:10px 12px;">
+            <div style="font-size:11px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Paid</div>
+            <input type="date" id="paidDateInput_${inv.id}" value="${inv.paid_date || ''}"
+                style="background:transparent;border:none;outline:none;font-size:13px;font-weight:600;color:#111827;font-family:inherit;width:100%;padding:0;" />
+        </div>
+    </div>
     <button id="previewBtn_${inv.id}" style="margin-top:8px; margin-bottom:4px; width:100%; padding:12px; background:#111827; color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:8px;">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Preview Invoice
@@ -499,6 +511,10 @@ function _renderInvoicePanelBody(container, inv) {
         numInput.addEventListener('blur', () => _updateInvoiceNumber(inv, numInput.value));
         numInput.addEventListener('keydown', e => { if (e.key === 'Enter') numInput.blur(); });
     }
+    const issuedInput = document.getElementById(`issuedDateInput_${inv.id}`);
+    if (issuedInput) issuedInput.addEventListener('change', () => _updateInvoiceDate(inv, 'issued_date', issuedInput.value));
+    const paidInput = document.getElementById(`paidDateInput_${inv.id}`);
+    if (paidInput) paidInput.addEventListener('change', () => _updateInvoiceDate(inv, 'paid_date', paidInput.value));
     container.querySelectorAll('.li-delete-btn').forEach(btn => {
         btn.addEventListener('click', () => _deleteLineItem(inv, btn.dataset.liId, container));
     });
@@ -508,6 +524,15 @@ function _renderInvoicePanelBody(container, inv) {
     });
     document.getElementById(`previewBtn_${inv.id}`).addEventListener('click', () => openInvoicePreview(inv));
     document.getElementById(`deleteBtn_${inv.id}`).addEventListener('click', () => openDeleteSheet(inv));
+}
+
+async function _updateInvoiceDate(inv, field, value) {
+    const newValue = value || null;
+    const { error } = await sb.from('invoices').update({ [field]: newValue }).eq('id', inv.id);
+    if (error) { alert('Error saving date: ' + error.message); return; }
+    inv[field] = newValue;
+    const cached = invoicesCache.find(i => i.id === inv.id);
+    if (cached) cached[field] = newValue;
 }
 
 async function _updateInvoiceNumber(inv, newNumber) {
