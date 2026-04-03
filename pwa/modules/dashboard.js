@@ -55,7 +55,7 @@ export async function loadDashboard() {
             .gte('date', prevYearStart)
             .lt('date', yearStart),
         sb.from('scheduled_emails')
-            .select('id, invoice_id, to_address, subject, scheduled_for, status, sent_at, invoices(invoice_number, clients(name))')
+            .select('id, invoice_id, to_address, subject, body_text, scheduled_for, status, sent_at, invoices(invoice_number, clients(name))')
             .in('status', ['pending', 'sent'])
             .order('created_at', { ascending: false })
             .limit(5),
@@ -284,7 +284,9 @@ function buildEmailLog(emails) {
                 ${icon}
                 <div style="min-width:0;">
                     <div style="font-size:12px;font-weight:700;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${clientName}</div>
-                    <div style="font-size:10px;color:#9ca3af;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.subject}</div>
+                    <div style="font-size:10px;color:#6b7280;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        ${e.subject}<span style="color:#c0c4cc;"> — </span><span style="color:#b0b4bc;font-weight:400;">${emailBodyPreview(e.body_text)}</span>
+                    </div>
                 </div>
             </div>
             <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:12px;">
@@ -307,6 +309,13 @@ function buildEmailLog(emails) {
                 ${rows}
             </div>
         </div>`;
+}
+
+function emailBodyPreview(body) {
+    if (!body) return '';
+    // Collapse whitespace and newlines to a single space, strip leading greeting line
+    const flat = body.replace(/\r?\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
+    return flat.length > 80 ? flat.slice(0, 80) + '…' : flat;
 }
 
 function formatEmailDate(d) {
