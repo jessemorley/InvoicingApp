@@ -132,8 +132,8 @@ export async function loadDashboard() {
         <div class="dash-grid" style="margin-bottom:10px;">
 
             <!-- Month Summary Card -->
-            <div class="week-group">
-                <div class="week-header"><span>${monthName} Summary</span></div>
+            <div class="card-group">
+                <div class="card-header"><span>${monthName} Summary</span></div>
                 <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;flex-direction:column;justify-content:space-between;">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                         <div>
@@ -165,8 +165,8 @@ export async function loadDashboard() {
             </div>
 
             <!-- Outstanding Card -->
-            <div class="week-group">
-                <div class="week-header"><span>Outstanding</span></div>
+            <div class="card-group">
+                <div class="card-header"><span>Outstanding</span></div>
                 <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;flex-direction:column;">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
                         <div style="font-size:22px;font-weight:900;color:#111827;">${fmt(outstandingTotal)}</div>
@@ -181,8 +181,8 @@ export async function loadDashboard() {
         </div>
 
         <!-- Last 6 Months Chart -->
-        <div class="week-group" style="margin-bottom:10px;">
-            <div class="week-header">
+        <div class="card-group" style="margin-bottom:10px;">
+            <div class="card-header">
                 <span>Last 6 Months</span>
                 <div style="display:flex;gap:16px;">
                     <div style="display:flex;align-items:center;gap:6px;">
@@ -349,8 +349,8 @@ function buildEmailLog(emails) {
     }).join('');
 
     return `
-        <div class="week-group" style="margin-bottom:24px;">
-            <div class="week-header">
+        <div class="card-group" style="margin-bottom:24px;">
+            <div class="card-header">
                 <span>Email Log</span>
                 <button onclick="window.switchView(2)" style="font-size:10px;font-weight:700;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0;text-transform:uppercase;letter-spacing:0.05em;">History</button>
             </div>

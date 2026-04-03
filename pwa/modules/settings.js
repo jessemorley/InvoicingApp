@@ -90,8 +90,8 @@ function _render() {
 
     container.innerHTML = `
         <!-- GENERAL -->
-        <div class="settings-section">
-            <div class="settings-section-header">General</div>
+        <div class="card-group">
+            <div class="card-header">General</div>
             <div class="settings-group">
                 <div class="settings-row">
                     <label class="settings-label" for="s_invoicePrefix">Invoice Prefix</label>
@@ -107,8 +107,8 @@ function _render() {
         </div>
 
         <!-- PREFERENCES -->
-        <div class="settings-section">
-            <div class="settings-section-header">Preferences</div>
+        <div class="card-group">
+            <div class="card-header">Preferences</div>
             <div class="settings-group">
                 <div class="settings-row settings-row-toggle">
                     <span class="settings-label">Include super in totals</span>
@@ -142,8 +142,8 @@ function _render() {
         </div>
 
         <!-- PERSONAL INFO -->
-        <div class="settings-section">
-            <div class="settings-section-header">Personal Info</div>
+        <div class="card-group">
+            <div class="card-header">Personal Info</div>
             <div class="settings-group">
                 <div class="settings-field">
                     <label class="settings-field-label" for="s_name">Name</label>
@@ -165,8 +165,8 @@ function _render() {
         </div>
 
         <!-- BANKING -->
-        <div class="settings-section">
-            <div class="settings-section-header">Banking</div>
+        <div class="card-group">
+            <div class="card-header">Banking</div>
             <div class="settings-group">
                 <div class="settings-field">
                     <label class="settings-field-label" for="s_bsb">BSB</label>
@@ -180,8 +180,8 @@ function _render() {
         </div>
 
         <!-- SUPERANNUATION -->
-        <div class="settings-section">
-            <div class="settings-section-header">Superannuation</div>
+        <div class="card-group">
+            <div class="card-header">Superannuation</div>
             <div class="settings-group">
                 <div class="settings-field">
                     <label class="settings-field-label" for="s_superFund">Fund Name</label>
@@ -203,8 +203,8 @@ function _render() {
         </div>
 
         <!-- ACCOUNT -->
-        <div class="settings-section" id="settingsAccountSection">
-            <div class="settings-section-header">Account</div>
+        <div class="card-group" id="settingsAccountSection">
+            <div class="card-header">Account</div>
             <div class="settings-group">
                 <div class="settings-row">
                     <span class="settings-label">Email</span>

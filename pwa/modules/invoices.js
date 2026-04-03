@@ -83,9 +83,9 @@ function loadMoreInvoices() {
     const sentinel = document.getElementById('invoicesLoadMore');
 
     if (invoicesSortMode === 'chronological') {
-        const grp = list.querySelector('.week-group') || (() => {
+        const grp = list.querySelector('.card-group') || (() => {
             const g = document.createElement('div');
-            g.className = 'week-group';
+            g.className = 'card-group';
             list.insertBefore(g, sentinel);
             return g;
         })();
@@ -136,28 +136,28 @@ function renderInvoices(data) {
         let idx = 0;
         if (unpaid.length) {
             const hdr = document.createElement('div');
-            hdr.className = 'week-header';
+            hdr.className = 'card-header';
             hdr.innerHTML = `<span>Unpaid</span><span>${fmt(unpaid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
             list.appendChild(hdr);
             const grp = document.createElement('div');
-            grp.className = 'week-group';
+            grp.className = 'card-group';
             unpaid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
             list.appendChild(grp);
         }
         if (paid.length) {
             const hdr = document.createElement('div');
-            hdr.className = 'week-header';
+            hdr.className = 'card-header';
             hdr.innerHTML = `<span>Paid</span><span>${fmt(paid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
             list.appendChild(hdr);
             const grp = document.createElement('div');
-            grp.className = 'week-group';
+            grp.className = 'card-group';
             paid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
             list.appendChild(grp);
         }
     } else {
         const initial = data.slice(0, INVOICES_PAGE_SIZE);
         const grp = document.createElement('div');
-        grp.className = 'week-group';
+        grp.className = 'card-group';
         initial.forEach((inv, i) => grp.appendChild(buildInvoiceCard(inv, i)));
         list.appendChild(grp);
         invoicesRenderedCount = initial.length;

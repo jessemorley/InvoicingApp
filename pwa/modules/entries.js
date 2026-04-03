@@ -210,7 +210,7 @@ function renderEntryClientWeeks(list, data, startCardIndex, beforeSentinel = fal
         const weekLabel = `${weekStart.toLocaleDateString('en-AU', opts)} – ${weekEnd.toLocaleDateString('en-AU', opts)}`;
 
         const header = document.createElement('div');
-        header.className = 'week-header';
+        header.className = 'card-header';
         header.style.animation = `cardIn 0.3s ease both`;
         header.style.animationDelay = `${Math.min(cardIndex, 6) * 40}ms`;
         header.innerHTML = `
@@ -224,7 +224,7 @@ function renderEntryClientWeeks(list, data, startCardIndex, beforeSentinel = fal
             </div>`;
 
         const group = document.createElement('div');
-        group.className = 'week-group';
+        group.className = 'card-group';
 
         entries.forEach(entry => {
             const description = entryDescription(entry);
@@ -300,14 +300,14 @@ function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
     let cardIndex = startCardIndex;
     weeks.forEach(({ weekStart, entries }) => {
         const header = document.createElement('div');
-        header.className = 'week-header';
+        header.className = 'card-header';
         header.style.animation = `cardIn 0.3s ease both`;
         header.style.animationDelay = `${Math.min(cardIndex, 6) * 40}ms`;
         const weekTotal = entries.reduce((sum, e) => sum + entryAmt(e), 0);
         header.innerHTML = `<span>${formatWeekLabel(weekStart)}</span><span>${fmt(weekTotal)}</span>`;
 
         const group = document.createElement('div');
-        group.className = 'week-group';
+        group.className = 'card-group';
         entries.forEach(entry => {
             const clientName  = entry.clients?.name || 'Unknown';
             const badgeColor  = clientBadgeColor(clientName);
@@ -376,10 +376,10 @@ function renderEntryFlat(list, data, startCardIndex, beforeSentinel = false) {
     const sentinel = document.getElementById('entriesLoadMore');
 
     // Reuse existing flat group so infinite-load batches don't create gaps
-    let group = list.querySelector('.week-group.flat-group');
+    let group = list.querySelector('.card-group.flat-group');
     if (!group) {
         group = document.createElement('div');
-        group.className = 'week-group flat-group';
+        group.className = 'card-group flat-group';
     }
 
     let cardIndex = startCardIndex;

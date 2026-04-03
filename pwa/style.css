@@ -512,7 +512,7 @@
         }
 
         /* Week grouping */
-        .week-header {
+        .card-header {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
@@ -524,10 +524,10 @@
             letter-spacing: var(--group-header-tracking);
             color: var(--group-header-color);
         }
-        .week-header:first-child {
+        .card-header:first-child {
             margin-top: 0;
         }
-        .week-group {
+        .card-group {
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -535,46 +535,46 @@
             margin-top: var(--group-header-gap);
         }
         /* Connected card style for entry groups */
-        #recentList .week-group {
+        #recentList .card-group {
             gap: 0;
             border-radius: 14px;
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        #recentList .week-group .entry-card-wrap:not(:last-child) .entry-row {
+        #recentList .card-group .entry-card-wrap:not(:last-child) .entry-row {
             border-bottom: 1px solid #f0f0f0;
         }
-        #recentList .week-group .entry-card-wrap:first-child .entry-row {
+        #recentList .card-group .entry-card-wrap:first-child .entry-row {
             border-radius: 14px 14px 0 0;
         }
-        #recentList .week-group .entry-card-wrap:last-child .entry-row {
+        #recentList .card-group .entry-card-wrap:last-child .entry-row {
             border-radius: 0 0 14px 14px;
         }
-        #recentList .week-group .entry-card-wrap:first-child:last-child .entry-row {
+        #recentList .card-group .entry-card-wrap:first-child:last-child .entry-row {
             border-radius: 14px;
         }
 
         /* Connected card style for client groups */
-        #clientsList .week-group {
+        #clientsList .card-group {
             gap: 0;
             border-radius: 14px;
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        #clientsList .week-group .client-list-row {
+        #clientsList .card-group .client-list-row {
             border-radius: 0;
             box-shadow: none;
         }
-        #clientsList .week-group .client-list-row:not(:last-child) {
+        #clientsList .card-group .client-list-row:not(:last-child) {
             border-bottom: 1px solid #f0f0f0;
         }
-        #clientsList .week-group .client-list-row:first-child {
+        #clientsList .card-group .client-list-row:first-child {
             border-radius: 14px 14px 0 0;
         }
-        #clientsList .week-group .client-list-row:last-child {
+        #clientsList .card-group .client-list-row:last-child {
             border-radius: 0 0 14px 14px;
         }
-        #clientsList .week-group .client-list-row:first-child:last-child {
+        #clientsList .card-group .client-list-row:first-child:last-child {
             border-radius: 14px;
         }
 
@@ -1252,20 +1252,6 @@
         }
 
         /* ── Settings view ── */
-        .settings-section {
-            margin-bottom: 28px;
-        }
-        .settings-section-header {
-            font-size: var(--group-header-size);
-            font-weight: var(--group-header-weight);
-            color: var(--group-header-color);
-            text-transform: uppercase;
-            letter-spacing: var(--group-header-tracking);
-            padding: 0 4px var(--group-header-gap);
-        }
-        .settings-section:first-child .settings-section-header {
-            padding-top: 16px;
-        }
         .settings-group {
             background: #fff;
             border-radius: 14px;

@@ -70,12 +70,12 @@ function renderClientsList() {
     function renderGroup(clients, label) {
         if (!clients.length) return;
         const hdr = document.createElement('div');
-        hdr.className = 'week-header';
+        hdr.className = 'card-header';
         hdr.innerHTML = `<span>${label}</span><span>${clients.length}</span>`;
         list.appendChild(hdr);
 
         const grp = document.createElement('div');
-        grp.className = 'week-group';
+        grp.className = 'card-group';
         clients.forEach(client => {
             const dotColor     = clientDotColor(client.name);
             const billingLabel = { day_rate: 'Day Rate', hourly: 'Hourly', manual: 'Manual' }[client.billing_type] || client.billing_type;
@@ -302,7 +302,7 @@ function _renderClientForm(client) {
 
         <!-- Workflow rates (day_rate clients only) -->
         <div id="cfWorkflowRatesSection" class="${bt === 'day_rate' ? '' : 'hidden'}">
-            <div class="week-header" style="padding-top:20px;"><span>Workflow Rates</span></div>
+            <div class="card-header" style="padding-top:20px;"><span>Workflow Rates</span></div>
             <div id="cfWorkflowRatesList" class="space-y-2 mt-2"></div>
             <button id="cfAddWfRateBtn" class="btn-add mt-3">
                 + Add Workflow Rate
