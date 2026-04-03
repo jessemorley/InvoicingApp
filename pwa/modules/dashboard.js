@@ -55,7 +55,7 @@ export async function loadDashboard() {
             .gte('date', prevYearStart)
             .lt('date', yearStart),
         sb.from('scheduled_emails')
-            .select('id, to_address, subject, scheduled_for, status, sent_at, invoices(invoice_number, clients(name))')
+            .select('id, invoice_id, to_address, subject, scheduled_for, status, sent_at, invoices(invoice_number, clients(name))')
             .in('status', ['pending', 'sent'])
             .order('created_at', { ascending: false })
             .limit(5),
@@ -277,8 +277,9 @@ function buildEmailLog(emails) {
         const statusLabel = isPending ? 'Scheduled' : 'Sent';
         const statusColor = isPending ? '#007AFF' : '#34c759';
 
-        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;
-                ${i < arr.length - 1 ? 'border-bottom:1px solid #f3f4f6;' : ''}">
+        const onclick = e.invoice_id ? `onclick="window.navigateToInvoice('${e.invoice_id}')"` : '';
+        return `<div ${onclick} style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;
+                ${e.invoice_id ? 'cursor:pointer;' : ''}${i < arr.length - 1 ? 'border-bottom:1px solid #f3f4f6;' : ''}">
             <div style="display:flex;align-items:center;gap:10px;min-width:0;">
                 ${icon}
                 <div style="min-width:0;">
