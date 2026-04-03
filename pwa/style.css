@@ -1215,12 +1215,14 @@
                 display: flex;
                 flex-wrap: wrap;
                 align-items: center;
-                gap: 2px 8px;
+                gap: 0 8px;
+                padding: 10px 14px;
             }
             .email-log-left  { flex: 1; min-width: 0; }
-            .email-log-right { flex-shrink: 0; }
+            .email-log-right { flex-shrink: 0; margin-left: auto; }
             .email-log-middle {
                 flex-basis: 100%;
+                margin-top: 3px;
             }
         }
 
