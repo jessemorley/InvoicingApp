@@ -818,7 +818,7 @@
             .cal-entry-pill { display: none !important; }
             .cal-entry-pill-desktop { display: block !important; }
             .cal-entry-desc { display: block; }
-            #calendarScroll { background: #fff; }
+            #calendarScroll { background: #fff; height: 0; }
             #calendarInner { padding: 0 20px; background: #fff; }
             /* Day headers bleed to full width and restore page bg so they float above the white panel */
             .cal-day-headers { background: #F2F3F5; margin: 0 -20px; padding: 0 20px; }

@@ -70,6 +70,16 @@ export async function loadRecentEntries() {
 
     if (error || !rawData?.length) {
         list.innerHTML = '';
+        const emptyState = document.createElement('div');
+        emptyState.id = 'entriesEmptyState';
+        emptyState.style.cssText = 'padding:48px 0 24px; text-align:center; color:#9ca3af;';
+        emptyState.innerHTML = `
+            <svg width="40" height="40" fill="none" stroke="#d1d5db" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 12px; display:block;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <p style="font-size:15px; font-weight:600; color:#6b7280; margin-bottom:4px;">No entries yet</p>
+            <p style="font-size:13px;">Entries from the last 4 weeks will appear here.</p>`;
+        list.appendChild(emptyState);
         appendNewEntryCard(list, 0);
         return;
     }
@@ -80,6 +90,13 @@ export async function loadRecentEntries() {
     renderEntries(list, rawData, 0);
     updateLoadMoreSentinel();
     appendNewEntryCard(list, 0);
+
+    // If content doesn't fill the scroll container, the scroll handler will never
+    // fire — proactively attempt load-more so the sentinel resolves.
+    const scroller = document.getElementById('tabRecent');
+    if (scroller && scroller.scrollHeight <= scroller.clientHeight) {
+        await loadMoreEntries();
+    }
 }
 
 async function loadMoreEntries() {
@@ -124,6 +141,10 @@ async function loadMoreEntries() {
 
 function updateLoadMoreSentinel() {
     let sentinel = document.getElementById('entriesLoadMore');
+    if (entriesAllLoaded) {
+        if (sentinel) sentinel.remove();
+        return;
+    }
     if (!sentinel) {
         sentinel = document.createElement('div');
         sentinel.id = 'entriesLoadMore';
@@ -131,11 +152,7 @@ function updateLoadMoreSentinel() {
         const list = document.getElementById('recentList');
         list.appendChild(sentinel);
     }
-    if (entriesAllLoaded) {
-        sentinel.textContent = '';
-    } else {
-        sentinel.innerHTML = '<div class="spinner" style="margin:0 auto;width:24px;height:24px;opacity:0.4;"></div>';
-    }
+    sentinel.innerHTML = '<div class="spinner" style="margin:0 auto;width:24px;height:24px;opacity:0.4;"></div>';
 }
 
 function renderEntries(list, data, startCardIndex, beforeSentinel = false) {

@@ -300,6 +300,8 @@ export function switchView(index) {
     const isDesktop = window.innerWidth >= 768;
 
     if (isDesktop) {
+        // Clear any mobile transform so the desktop flex layout takes over
+        document.getElementById('viewSlider').style.transform = '';
         // On desktop: show/hide panes directly (no slider transform)
         ['viewDashboard','viewEntries','viewInvoices','viewSettings','viewCalendar','viewClients','viewAccount'].forEach((id, i) => {
             const el = document.getElementById(id);
@@ -423,6 +425,16 @@ document.getElementById('invoicePreviewPrint').addEventListener('click', () => {
 // ─────────────────────────────────────────────
 Entries.initScrollHandlers();
 Invoices.initScrollHandlers();
+
+// Re-apply layout when crossing the mobile↔desktop breakpoint
+let _lastIsDesktop = window.innerWidth >= 768;
+window.addEventListener('resize', () => {
+    const isDesktop = window.innerWidth >= 768;
+    if (isDesktop !== _lastIsDesktop) {
+        _lastIsDesktop = isDesktop;
+        switchView(currentViewIndex);
+    }
+});
 
 lucide.createIcons({ attrs: { 'stroke-width': 2.2 } });
 init();
