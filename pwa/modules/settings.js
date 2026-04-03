@@ -14,6 +14,7 @@ export function init(supabase, stateGetter) {
 let settingsLoaded = false;
 let bizData        = null;
 let seqData        = null;
+let userEmail      = '—';
 let saveSeqTask    = null;
 let saveBizTask    = null;
 
@@ -52,9 +53,10 @@ async function _fetchAndRender() {
     if (!container) return;
     container.innerHTML = '<div class="spinner"></div>';
 
-    const [{ data: biz, error: bizErr }, { data: seq, error: seqErr }] = await Promise.all([
+    const [{ data: biz, error: bizErr }, { data: seq, error: seqErr }, { data: { session } }] = await Promise.all([
         sb.from('business_details').select('*').single(),
         sb.from('invoice_sequence').select('invoice_prefix, last_number, user_id').single(),
+        sb.auth.getSession(),
     ]);
 
     if (bizErr || seqErr) {
@@ -62,8 +64,9 @@ async function _fetchAndRender() {
         return;
     }
 
-    bizData = biz;
-    seqData = seq;
+    bizData   = biz;
+    seqData   = seq;
+    userEmail = session?.user?.email ?? '—';
     _render();
 }
 
@@ -198,6 +201,17 @@ function _render() {
                 </div>
             </div>
         </div>
+
+        <!-- ACCOUNT -->
+        <div class="settings-section" id="settingsAccountSection">
+            <div class="settings-section-header">Account</div>
+            <div class="settings-group">
+                <div class="settings-row">
+                    <span class="settings-label">Email</span>
+                    <span class="settings-value-readonly">${userEmail}</span>
+                </div>
+            </div>
+        </div>
     `;
 
     _bindHandlers();
@@ -298,4 +312,8 @@ function _scheduleBizSave() {
             include_super_in_totals: bizData.include_super_in_totals,
         }).eq('user_id', bizData.user_id);
     }, 800);
+}
+
+export function scrollToAccount() {
+    document.getElementById('settingsAccountSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }

@@ -8,7 +8,6 @@ import * as Clients  from './modules/clients.js';
 import * as Calendar from './modules/calendar.js';
 import * as Generate from './modules/generate.js';
 import * as Settings from './modules/settings.js';
-import * as Account  from './modules/account.js';
 import { clientDotColor } from './modules/utils.js';
 
 // ── Supabase ─────────────────────────────────
@@ -25,7 +24,6 @@ const VIEW_INVOICES  = 2;
 const VIEW_SETTINGS  = 3;
 const VIEW_CALENDAR  = 4;
 const VIEW_CLIENTS   = 5;
-const VIEW_ACCOUNT   = 6;
 
 // ── Global state ─────────────────────────────
 let allClients              = [];
@@ -55,7 +53,6 @@ Clients.init(sb, getState);
 Calendar.init(sb, getState);
 Generate.init(sb, getState);
 Settings.init(sb, getState);
-Account.init(sb, getState);
 
 // ─────────────────────────────────────────────
 // AUTH
@@ -87,7 +84,7 @@ function showApp() {
     });
     Clients.initHandlers();
     const saved = parseInt(sessionStorage.getItem('activeView'));
-    switchView(Number.isFinite(saved) ? saved : VIEW_ENTRIES);
+    switchView((Number.isFinite(saved) && saved <= VIEW_CLIENTS) ? saved : VIEW_ENTRIES);
 }
 
 document.getElementById('loginBtn').addEventListener('click', async () => {
@@ -273,8 +270,8 @@ document.addEventListener('clients:saved', async () => {
 // ─────────────────────────────────────────────
 // VIEW SWITCHING
 // ─────────────────────────────────────────────
-const TAB_IDS = ['tabDashboardBtn', 'tabEntriesBtn', 'tabInvoicesBtn', 'tabSettingsBtn'];
-const SIDEBAR_VIEWS = ['dashboard', 'entries', 'invoices', 'settings', 'calendar', 'clients', 'account'];
+const TAB_IDS = ['tabDashboardBtn', 'tabEntriesBtn', 'tabInvoicesBtn'];
+const SIDEBAR_VIEWS = ['dashboard', 'entries', 'invoices', 'settings', 'calendar', 'clients'];
 
 function openOverflowMenu() {
     const backdrop = document.getElementById('overflowBackdrop');
@@ -303,7 +300,7 @@ export function switchView(index) {
         // Clear any mobile transform so the desktop flex layout takes over
         document.getElementById('viewSlider').style.transform = '';
         // On desktop: show/hide panes directly (no slider transform)
-        ['viewDashboard','viewEntries','viewInvoices','viewSettings','viewCalendar','viewClients','viewAccount'].forEach((id, i) => {
+        ['viewDashboard','viewEntries','viewInvoices','viewSettings','viewCalendar','viewClients'].forEach((id, i) => {
             const el = document.getElementById(id);
             if (el) el.style.display = i === index ? '' : 'none';
         });
@@ -337,10 +334,16 @@ export function switchView(index) {
     if (index === VIEW_CALENDAR) Calendar.loadCalendar();
     if (index === VIEW_CLIENTS)  Clients.loadClients();
     if (index === VIEW_SETTINGS) Settings.loadSettings();
-    if (index === VIEW_ACCOUNT)  Account.loadAccount();
 }
 // Expose for onclick= attributes in HTML
 window.switchView = switchView;
+
+async function openAccountSettings() {
+    switchView(VIEW_SETTINGS);
+    await Settings.loadSettings();
+    Settings.scrollToAccount();
+}
+window.openAccountSettings = openAccountSettings;
 window.navigateToInvoice = (id) => {
     if (Invoices.isLoaded()) {
         switchView(VIEW_INVOICES);
@@ -377,7 +380,7 @@ window.navigateToInvoice = (id) => {
         e.preventDefault();
         const baseVw  = currentViewIndex * -100;
         const dragVw  = (dx / window.innerWidth) * 100;
-        const totalVw = Math.max(-600, Math.min(0, baseVw + dragVw));
+        const totalVw = Math.max(-500, Math.min(0, baseVw + dragVw));
         liveOffsetVw  = totalVw;
         slider.style.transform = `translateX(${totalVw}vw)`;
     }, { passive: false });
@@ -386,7 +389,7 @@ window.navigateToInvoice = (id) => {
         if (swipeDir !== 'h') return;
         slider.style.transition = 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)';
         const moved = liveOffsetVw - (currentViewIndex * -100);
-        const maxView = 6;
+        const maxView = 5;
         if (moved < -28 && currentViewIndex < maxView) {
             switchView(currentViewIndex + 1);
         } else if (moved > 28 && currentViewIndex > 0) {
