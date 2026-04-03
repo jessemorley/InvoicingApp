@@ -1218,12 +1218,9 @@
                 gap: 0 8px;
                 padding: 10px 14px;
             }
-            .email-log-left  { flex: 1; min-width: 0; }
-            .email-log-right { flex-shrink: 0; margin-left: auto; }
-            .email-log-middle {
-                flex-basis: 100%;
-                margin-top: 3px;
-            }
+            .email-log-left   { flex: 1; min-width: 0; order: 1; }
+            .email-log-right  { flex-shrink: 0; order: 2; }
+            .email-log-middle { flex-basis: 100%; order: 3; margin-top: 3px; }
         }
 
         /* Dashboard responsive grid */
