@@ -452,6 +452,20 @@
             padding: 2px 7px;
             border-radius: 20px;
             white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
+            height: 18px;
+            box-sizing: border-box;
+        }
+        .email-icon-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 7px;
+            border-radius: 20px;
+            height: 18px;
+            box-sizing: border-box;
         }
 
         /* Pull to refresh */
