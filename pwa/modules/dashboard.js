@@ -1,4 +1,4 @@
-import { fmt } from './utils.js';
+import { fmt, clientBadgeColor } from './utils.js';
 
 let sb, getState;
 let annualChart = null;
@@ -154,7 +154,10 @@ export async function loadDashboard() {
                     </div>
                     <div>
                         <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">Top Client</div>
-                        <div style="font-size:13px;font-weight:700;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${topClient}</div>
+                        ${topClient !== '—'
+                            ? `<span class="client-badge ${clientBadgeColor(topClient)}" style="font-size:11px;">${topClient}</span>`
+                            : `<div style="font-size:13px;font-weight:700;color:#111827;">—</div>`
+                        }
                     </div>
                 </div>
             </div>
