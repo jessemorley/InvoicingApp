@@ -20,6 +20,7 @@ let saveBizTask    = null;
 
 const LOCAL_KEYS = {
     markIssuedOnExport:     'settings_markIssuedOnExport',
+    markIssuedOnSend:       'settings_markIssuedOnSend',
     dueDateOffsetDays:      'settings_dueDateOffsetDays',
     financialYearStartMonth:'settings_financialYearStartMonth',
 };
@@ -121,6 +122,13 @@ function _render() {
                     <span class="settings-label">Mark as issued on PDF export</span>
                     <label class="settings-toggle">
                         <input id="s_markIssuedOnExport" type="checkbox" ${markIssued ? 'checked' : ''}>
+                        <span class="settings-toggle-track"></span>
+                    </label>
+                </div>
+                <div class="settings-row settings-row-toggle">
+                    <span class="settings-label">Mark as issued after sending email</span>
+                    <label class="settings-toggle">
+                        <input id="s_markIssuedOnSend" type="checkbox" ${getLocal('markIssuedOnSend', true) ? 'checked' : ''}>
                         <span class="settings-toggle-track"></span>
                     </label>
                 </div>
@@ -244,6 +252,9 @@ function _bindHandlers() {
     // Local preferences
     document.getElementById('s_markIssuedOnExport').addEventListener('change', e => {
         setLocal('markIssuedOnExport', e.target.checked);
+    });
+    document.getElementById('s_markIssuedOnSend').addEventListener('change', e => {
+        setLocal('markIssuedOnSend', e.target.checked);
     });
     document.getElementById('s_dueDateOffsetDays').addEventListener('input', e => {
         setLocal('dueDateOffsetDays', e.target.value);

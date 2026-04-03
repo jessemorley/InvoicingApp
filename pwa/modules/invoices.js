@@ -940,20 +940,9 @@ function openEmailComposeSheet(inv, prefill = null) {
             <style>
                 #emailBottomRow { display:flex; flex-direction:column; gap:10px; }
                 #emailButtons   { display:flex; gap:8px; align-items:stretch; }
-                @media (min-width: 640px) {
-                    #emailBottomRow { flex-direction:row; align-items:center; flex-wrap:wrap; }
-                    #emailMarkIssued-label { margin-bottom:0; flex:1; }
-                    #emailButtons { flex-shrink:0; }
-                    #emailButtons #emailSendBtn, #emailButtons #emailCancelBtn { width:120px; }
-                }
                 .schedule-option:hover { background:#f9fafb !important; }
             </style>
             <div id="emailBottomRow">
-                <label id="emailMarkIssued-label" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                    <input id="emailMarkIssued" type="checkbox" ${isCurrentlyDraft ? 'checked' : ''}
-                        style="width:18px;height:18px;accent-color:#111827;cursor:pointer;flex-shrink:0;" />
-                    <span style="font-size:14px;font-weight:500;color:#374151;">Mark as Issued after sending</span>
-                </label>
                 <div id="emailButtons">
                     <button id="emailCancelBtn" class="btn-ghost" style="flex:1;">Cancel</button>
                     <div style="position:relative;display:flex;align-items:stretch;">
@@ -1011,14 +1000,14 @@ function openEmailComposeSheet(inv, prefill = null) {
         const d = new Date();
         if (preset === 'tomorrow-morning') {
             d.setDate(d.getDate() + 1);
-            d.setHours(9, 0, 0, 0);
+            d.setHours(8, 0, 0, 0);
         } else if (preset === 'this-afternoon') {
             d.setHours(14, 0, 0, 0);
         } else if (preset === 'monday-morning') {
             const day = d.getDay();
             const daysUntilMonday = day === 1 ? 7 : (8 - day) % 7;
             d.setDate(d.getDate() + daysUntilMonday);
-            d.setHours(9, 0, 0, 0);
+            d.setHours(8, 0, 0, 0);
         }
         return d;
     }
@@ -1061,7 +1050,7 @@ function openEmailComposeSheet(inv, prefill = null) {
         const to         = document.getElementById('emailTo').value.trim();
         const subject    = document.getElementById('emailSubject').value.trim();
         const bodyText   = document.getElementById('emailBody').value.trim();
-        const markIssued = document.getElementById('emailMarkIssued').checked;
+        const markIssued = localStorage.getItem('settings_markIssuedOnSend') !== 'false';
 
         if (!to)      { document.getElementById('emailTo').focus();      return; }
         if (!subject) { document.getElementById('emailSubject').focus(); return; }
@@ -1110,7 +1099,34 @@ async function _sendInvoiceEmail(inv, to, subject, bodyText, markIssued, schedul
             const cached = invoicesCache.find(i => i.id === inv.id);
             if (cached) { if (!cached.scheduled_emails) cached.scheduled_emails = []; cached.scheduled_emails.push({ status: 'pending' }); }
             _updateCardEmailIcon(inv.id);
-            return null; // scheduled — skip the mark-issued block below
+            // Always mark as issued when scheduling, with issued_date = scheduled date
+            if (inv.status !== 'issued') {
+                const sd = new Date(scheduledFor);
+                const issuedDate = [sd.getFullYear(), String(sd.getMonth()+1).padStart(2,'0'), String(sd.getDate()).padStart(2,'0')].join('-');
+                const { error } = await sb.from('invoices').update({ status: 'issued', issued_date: issuedDate }).eq('id', inv.id);
+                if (!error) {
+                    inv.status = 'issued';
+                    inv.issued_date = issuedDate;
+                    if (cached) { cached.status = 'issued'; cached.issued_date = issuedDate; }
+                    const statusRow = document.getElementById(`statusRow_${inv.id}`);
+                    if (statusRow) {
+                        statusRow.innerHTML = _buildStatusButtons('issued');
+                        statusRow.querySelectorAll('.status-btn').forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                const body = document.getElementById(`invoicePanelBody`) ||
+                                             statusRow.closest('.invoice-detail-inner');
+                                _updateInvoiceStatus(inv, btn.dataset.status, body);
+                            });
+                        });
+                    }
+                    const chip = document.querySelector(`.invoice-selected .invoice-chip`) ||
+                                 document.querySelector(`.expanded .invoice-chip`);
+                    if (chip) { chip.className = 'invoice-chip bg-orange-100 text-orange-600'; chip.textContent = 'Issued'; }
+                    const issuedInput = document.getElementById(`issuedDateInput_${inv.id}`);
+                    if (issuedInput) issuedInput.value = issuedDate;
+                }
+            }
+            return null;
         }
     } catch (err) {
         return err.message;
