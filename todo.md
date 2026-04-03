@@ -40,5 +40,13 @@
 - [ ] Invoice preview to be scollable/resize on desktop
 - [ ] Bug: after generating an invoice 
 
+- move account to settings
+- Move settings to hamburger menu
+- Email pending/sent chip size doesn’t match
+- How are client colours set?
+- Feature: Expenses logging
+- Emails: log page?
+
+
 ## App Name Ideas
 Docket, Daybook, Remit, Sole, Dayrate
