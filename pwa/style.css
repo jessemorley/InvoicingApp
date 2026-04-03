@@ -1,6 +1,22 @@
         :root {
             --accent: #007AFF;
 
+            /* Semantic state colours */
+            --color-pending-bg:     #eff6ff;
+            --color-pending-border: #bfdbfe;
+            --color-pending-text:   #1d4ed8;
+            --color-pending-icon:   #3b82f6;
+
+            --color-sent-bg:     #f0fdf4;
+            --color-sent-border: #bbf7d0;
+            --color-sent-text:   #16a34a;
+            --color-sent-icon:   #16a34a;
+
+            --color-error-bg:     #fef2f2;
+            --color-error-border: #fecaca;
+            --color-error-text:   #dc2626;
+            --color-error-icon:   #ef4444;
+
             /* Typography — panel titles */
             --panel-title-size: 15px;
             --panel-title-weight: 700;

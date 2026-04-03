@@ -275,7 +275,7 @@ function buildEmailLog(emails) {
             ? `<i data-lucide="clock" style="width:16px;height:16px;color:#007AFF;flex-shrink:0;"></i>`
             : `<i data-lucide="check-circle-2" style="width:16px;height:16px;color:#34c759;flex-shrink:0;"></i>`;
         const statusLabel = isPending ? 'Scheduled' : 'Sent';
-        const statusColor = isPending ? '#007AFF' : '#34c759';
+        const statusColor = isPending ? 'var(--color-pending-text)' : 'var(--color-sent-text)';
 
         const onclick = e.invoice_id ? `onclick="window.navigateToInvoice('${e.invoice_id}')"` : '';
         return `<div ${onclick} class="email-log-row" style="${e.invoice_id ? 'cursor:pointer;' : ''}${i < arr.length - 1 ? 'border-bottom:1px solid #f3f4f6;' : ''}">
