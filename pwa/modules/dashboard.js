@@ -280,8 +280,8 @@ function buildEmailLog(emails) {
         const onclick = e.invoice_id ? `onclick="window.navigateToInvoice('${e.invoice_id}')"` : '';
         return `<div ${onclick} style="display:grid;grid-template-columns:0.6fr 2fr auto;align-items:center;gap:12px;padding:12px 14px;
                 ${e.invoice_id ? 'cursor:pointer;' : ''}${i < arr.length - 1 ? 'border-bottom:1px solid #f3f4f6;' : ''}">
-            <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-                ${icon}
+            <div style="display:flex;align-items:center;gap:8px;overflow:hidden;">
+                <div style="flex-shrink:0;">${icon}</div>
                 <div style="font-size:13px;font-weight:700;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${clientName}</div>
             </div>
             <div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
