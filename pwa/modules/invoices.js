@@ -138,9 +138,9 @@ function renderInvoices(data) {
             const hdr = document.createElement('div');
             hdr.className = 'card-header';
             hdr.innerHTML = `<span>Unpaid</span><span>${fmt(unpaid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
-            list.appendChild(hdr);
             const grp = document.createElement('div');
             grp.className = 'card-group';
+            grp.appendChild(hdr);
             unpaid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
             list.appendChild(grp);
         }
@@ -148,9 +148,9 @@ function renderInvoices(data) {
             const hdr = document.createElement('div');
             hdr.className = 'card-header';
             hdr.innerHTML = `<span>Paid</span><span>${fmt(paid.reduce((s, inv) => s + invoiceSubtotal(inv), 0))}</span>`;
-            list.appendChild(hdr);
             const grp = document.createElement('div');
             grp.className = 'card-group';
+            grp.appendChild(hdr);
             paid.forEach(inv => grp.appendChild(buildInvoiceCard(inv, idx++)));
             list.appendChild(grp);
         }
