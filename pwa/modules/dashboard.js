@@ -278,25 +278,17 @@ function buildEmailLog(emails) {
         const statusColor = isPending ? '#007AFF' : '#34c759';
 
         const onclick = e.invoice_id ? `onclick="window.navigateToInvoice('${e.invoice_id}')"` : '';
-        return `<div ${onclick} style="display:grid;grid-template-columns:1fr 2fr auto;align-items:center;gap:12px;padding:11px 14px;
+        return `<div ${onclick} style="display:grid;grid-template-columns:1fr 2fr auto;align-items:center;gap:12px;padding:12px 14px;
                 ${e.invoice_id ? 'cursor:pointer;' : ''}${i < arr.length - 1 ? 'border-bottom:1px solid #f3f4f6;' : ''}">
-            <!-- Left: icon + client + to -->
             <div style="display:flex;align-items:center;gap:8px;min-width:0;">
                 ${icon}
-                <div style="min-width:0;">
-                    <div style="font-size:12px;font-weight:700;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${clientName}</div>
-                    <div style="font-size:10px;color:#b0b4bc;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.to_address}</div>
-                </div>
+                <div style="font-size:13px;font-weight:700;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${clientName}</div>
             </div>
-            <!-- Middle: subject + preview -->
-            <div style="min-width:0;">
-                <div style="font-size:11px;font-weight:600;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.subject}</div>
-                <div style="font-size:10px;color:#b0b4bc;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${emailBodyPreview(e.body_text)}</div>
-            </div>
-            <!-- Right: status + date -->
+            <div style="font-size:13px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.subject}</div>
             <div style="text-align:right;flex-shrink:0;">
-                <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:${statusColor};">${statusLabel}</div>
-                <div style="font-size:9px;color:#9ca3af;font-weight:600;margin-top:2px;">${dateLabel}</div>
+                <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:${statusColor};">${statusLabel}</span>
+                <span style="font-size:12px;color:#c0c4cc;margin:0 3px;">·</span>
+                <span style="font-size:12px;color:#9ca3af;font-weight:600;">${dateLabel}</span>
             </div>
         </div>`;
     }).join('');
