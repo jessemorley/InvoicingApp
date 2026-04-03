@@ -1423,7 +1423,7 @@
             grid-template-columns: 140px 1fr auto;
             align-items: center;
             gap: 12px;
-            padding: 12px 14px;
+            padding: 16px 14px;
         }
         .email-log-middle { min-width: 0; }
         @media (max-width: 640px) {
