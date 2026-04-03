@@ -25,15 +25,19 @@ export async function loadDashboard() {
     // Last day in prev month matching today's day-of-month (clamped to actual month length)
     const prevMonthDaysInMonth = new Date(prevMonthYear, prevMonth + 1, 0).getDate();
     const prevMonthSameDay = `${prevMonthYear}-${pad(prevMonth + 1)}-${pad(Math.min(dayOfMonth, prevMonthDaysInMonth))}`;
-    const yearStart     = `${year}-01-01`;
-    const prevYearStart = `${year - 1}-01-01`;
+    // Rolling 6-month window: compute the start of the window (may be in previous year)
+    const windowStartM    = month - 5; // can be negative
+    const windowStartYear = windowStartM < 0 ? year - 1 : year;
+    const windowStartMon  = windowStartM < 0 ? 12 + windowStartM : windowStartM; // 0-indexed
+    // Chart fetch covers current window + same window 1 year prior
+    const chartWindowStart      = `${windowStartYear}-${pad(windowStartMon + 1)}-01`;
+    const chartComparisonStart  = `${windowStartYear - 1}-${pad(windowStartMon + 1)}-01`;
 
     const [
         { data: monthEntries },
         { data: prevMonthEntries },
         { data: outstandingInvoices },
-        { data: currentYearEntries },
-        { data: prevYearEntries },
+        { data: chartEntries },
         { data: recentEmails },
     ] = await Promise.all([
         sb.from('entries')
@@ -49,11 +53,7 @@ export async function loadDashboard() {
             .order('created_at', { ascending: false }),
         sb.from('entries')
             .select('date, total_amount')
-            .gte('date', yearStart),
-        sb.from('entries')
-            .select('date, total_amount')
-            .gte('date', prevYearStart)
-            .lt('date', yearStart),
+            .gte('date', chartComparisonStart),
         sb.from('scheduled_emails')
             .select('id, invoice_id, to_address, subject, body_text, scheduled_for, status, sent_at, invoices(invoice_number, clients(name))')
             .in('status', ['pending', 'sent'])
@@ -83,14 +83,30 @@ export async function loadDashboard() {
     const outstandingTotal = sum(outstandingInvoices, 'subtotal');
     const invoiceCount     = (outstandingInvoices || []).length;
 
-    // --- Annual chart data ---
-    const currentMonthly = Array(12).fill(0);
-    const prevMonthly    = Array(12).fill(0);
-    (currentYearEntries || []).forEach(e => {
-        currentMonthly[parseInt(e.date.split('-')[1]) - 1] += parseFloat(e.total_amount || 0);
-    });
-    (prevYearEntries || []).forEach(e => {
-        prevMonthly[parseInt(e.date.split('-')[1]) - 1] += parseFloat(e.total_amount || 0);
+    // --- Last 6 months chart data ---
+    // Build the window: 6 {year, month} pairs ending at current month
+    const allMonthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const windowSlots = [];
+    for (let i = 5; i >= 0; i--) {
+        const m = month - i;
+        windowSlots.push(m < 0
+            ? { y: year - 1, m: 12 + m }
+            : { y: year,     m });
+    }
+
+    const last6Labels   = windowSlots.map(s => allMonthNames[s.m]);
+    const last6Data     = Array(6).fill(0);
+    const last6PrevData = Array(6).fill(0);
+
+    (chartEntries || []).forEach(e => {
+        const parts = e.date.split('-');
+        const ey = parseInt(parts[0]);
+        const em = parseInt(parts[1]) - 1; // 0-indexed
+        const amt = parseFloat(e.total_amount || 0);
+        windowSlots.forEach(({ y, m }, idx) => {
+            if (ey === y && em === m)         last6Data[idx]     += amt;
+            if (ey === y - 1 && em === m)     last6PrevData[idx] += amt;
+        });
     });
 
     // --- Build HTML ---
@@ -161,10 +177,10 @@ export async function loadDashboard() {
             </div>
         </div>
 
-        <!-- Annual Performance Chart -->
+        <!-- Last 6 Months Chart -->
         <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin-bottom:10px;">
             <div style="margin-bottom:14px;">
-                <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:8px;">Annual Performance</div>
+                <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:8px;">Last 6 Months</div>
                 <div style="display:flex;gap:16px;">
                     <div style="display:flex;align-items:center;gap:6px;">
                         <div style="width:18px;height:3px;background:#007AFF;border-radius:2px;"></div>
@@ -194,10 +210,10 @@ export async function loadDashboard() {
         annualChart = new Chart(canvas, {
             type: 'line',
             data: {
-                labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].slice(0, month + 1),
+                labels: last6Labels,
                 datasets: [
                     {
-                        data: currentMonthly.slice(0, month + 1),
+                        data: last6Data,
                         borderColor: '#007AFF',
                         borderWidth: 2.5,
                         tension: 0.4,
@@ -209,7 +225,7 @@ export async function loadDashboard() {
                         fill: false,
                     },
                     {
-                        data: prevMonthly.slice(0, month + 1),
+                        data: last6PrevData,
                         borderColor: '#E2E8F0',
                         borderWidth: 2,
                         borderDash: [4, 4],
