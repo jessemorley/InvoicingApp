@@ -1200,3 +1200,15 @@
         #entriesToggleBtn:hover {
             background: #f4f4f5;
         }
+
+        /* Dashboard responsive grid */
+        .dash-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+        }
+        @media (max-width: 520px) {
+            .dash-grid {
+                grid-template-columns: 1fr;
+            }
+        }
