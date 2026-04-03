@@ -314,15 +314,25 @@ async function _openInvoiceDesktop(wrap, inv) {
     panel.dataset.invoiceId = inv.id;
 
     // Show header + spinner immediately
+    const clientName = inv.clients?.name || '';
     panel.innerHTML = `
-        <div style="padding:20px; overflow-y:auto; height:100%; box-sizing:border-box;">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
-                <h3 id="invoicePanelHeader" class="panel-header">${inv.invoice_number}</h3>
-                <button id="invoicePanelClose" style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+        <div class="invoice-panel-header">
+            <div>
+                <h3 id="invoicePanelHeader" class="invoice-panel-title">${escText(inv.invoice_number)}</h3>
+                ${clientName ? `<span class="client-badge ${clientBadgeColor(clientName)}">${escText(clientName)}</span>` : ''}
             </div>
-            <div id="invoicePanelBody"><div class="spinner" style="margin:24px auto;width:24px;height:24px;"></div></div>
+            <button id="invoicePanelClose" class="invoice-panel-close-btn">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div id="invoicePanelBody" class="invoice-panel-body">
+            <div class="spinner" style="margin:24px auto;width:24px;height:24px;"></div>
+        </div>
+        <div class="invoice-panel-footer">
+            <button id="deleteBtn_${inv.id}" class="btn-destructive-ghost">
+                <svg class="shake-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                Delete Invoice
+            </button>
         </div>`;
     panel.classList.add('open');
     document.getElementById('viewSlider')?.classList.add('detail-open');
@@ -338,6 +348,8 @@ async function _openInvoiceDesktop(wrap, inv) {
         document.getElementById('viewSlider')?.classList.remove('detail-open');
         document.querySelectorAll('.invoice-selected').forEach(el => el.classList.remove('invoice-selected'));
     });
+
+    panel.querySelector(`#deleteBtn_${inv.id}`).addEventListener('click', () => openDeleteSheet(inv));
 
     await _fetchFullInvoice(inv);
     const body = panel.querySelector('#invoicePanelBody');
@@ -451,14 +463,17 @@ function _renderInvoicePanelBody(container, inv) {
     const sorted = [...entries].sort((a, b) => a.date < b.date ? -1 : 1);
     const { businessDetails } = getState();
     const includeSuperInTotals = businessDetails?.include_super_in_totals ?? true;
-    let html = '<div class="space-y-0">';
+    const isDesktopPanel = !!container.closest('#detailPanel');
+
+    // ── Section 1: Items & Billing ──
+    let itemsHtml = '';
     sorted.forEach(e => {
         const desc   = entryDescription(e);
         const total  = e.total_amount || 0;
         const amount = fmt(includeSuperInTotals ? total : total - (e.super_amount || 0));
         const date   = formatEntryDate(e.date);
-        html += `
-            <div class="flex justify-between items-center py-2.5 border-b border-slate-50">
+        itemsHtml += `
+            <div class="flex justify-between items-center py-2.5 border-b border-slate-100">
                 <div class="flex-1 min-w-0 mr-4">
                     <p class="text-[14px] font-semibold text-gray-800 truncate">${desc}</p>
                     <p class="text-[11px] text-gray-400 mt-0.5">${date}</p>
@@ -467,12 +482,11 @@ function _renderInvoicePanelBody(container, inv) {
             </div>`;
     });
 
-    // Custom line items
     const lineItems = [...(inv.invoice_line_items || [])].sort((a, b) => a.sort_order - b.sort_order);
     lineItems.forEach(li => {
         const qtyLabel = li.quantity != null ? ` ×${li.quantity}` : '';
-        html += `
-            <div class="flex justify-between items-center py-2.5 border-b border-slate-50">
+        itemsHtml += `
+            <div class="flex justify-between items-center py-2.5 border-b border-slate-100">
                 <div class="flex-1 min-w-0 mr-2">
                     <p class="text-[14px] font-semibold text-gray-800 truncate">${li.description}${qtyLabel}</p>
                 </div>
@@ -489,44 +503,65 @@ function _renderInvoicePanelBody(container, inv) {
     });
 
     const subtotal = invoiceSubtotal(inv);
-    html += `
-        <div class="flex justify-between items-center pt-3 pb-1">
-            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total excl. super</span>
-            <span class="text-[16px] font-bold text-gray-900">${fmt(subtotal)}</span>
+
+    let html = `
+        <div class="invoice-panel-section">
+            <div class="invoice-section-header-row">
+                <span class="invoice-section-header">Items &amp; Billing</span>
+                <button id="addLineItemBtn_${inv.id}" class="btn-add-line-item">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                    Add line item
+                </button>
+            </div>
+            <div class="invoice-items-card">
+                ${itemsHtml}
+                <div class="invoice-items-total">
+                    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total excl. super</span>
+                    <span class="text-[18px] font-black text-gray-900">${fmt(subtotal)}</span>
+                </div>
+            </div>
         </div>
-    </div>
-    <button id="addLineItemBtn_${inv.id}" style="margin-top:10px; width:100%; padding:10px; background:transparent; color:#374151; border:1.5px solid #e5e7eb; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; letter-spacing:-0.2px; display:flex; align-items:center; justify-content:center; gap:6px;">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-        Add line item
-    </button>
-    <div id="statusRow_${inv.id}" style="margin-top:10px; display:flex; gap:8px;">
-        ${_buildStatusButtons(inv.status)}
-    </div>
-    <div style="margin-top:8px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-        <div style="background:#f9fafb; border-radius:12px; padding:10px 12px;">
-            <div style="font-size:11px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Issued</div>
-            <input type="date" id="issuedDateInput_${inv.id}" value="${inv.issued_date || ''}"
-                style="background:transparent;border:none;outline:none;font-size:13px;font-weight:600;color:#111827;font-family:inherit;width:100%;padding:0;" />
+
+        <div class="invoice-panel-section">
+            <span class="invoice-section-header">Payment Status</span>
+            <div id="statusRow_${inv.id}" class="invoice-status-seg">
+                ${_buildStatusButtons(inv.status)}
+            </div>
+            <div class="invoice-date-grid">
+                <div class="invoice-date-field">
+                    <label>Issued</label>
+                    <input type="date" id="issuedDateInput_${inv.id}" value="${inv.issued_date || ''}">
+                </div>
+                <div class="invoice-date-field">
+                    <label>Paid</label>
+                    <input type="date" id="paidDateInput_${inv.id}" value="${inv.paid_date || ''}">
+                </div>
+            </div>
         </div>
-        <div style="background:#f9fafb; border-radius:12px; padding:10px 12px;">
-            <div style="font-size:11px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Paid</div>
-            <input type="date" id="paidDateInput_${inv.id}" value="${inv.paid_date || ''}"
-                style="background:transparent;border:none;outline:none;font-size:13px;font-weight:600;color:#111827;font-family:inherit;width:100%;padding:0;" />
+
+        <div class="invoice-panel-section">
+            <span class="invoice-section-header">Communication</span>
+            <div id="scheduledEmailBanner_${inv.id}"></div>
         </div>
-    </div>
-    <button id="previewBtn_${inv.id}" class="btn-primary" style="margin-top:8px;margin-bottom:4px;">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        Preview Invoice
-    </button>
-    <button id="emailBtn_${inv.id}" class="btn-secondary" style="margin-top:6px;margin-bottom:4px;">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-        Email Invoice
-    </button>
-    <div id="scheduledEmailBanner_${inv.id}"></div>
-    <button id="deleteBtn_${inv.id}" class="btn-destructive" style="margin-top:6px;margin-bottom:4px;">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-        Delete Invoice
-    </button>`;
+
+        <div class="invoice-panel-section">
+            <button id="previewBtn_${inv.id}" class="btn-primary" style="margin-bottom:8px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Preview Invoice
+            </button>
+            <button id="emailBtn_${inv.id}" class="btn-secondary">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                Email Invoice
+            </button>
+        </div>`;
+
+    if (!isDesktopPanel) {
+        html += `
+        <button id="deleteBtn_${inv.id}" class="btn-destructive" style="margin-top:6px;margin-bottom:4px;">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            Delete Invoice
+        </button>`;
+    }
 
     container.innerHTML = html;
     const issuedInput = document.getElementById(`issuedDateInput_${inv.id}`);
@@ -542,7 +577,9 @@ function _renderInvoicePanelBody(container, inv) {
     });
     document.getElementById(`previewBtn_${inv.id}`).addEventListener('click', () => openInvoicePreview(inv));
     document.getElementById(`emailBtn_${inv.id}`).addEventListener('click', () => openEmailComposeSheet(inv));
-    document.getElementById(`deleteBtn_${inv.id}`).addEventListener('click', () => openDeleteSheet(inv));
+    if (!isDesktopPanel) {
+        document.getElementById(`deleteBtn_${inv.id}`)?.addEventListener('click', () => openDeleteSheet(inv));
+    }
     _loadScheduledEmailBanner(inv, container);
 }
 
@@ -556,7 +593,7 @@ function _wireHeaderEdit(panel, inv) {
         if (!currentH3) return;
         const input = document.createElement('input');
         input.value = inv.invoice_number;
-        input.style.cssText = 'font-size:15px;font-weight:700;color:#111827;font-family:inherit;border:none;outline:none;background:transparent;width:100%;padding:0;margin:0;';
+        input.style.cssText = 'font-size:22px;font-weight:800;letter-spacing:-0.5px;color:#111827;font-family:inherit;border:none;outline:none;background:transparent;width:100%;padding:0;margin:0;';
         currentH3.replaceWith(input);
         input.focus();
         input.select();
@@ -565,7 +602,7 @@ function _wireHeaderEdit(panel, inv) {
             if (save && newVal && newVal !== inv.invoice_number) _updateInvoiceNumber(inv, newVal);
             const h3 = document.createElement('h3');
             h3.id = 'invoicePanelHeader';
-            h3.className = 'panel-header';
+            h3.className = 'invoice-panel-title';
             h3.style.cursor = inv.status === 'draft' ? 'text' : '';
             h3.textContent = (save && newVal) ? newVal : inv.invoice_number;
             input.replaceWith(h3);
@@ -605,24 +642,19 @@ async function _updateInvoiceNumber(inv, newNumber) {
     const cardSpan = document.querySelector(`.invoice-card-wrap[data-invoice-id="${inv.id}"] .text-\\[15px\\].font-bold`);
     if (cardSpan) cardSpan.textContent = newNumber;
     // Update desktop panel header
-    const header = document.querySelector('#detailPanel .panel-header');
+    const header = document.querySelector('#detailPanel #invoicePanelHeader');
     if (header) header.textContent = newNumber;
 }
 
 function _buildStatusButtons(currentStatus) {
     const statuses = [
-        { value: 'draft',  label: 'Draft',  active: 'background:#f3f4f6;color:#6b7280;border-color:#d1d5db;', inactive: 'background:#fff;color:#9ca3af;border-color:#e5e7eb;' },
-        { value: 'issued', label: 'Issued', active: 'background:#fff7ed;color:#ea580c;border-color:#fed7aa;', inactive: 'background:#fff;color:#9ca3af;border-color:#e5e7eb;' },
-        { value: 'paid',   label: 'Paid',   active: 'background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;', inactive: 'background:#fff;color:#9ca3af;border-color:#e5e7eb;' },
+        { value: 'draft',  label: 'Draft'  },
+        { value: 'issued', label: 'Issued' },
+        { value: 'paid',   label: 'Paid'   },
     ];
-    return statuses.map(s => {
-        const style = s.value === currentStatus ? s.active : s.inactive;
-        const weight = s.value === currentStatus ? '700' : '500';
-        return `<button class="status-btn" data-status="${s.value}"
-            style="flex:1;padding:9px 0;border:1.5px solid;border-radius:10px;font-size:13px;font-weight:${weight};cursor:pointer;font-family:inherit;${style}">
-            ${s.label}
-        </button>`;
-    }).join('');
+    return statuses.map(s =>
+        `<button class="status-btn${s.value === currentStatus ? ' active' : ''}" data-status="${s.value}">${s.label}</button>`
+    ).join('');
 }
 
 async function _updateInvoiceStatus(inv, newStatus, container) {
@@ -1104,7 +1136,7 @@ async function _loadScheduledEmailBanner(inv, container) {
         const d = new Date(row.sent_at);
         const dateStr = d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
         slot.innerHTML = `
-            <div style="margin-top:6px;margin-bottom:4px;padding:12px 14px;background:var(--color-sent-bg);border:1.5px solid var(--color-sent-border);border-radius:12px;">
+            <div style="padding:12px 14px;background:var(--color-sent-bg);border:1.5px solid var(--color-sent-border);border-radius:12px;">
                 <p style="font-size:13px;font-weight:600;color:var(--color-sent-text);margin:0;display:flex;align-items:center;gap:6px;">
                     <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m16 19 2 2 4-4"/></svg>
                     Sent to ${escText(row.to_address)} · ${escText(dateStr)}
@@ -1117,7 +1149,7 @@ async function _loadScheduledEmailBanner(inv, container) {
         const d = new Date(row.scheduled_for);
         const dateStr = d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
         slot.innerHTML = `
-            <div id="schedBannerWrap" style="margin-top:6px;margin-bottom:4px;padding:12px 14px;background:var(--color-pending-bg);border:1.5px solid var(--color-pending-border);border-radius:12px;cursor:pointer;">
+            <div id="schedBannerWrap" style="padding:12px 14px;background:var(--color-pending-bg);border:1.5px solid var(--color-pending-border);border-radius:12px;cursor:pointer;">
                 <p style="font-size:13px;font-weight:600;color:var(--color-pending-text);margin:0;display:flex;align-items:center;gap:6px;">
                     <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>
                     Scheduled to send ${escText(dateStr)}
@@ -1167,7 +1199,7 @@ async function _loadScheduledEmailBanner(inv, container) {
 
     } else { // failed
         slot.innerHTML = `
-            <div style="margin-top:6px;margin-bottom:4px;padding:12px 14px;background:var(--color-error-bg);border:1.5px solid var(--color-error-border);border-radius:12px;">
+            <div style="padding:12px 14px;background:var(--color-error-bg);border:1.5px solid var(--color-error-border);border-radius:12px;">
                 <p style="font-size:13px;font-weight:600;color:var(--color-error-text);margin:0 0 4px;display:flex;align-items:center;gap:6px;">
                     <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01"/></svg>
                     Scheduled send failed
