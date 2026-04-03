@@ -810,6 +810,7 @@
             display: none;
         }
 
+        #viewCalendar { display: flex; flex-direction: column; }
         .cal-entry-desc { display: none; }
         .cal-entry-pill-desktop { display: none !important; }
         #calendarInner { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
@@ -823,7 +824,7 @@
             /* Day headers bleed to full width and restore page bg so they float above the white panel */
             .cal-day-headers { background: #F2F3F5; margin: 0 -20px; padding: 0 20px; }
             .cal-day-cell { padding: 6px 5px !important; }
-            #viewCalendar .view-content { max-width: none; }
+            #viewCalendar .view-content { max-width: none; width: 100%; margin-left: 0; margin-right: 0; }
             /* App shell becomes a row */
             #appShell.active {
                 flex-direction: row;
