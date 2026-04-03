@@ -3,9 +3,8 @@ import { fmt } from './utils.js';
 let sb, getState;
 let annualChart = null;
 
-export function init(supabase, stateGetter) {
+export function init(supabase) {
     sb = supabase;
-    getState = stateGetter;
 }
 
 export async function loadDashboard() {
@@ -30,8 +29,7 @@ export async function loadDashboard() {
     const windowStartYear = windowStartM < 0 ? year - 1 : year;
     const windowStartMon  = windowStartM < 0 ? 12 + windowStartM : windowStartM; // 0-indexed
     // Chart fetch covers current window + same window 1 year prior
-    const chartWindowStart      = `${windowStartYear}-${pad(windowStartMon + 1)}-01`;
-    const chartComparisonStart  = `${windowStartYear - 1}-${pad(windowStartMon + 1)}-01`;
+    const chartComparisonStart = `${windowStartYear - 1}-${pad(windowStartMon + 1)}-01`;
 
     const [
         { data: monthEntries },
@@ -241,20 +239,53 @@ export async function loadDashboard() {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        callbacks: {
-                            label: ctx => fmt(ctx.raw),
-                            title: ctxArr => ctxArr[0].label + ' ' + (ctxArr[0].datasetIndex === 0 ? year : year - 1),
-                        },
-                        backgroundColor: '#fff',
-                        borderColor: 'rgba(0,0,0,0.08)',
-                        borderWidth: 1,
-                        bodyColor: '#111827',
-                        titleColor: '#9ca3af',
-                        bodyFont: { weight: '700', size: 12, family: '-apple-system, SF Pro Display, Inter, sans-serif' },
-                        titleFont: { size: 10, weight: '700', family: '-apple-system, SF Pro Display, Inter, sans-serif' },
-                        cornerRadius: 10,
-                        padding: 10,
-                        displayColors: false,
+                        enabled: false,
+                        external({ chart, tooltip }) {
+                            let el = chart.canvas.parentNode.querySelector('.chart-tooltip');
+                            if (!el) {
+                                el = document.createElement('div');
+                                el.className = 'chart-tooltip';
+                                Object.assign(el.style, {
+                                    position: 'absolute', pointerEvents: 'none',
+                                    background: '#fff', border: '1px solid rgba(0,0,0,0.08)',
+                                    borderRadius: '10px', padding: '10px 12px',
+                                    fontFamily: '-apple-system, SF Pro Display, Inter, sans-serif',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                                    whiteSpace: 'nowrap', transition: 'opacity 0.1s',
+                                });
+                                chart.canvas.parentNode.style.position = 'relative';
+                                chart.canvas.parentNode.appendChild(el);
+                            }
+                            if (tooltip.opacity === 0) { el.style.opacity = '0'; return; }
+                            const dp = tooltip.dataPoints;
+                            if (!dp || !dp.length) return;
+
+                            const idx  = dp[0].dataIndex;
+                            const slot = windowSlots[idx];
+                            const cur  = last6Data[idx];
+                            const prev = last6PrevData[idx];
+                            const pct  = prev > 0 ? ((cur - prev) / prev) * 100 : null;
+const pctHtml = pct !== null
+                                ? `<div style="font-size:10px;font-weight:700;color:${pct >= 0 ? '#34c759' : '#ef4444'};">${pct >= 0 ? '↑' : '↓'} ${Math.abs(pct).toFixed(1)}%</div>`
+                                : '';
+
+                            el.innerHTML = `
+                                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:5px;">
+                                    <div style="font-size:10px;font-weight:700;color:#9ca3af;">${allMonthNames[slot.m]}</div>
+                                    ${pctHtml}
+                                </div>
+                                <div style="font-size:12px;font-weight:700;color:#111827;">${fmt(cur)}</div>
+                                <div style="font-size:12px;font-weight:700;color:#94a3b8;">${fmt(prev)}</div>
+                            `;
+                            el.style.opacity = '1';
+
+                            const x = tooltip.caretX;
+                            const y = tooltip.caretY;
+                            const cw = chart.canvas.offsetWidth;
+                            // Flip to left side if tooltip would overflow
+                            el.style.left = (x + el.offsetWidth + 16 > cw ? x - el.offsetWidth - 10 : x + 10) + 'px';
+                            el.style.top  = Math.max(0, y - 20) + 'px';
+                        }
                     }
                 },
                 scales: {
