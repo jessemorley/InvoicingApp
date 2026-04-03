@@ -278,26 +278,25 @@ function buildEmailLog(emails) {
         const statusColor = isPending ? '#007AFF' : '#34c759';
 
         const onclick = e.invoice_id ? `onclick="window.navigateToInvoice('${e.invoice_id}')"` : '';
-        return `<div ${onclick} style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;
+        return `<div ${onclick} style="display:grid;grid-template-columns:1fr 2fr auto;align-items:center;gap:12px;padding:11px 14px;
                 ${e.invoice_id ? 'cursor:pointer;' : ''}${i < arr.length - 1 ? 'border-bottom:1px solid #f3f4f6;' : ''}">
-            <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+            <!-- Left: icon + client + to -->
+            <div style="display:flex;align-items:center;gap:8px;min-width:0;">
                 ${icon}
                 <div style="min-width:0;">
-                    <div style="display:flex;align-items:baseline;gap:5px;overflow:hidden;">
-                        <div style="font-size:12px;font-weight:700;color:#111827;white-space:nowrap;flex-shrink:0;">${clientName}</div>
-                        <div style="font-size:10px;color:#c0c4cc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.to_address}</div>
-                    </div>
-                    <div style="font-size:10px;color:#6b7280;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                        ${e.subject}<span style="color:#c0c4cc;"> — </span><span style="color:#b0b4bc;font-weight:400;">${emailBodyPreview(e.body_text)}</span>
-                    </div>
+                    <div style="font-size:12px;font-weight:700;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${clientName}</div>
+                    <div style="font-size:10px;color:#b0b4bc;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.to_address}</div>
                 </div>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:12px;">
-                <div style="text-align:right;">
-                    <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:${statusColor};">${statusLabel}</div>
-                    <div style="font-size:9px;color:#9ca3af;font-weight:600;margin-top:1px;">${dateLabel}</div>
-                </div>
-                <i data-lucide="chevron-right" style="width:14px;height:14px;color:#d1d5db;flex-shrink:0;"></i>
+            <!-- Middle: subject + preview -->
+            <div style="min-width:0;">
+                <div style="font-size:11px;font-weight:600;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.subject}</div>
+                <div style="font-size:10px;color:#b0b4bc;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${emailBodyPreview(e.body_text)}</div>
+            </div>
+            <!-- Right: status + date -->
+            <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:${statusColor};">${statusLabel}</div>
+                <div style="font-size:9px;color:#9ca3af;font-weight:600;margin-top:2px;">${dateLabel}</div>
             </div>
         </div>`;
     }).join('');
