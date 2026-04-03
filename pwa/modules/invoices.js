@@ -216,7 +216,7 @@ function buildInvoiceCard(inv, index) {
     const hasPending  = emailRows.some(e => e.status === 'pending');
     const hasSent     = !hasPending && emailRows.some(e => e.status === 'sent');
     const emailIcon   = hasPending
-        ? `<span style="padding:2px 7px;border-radius:20px;background:#f3f4f6;display:inline-flex;align-items:center;"><svg width="10" height="10" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg></span>`
+        ? `<span style="padding:2px 7px;border-radius:20px;background:#eff6ff;display:inline-flex;align-items:center;"><svg width="10" height="10" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg></span>`
         : hasSent
         ? `<span style="padding:2px 7px;border-radius:20px;background:#f0fdf4;display:inline-flex;align-items:center;"><svg width="10" height="10" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m16 19 2 2 4-4"/></svg></span>`
         : '';
@@ -266,7 +266,7 @@ function _updateCardEmailIcon(invId) {
     const chip = wrap.querySelector('.invoice-chip');
     wrap.innerHTML = '';
     if (hasPending) {
-        wrap.insertAdjacentHTML('beforeend', `<span style="padding:2px 7px;border-radius:20px;background:#f3f4f6;display:inline-flex;align-items:center;"><svg width="10" height="10" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg></span>`);
+        wrap.insertAdjacentHTML('beforeend', `<span style="padding:2px 7px;border-radius:20px;background:#eff6ff;display:inline-flex;align-items:center;"><svg width="10" height="10" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg></span>`);
     } else if (hasSent) {
         wrap.insertAdjacentHTML('beforeend', `<span style="padding:2px 7px;border-radius:20px;background:#f0fdf4;display:inline-flex;align-items:center;"><svg width="10" height="10" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m16 19 2 2 4-4"/></svg></span>`);
     }
@@ -1104,8 +1104,8 @@ async function _loadScheduledEmailBanner(inv, container) {
         const d = new Date(row.scheduled_for);
         const dateStr = d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
         slot.innerHTML = `
-            <div id="schedBannerWrap" style="margin-top:6px;margin-bottom:4px;padding:12px 14px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;cursor:pointer;">
-                <p style="font-size:13px;font-weight:600;color:#c2410c;margin:0;display:flex;align-items:center;gap:6px;">
+            <div id="schedBannerWrap" style="margin-top:6px;margin-bottom:4px;padding:12px 14px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;cursor:pointer;">
+                <p style="font-size:13px;font-weight:600;color:#1d4ed8;margin:0;display:flex;align-items:center;gap:6px;">
                     <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>
                     Scheduled to send ${escText(dateStr)}
                 </p>
