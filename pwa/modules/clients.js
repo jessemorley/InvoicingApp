@@ -72,10 +72,10 @@ function renderClientsList() {
         const hdr = document.createElement('div');
         hdr.className = 'card-header';
         hdr.innerHTML = `<span>${label}</span><span>${clients.length}</span>`;
+        list.appendChild(hdr);
 
         const grp = document.createElement('div');
         grp.className = 'card-group';
-        grp.appendChild(hdr);
         clients.forEach(client => {
             const dotColor     = clientDotColor(client.name);
             const billingLabel = { day_rate: 'Day Rate', hourly: 'Hourly', manual: 'Manual' }[client.billing_type] || client.billing_type;

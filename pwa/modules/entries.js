@@ -225,7 +225,6 @@ function renderEntryClientWeeks(list, data, startCardIndex, beforeSentinel = fal
 
         const group = document.createElement('div');
         group.className = 'card-group';
-        group.appendChild(header);
 
         entries.forEach(entry => {
             const description = entryDescription(entry);
@@ -267,8 +266,10 @@ function renderEntryClientWeeks(list, data, startCardIndex, beforeSentinel = fal
         });
 
         if (beforeSentinel && sentinel) {
+            list.insertBefore(header, sentinel);
             list.insertBefore(group, sentinel);
         } else {
+            list.appendChild(header);
             list.appendChild(group);
         }
     });
@@ -307,7 +308,6 @@ function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
 
         const group = document.createElement('div');
         group.className = 'card-group';
-        group.appendChild(header);
         entries.forEach(entry => {
             const clientName  = entry.clients?.name || 'Unknown';
             const badgeColor  = clientBadgeColor(clientName);
@@ -360,8 +360,10 @@ function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
         });
 
         if (beforeSentinel && sentinel) {
+            list.insertBefore(header, sentinel);
             list.insertBefore(group, sentinel);
         } else {
+            list.appendChild(header);
             list.appendChild(group);
         }
     });
