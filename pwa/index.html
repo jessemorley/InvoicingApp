@@ -99,8 +99,8 @@
             <div style="width:100%; height:100dvh; overflow-y:auto; overflow-x:hidden;">
                 <div style="padding-top:env(safe-area-inset-top);">
                     <div class="px-5 view-content">
-                        <div class="pt-6 pb-3">
-                            <h1 class="text-3xl font-extrabold text-gray-900">Dashboard</h1>
+                        <div class="page-header">
+                            <h1>Dashboard</h1>
                         </div>
                         <div id="dashboardContent" class="pb-36">
                             <div class="spinner"></div>
@@ -306,8 +306,8 @@
                     <div id="entriesInner" style="padding-top:env(safe-area-inset-top);">
                         <div class="px-5 view-content">
                             <div id="newEntrySlot"></div>
-                            <div id="entriesHeaderTop" class="flex justify-between items-center pt-6 pb-3">
-                                <h1 class="text-3xl font-extrabold text-gray-900">Entries</h1>
+                            <div class="page-header">
+                                <h1>Entries</h1>
                                 <div id="entriesToggleBtn" style="position:relative; display:flex; align-items:center; gap:6px; padding:6px 10px; border-radius:6px; border:1px solid #e5e7eb; font-size:12px; font-weight:600; color:#374151; cursor:pointer; transition:background 0.15s; user-select:none;">
                                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M7 12h10M11 18h2"/>
@@ -341,8 +341,8 @@
             <div id="invoicesScroll">
                 <div style="padding-top:env(safe-area-inset-top);">
                     <div class="px-5 view-content">
-                        <div id="invoicesHeaderTop" class="flex justify-between items-center pt-6 pb-3">
-                            <h1 class="text-3xl font-extrabold text-gray-900">Invoices</h1>
+                        <div class="page-header">
+                            <h1>Invoices</h1>
                             <button id="invoiceSortBtn" class="invoice-sort-btn" aria-label="Toggle invoice grouping"></button>
                         </div>
                         <div id="generateBar" class="mb-3" style="display:none;"></div>
@@ -361,8 +361,8 @@
             <div id="settingsScroll" style="width:100%; height:100dvh; overflow-y:auto; overflow-x:hidden;">
                 <div style="padding-top:env(safe-area-inset-top);">
                     <div class="px-5 view-content">
-                        <div class="pt-6 pb-3">
-                            <h1 class="text-3xl font-extrabold text-gray-900">Settings</h1>
+                        <div class="page-header">
+                            <h1>Settings</h1>
                         </div>
                         <div id="settingsContent" class="pb-36">
                             <p class="text-gray-400 text-sm py-8 text-center">Loading…</p>
@@ -376,17 +376,19 @@
         <div id="viewCalendar" class="view-pane">
             <!-- Header: outside the scroll container so it never moves during grid loads -->
             <div style="padding-top:env(safe-area-inset-top); flex-shrink:0;">
-                <div class="px-5 view-content flex justify-between items-center pt-6 pb-3">
-                    <h1 class="text-3xl font-extrabold text-gray-900">Calendar</h1>
-                    <div class="flex gap-2 items-center">
-                        <span id="calMonthLabel" class="cal-month-label"></span>
-                        <button id="calPrevBtn" class="invoice-sort-btn">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                        </button>
-                        <button id="calTodayBtn" style="height:36px; padding:0 12px; border-radius:10px; border:none; background:rgba(0,0,0,0.06); font-size:13px; font-weight:600; color:#111827; cursor:pointer; flex-shrink:0;">Today</button>
-                        <button id="calNextBtn" class="invoice-sort-btn">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                        </button>
+                <div class="px-5 view-content">
+                    <div class="page-header">
+                        <h1>Calendar</h1>
+                        <div class="flex gap-2 items-center">
+                            <span id="calMonthLabel" class="cal-month-label"></span>
+                            <button id="calPrevBtn" class="invoice-sort-btn">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                            <button id="calTodayBtn" style="height:36px; padding:0 12px; border-radius:10px; border:none; background:rgba(0,0,0,0.06); font-size:13px; font-weight:600; color:#111827; cursor:pointer; flex-shrink:0;">Today</button>
+                            <button id="calNextBtn" class="invoice-sort-btn">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -413,8 +415,8 @@
             <div id="clientsScroll" style="width:100%; height:100dvh; overflow-y:auto; overflow-x:hidden;">
                 <div style="padding-top:env(safe-area-inset-top);">
                     <div class="px-5 view-content">
-                        <div class="flex justify-between items-center pt-6 pb-3">
-                            <h1 class="text-3xl font-extrabold text-gray-900">Clients</h1>
+                        <div class="page-header">
+                            <h1>Clients</h1>
                             <button id="addClientBtn" class="invoice-sort-btn" title="Add client">
                                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                             </button>

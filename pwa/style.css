@@ -17,6 +17,11 @@
             --color-error-text:   #dc2626;
             --color-error-icon:   #ef4444;
 
+            /* Typography — page/view titles */
+            --page-title-size: 1.875rem;
+            --page-title-weight: 800;
+            --page-title-color: #111827;
+
             /* Typography — panel titles */
             --panel-title-size: 15px;
             --panel-title-weight: 700;
@@ -526,6 +531,20 @@
         }
         .card-header:first-child {
             margin-top: 0;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 24px;
+            padding-bottom: 12px;
+        }
+        .page-header h1 {
+            font-size: var(--page-title-size);
+            font-weight: var(--page-title-weight);
+            color: var(--page-title-color);
+            line-height: 1.15;
+            margin: 0;
         }
         .card-group {
             display: flex;
