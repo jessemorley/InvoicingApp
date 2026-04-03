@@ -287,9 +287,9 @@ function buildEmailLog(emails) {
             <div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                 <span style="font-weight:700;color:#374151;">${e.subject}</span><span style="color:#d1d5db;"> — </span><span style="color:#b0b4bc;">${emailBodyPreview(e.body_text)}</span>
             </div>
-            <div style="text-align:right;flex-shrink:0;white-space:nowrap;">
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-shrink:0;">
                 <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:${statusColor};">${statusLabel}</span>
-                <span style="font-size:12px;color:#c0c4cc;margin:0 3px;">·</span>
+                <span style="font-size:12px;color:#c0c4cc;">·</span>
                 <span style="font-size:12px;color:#9ca3af;font-weight:600;">${dateLabel}</span>
             </div>
         </div>`;
