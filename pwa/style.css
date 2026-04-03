@@ -1221,7 +1221,6 @@
             .email-log-right { flex-shrink: 0; }
             .email-log-middle {
                 flex-basis: 100%;
-                padding-left: 24px; /* indent to clear icon */
             }
         }
 
