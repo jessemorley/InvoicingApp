@@ -1201,6 +1201,30 @@
             background: #f4f4f5;
         }
 
+        /* Dashboard email log rows */
+        .email-log-row {
+            display: grid;
+            grid-template-columns: 140px 1fr auto;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+        }
+        .email-log-middle { min-width: 0; }
+        @media (max-width: 640px) {
+            .email-log-row {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 2px 8px;
+            }
+            .email-log-left  { flex: 1; min-width: 0; }
+            .email-log-right { flex-shrink: 0; }
+            .email-log-middle {
+                flex-basis: 100%;
+                padding-left: 24px; /* indent to clear icon */
+            }
+        }
+
         /* Dashboard responsive grid */
         .dash-grid {
             display: grid;
