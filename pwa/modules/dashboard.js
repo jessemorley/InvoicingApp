@@ -132,56 +132,58 @@ export async function loadDashboard() {
         <div class="dash-grid" style="margin-bottom:10px;">
 
             <!-- Month Summary Card -->
-            <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;flex-direction:column;justify-content:space-between;">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div>
-                        <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;">${monthName} Summary</div>
-                        <div style="font-size:28px;font-weight:900;color:#111827;line-height:1.1;margin-top:4px;">${fmt(monthTotal)}</div>
-                        ${pctBadge}
+            <div class="week-group">
+                <div class="week-header"><span>${monthName} Summary</span></div>
+                <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;flex-direction:column;justify-content:space-between;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                        <div>
+                            <div style="font-size:28px;font-weight:900;color:#111827;line-height:1.1;">${fmt(monthTotal)}</div>
+                            ${pctBadge}
+                        </div>
+                        <div style="background:rgba(0,122,255,0.08);padding:8px;border-radius:10px;color:#007AFF;flex-shrink:0;">
+                            <i data-lucide="trending-up" style="width:20px;height:20px;"></i>
+                        </div>
                     </div>
-                    <div style="background:rgba(0,122,255,0.08);padding:8px;border-radius:10px;color:#007AFF;flex-shrink:0;">
-                        <i data-lucide="trending-up" style="width:20px;height:20px;"></i>
-                    </div>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid #f3f4f6;">
-                    <div>
-                        <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">Entries</div>
-                        <div style="font-size:13px;font-weight:700;color:#111827;">${entryCount} Job${entryCount !== 1 ? 's' : ''}</div>
-                    </div>
-                    <div>
-                        <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">Avg. Daily</div>
-                        <div style="font-size:13px;font-weight:700;color:#111827;">${fmt(avgDaily)}</div>
-                    </div>
-                    <div>
-                        <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">Top Client</div>
-                        ${topClient !== '—'
-                            ? `<span class="client-badge ${clientBadgeColor(topClient)}" style="font-size:11px;">${topClient}</span>`
-                            : `<div style="font-size:13px;font-weight:700;color:#111827;">—</div>`
-                        }
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid #f3f4f6;">
+                        <div>
+                            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">Entries</div>
+                            <div style="font-size:13px;font-weight:700;color:#111827;">${entryCount} Job${entryCount !== 1 ? 's' : ''}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">Avg. Daily</div>
+                            <div style="font-size:13px;font-weight:700;color:#111827;">${fmt(avgDaily)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;">Top Client</div>
+                            ${topClient !== '—'
+                                ? `<span class="client-badge ${clientBadgeColor(topClient)}" style="font-size:11px;">${topClient}</span>`
+                                : `<div style="font-size:13px;font-weight:700;color:#111827;">—</div>`
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Outstanding Card -->
-            <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;flex-direction:column;">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
-                    <div>
-                        <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.06em;">Outstanding</div>
-                        <div style="font-size:22px;font-weight:900;color:#111827;margin-top:4px;">${fmt(outstandingTotal)}</div>
+            <div class="week-group">
+                <div class="week-header"><span>Outstanding</span></div>
+                <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;flex-direction:column;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+                        <div style="font-size:22px;font-weight:900;color:#111827;">${fmt(outstandingTotal)}</div>
+                        ${invoiceCount > 0 ? `<div style="padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:rgba(239,68,68,0.08);color:#ef4444;flex-shrink:0;margin-top:2px;">${invoiceCount} unpaid</div>` : ''}
                     </div>
-                    ${invoiceCount > 0 ? `<div style="padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:rgba(239,68,68,0.08);color:#ef4444;flex-shrink:0;margin-top:2px;">${invoiceCount} unpaid</div>` : ''}
+                    <div style="flex:1;">
+                        ${unpaidRows || '<div style="font-size:11px;color:#9ca3af;padding:6px 0;">All paid — nice!</div>'}
+                    </div>
+                    ${invoiceCount > 0 ? `<button onclick="window.switchView(2)" style="margin-top:12px;font-size:10px;color:#007AFF;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;background:none;border:none;cursor:pointer;text-align:center;width:100%;padding:0;">View All ${invoiceCount} Invoice${invoiceCount !== 1 ? 's' : ''} →</button>` : ''}
                 </div>
-                <div style="flex:1;">
-                    ${unpaidRows || '<div style="font-size:11px;color:#9ca3af;padding:6px 0;">All paid — nice!</div>'}
-                </div>
-                ${invoiceCount > 0 ? `<button onclick="window.switchView(2)" style="margin-top:12px;font-size:10px;color:#007AFF;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;background:none;border:none;cursor:pointer;text-align:center;width:100%;padding:0;">View All ${invoiceCount} Invoice${invoiceCount !== 1 ? 's' : ''} →</button>` : ''}
             </div>
         </div>
 
         <!-- Last 6 Months Chart -->
-        <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin-bottom:10px;">
-            <div style="margin-bottom:14px;">
-                <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:8px;">Last 6 Months</div>
+        <div class="week-group" style="margin-bottom:10px;">
+            <div class="week-header">
+                <span>Last 6 Months</span>
                 <div style="display:flex;gap:16px;">
                     <div style="display:flex;align-items:center;gap:6px;">
                         <div style="width:18px;height:3px;background:#007AFF;border-radius:2px;"></div>
@@ -193,8 +195,10 @@ export async function loadDashboard() {
                     </div>
                 </div>
             </div>
-            <div style="height:180px;position:relative;">
-                <canvas id="annualChart"></canvas>
+            <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <div style="height:180px;position:relative;">
+                    <canvas id="annualChart"></canvas>
+                </div>
             </div>
         </div>
         <!-- Email Log -->
@@ -345,10 +349,10 @@ function buildEmailLog(emails) {
     }).join('');
 
     return `
-        <div style="margin-bottom:24px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <div style="font-size:15px;font-weight:700;color:#111827;">Email Log</div>
-                <button onclick="window.switchView(2)" style="font-size:12px;font-weight:700;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0;">History</button>
+        <div class="week-group" style="margin-bottom:24px;">
+            <div class="week-header">
+                <span>Email Log</span>
+                <button onclick="window.switchView(2)" style="font-size:10px;font-weight:700;color:#9ca3af;background:none;border:none;cursor:pointer;padding:0;text-transform:uppercase;letter-spacing:0.05em;">History</button>
             </div>
             <div style="background:#fff;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);overflow:hidden;">
                 ${rows}
