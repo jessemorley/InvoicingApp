@@ -22,6 +22,9 @@ export async function loadDashboard() {
     const prevMonth     = month === 0 ? 11 : month - 1;
     const prevMonthYear = month === 0 ? year - 1 : year;
     const prevMonthStart = `${prevMonthYear}-${pad(prevMonth + 1)}-01`;
+    // Last day in prev month matching today's day-of-month (clamped to actual month length)
+    const prevMonthDaysInMonth = new Date(prevMonthYear, prevMonth + 1, 0).getDate();
+    const prevMonthSameDay = `${prevMonthYear}-${pad(prevMonth + 1)}-${pad(Math.min(dayOfMonth, prevMonthDaysInMonth))}`;
     const yearStart     = `${year}-01-01`;
     const prevYearStart = `${year - 1}-01-01`;
 
@@ -39,7 +42,7 @@ export async function loadDashboard() {
         sb.from('entries')
             .select('total_amount')
             .gte('date', prevMonthStart)
-            .lt('date', monthStart),
+            .lte('date', prevMonthSameDay),
         sb.from('invoices')
             .select('invoice_number, subtotal, clients(name)')
             .in('status', ['draft', 'issued'])
@@ -97,7 +100,7 @@ export async function loadDashboard() {
         ? `<div style="display:inline-flex;align-items:center;gap:2px;margin-top:6px;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;
                 background:${pctChange >= 0 ? 'rgba(52,199,89,0.1)' : 'rgba(239,68,68,0.1)'};
                 color:${pctChange >= 0 ? '#34c759' : '#ef4444'};">
-                ${pctChange >= 0 ? '↑' : '↓'} ${Math.abs(pctChange).toFixed(1)}% vs Last Month
+                ${pctChange >= 0 ? '↑' : '↓'} ${Math.abs(pctChange).toFixed(1)}% vs last month (day ${dayOfMonth})
             </div>`
         : '';
 
@@ -191,10 +194,10 @@ export async function loadDashboard() {
         annualChart = new Chart(canvas, {
             type: 'line',
             data: {
-                labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+                labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].slice(0, month + 1),
                 datasets: [
                     {
-                        data: currentMonthly,
+                        data: currentMonthly.slice(0, month + 1),
                         borderColor: '#007AFF',
                         borderWidth: 2.5,
                         tension: 0.4,
@@ -206,7 +209,7 @@ export async function loadDashboard() {
                         fill: false,
                     },
                     {
-                        data: prevMonthly,
+                        data: prevMonthly.slice(0, month + 1),
                         borderColor: '#E2E8F0',
                         borderWidth: 2,
                         borderDash: [4, 4],
