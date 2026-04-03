@@ -85,21 +85,11 @@ function _renderCalendar() {
     let startDow = firstOfMonth.getDay() - 1;
     if (startDow < 0) startDow = 6;
 
-    const dayHeaders = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-
     const monthLabel = document.getElementById('calMonthLabel');
     if (monthLabel) monthLabel.textContent = `${monthNames[currentMonth]} ${currentYear}`;
 
-    // Day-of-week header row — separate grid, styled as group header
-    let html = `<div class="cal-day-headers" style="display:grid; grid-template-columns:repeat(7,1fr); flex-shrink:0;">`;
-    dayHeaders.forEach((d, i) => {
-        const isWknd = i >= 5;
-        html += `<div style="text-align:center; padding:6px 0 8px; font-size:var(--group-header-size); font-weight:var(--group-header-weight); color:${isWknd ? '#b0b7c3' : 'var(--group-header-color)'}; text-transform:uppercase; letter-spacing:var(--group-header-tracking); min-width:0;">${d}</div>`;
-    });
-    html += `</div>`;
-
     // Cells grid — 6 rows only, flex:1 to fill remaining height
-    html += `
+    let html = `
     <div class="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:repeat(6,1fr); flex:1; min-height:0; overflow:hidden; background:#fff;">`;
 
     // Empty cells before first day
