@@ -939,13 +939,14 @@ function openEmailComposeSheet(inv, prefill = null) {
 
             <style>
                 #emailBottomRow { display:flex; flex-direction:column; gap:10px; }
-                #emailButtons   { display:flex; gap:10px; }
+                #emailButtons   { display:flex; gap:8px; align-items:stretch; }
                 @media (min-width: 640px) {
-                    #emailBottomRow { flex-direction:row; align-items:center; }
+                    #emailBottomRow { flex-direction:row; align-items:center; flex-wrap:wrap; }
                     #emailMarkIssued-label { margin-bottom:0; flex:1; }
                     #emailButtons { flex-shrink:0; }
-                    #emailButtons button { width:120px; }
+                    #emailButtons #emailSendBtn, #emailButtons #emailCancelBtn { width:120px; }
                 }
+                .schedule-option:hover { background:#f9fafb !important; }
             </style>
             <div id="emailBottomRow">
                 <label id="emailMarkIssued-label" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
@@ -955,17 +956,26 @@ function openEmailComposeSheet(inv, prefill = null) {
                 </label>
                 <div id="emailButtons">
                     <button id="emailCancelBtn" class="btn-ghost" style="flex:1;">Cancel</button>
+                    <div style="position:relative;display:flex;align-items:stretch;">
+                        <button id="emailScheduleBtn" class="btn-ghost" style="width:44px;padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;" title="Schedule send">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>
+                        </button>
+                        <div id="emailScheduleDropdown" style="display:none;position:absolute;bottom:calc(100% + 8px);right:0;background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:210px;overflow:hidden;z-index:10;">
+                            <button class="schedule-option" data-preset="tomorrow-morning" style="display:block;width:100%;text-align:left;padding:12px 16px;font-size:14px;font-weight:500;color:#111827;background:none;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;">Tomorrow morning</button>
+                            <button class="schedule-option" data-preset="this-afternoon" style="display:block;width:100%;text-align:left;padding:12px 16px;font-size:14px;font-weight:500;color:#111827;background:none;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;">This afternoon</button>
+                            <button class="schedule-option" data-preset="monday-morning" style="display:block;width:100%;text-align:left;padding:12px 16px;font-size:14px;font-weight:500;color:#111827;background:none;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;">Monday morning</button>
+                            <button class="schedule-option" data-preset="pick" style="display:block;width:100%;text-align:left;padding:12px 16px;font-size:14px;font-weight:500;color:#111827;background:none;border:none;cursor:pointer;">Pick date &amp; time</button>
+                        </div>
+                    </div>
                     <button id="emailSendBtn" class="btn-primary" style="flex:1;">
                         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                         Send
                     </button>
                 </div>
-            </div>
-
-            <div style="margin-top:16px;border-top:1px solid #f3f4f6;padding-top:14px;">
-                <label style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:6px;">Schedule for later (optional)</label>
-                <input type="datetime-local" id="emailScheduleTime"
-                    style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:inherit;color:#111827;outline:none;box-sizing:border-box;" />
+                <div id="emailPickerRow" style="display:none;">
+                    <input type="datetime-local" id="emailScheduleTime"
+                        style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:inherit;color:#111827;outline:none;box-sizing:border-box;" />
+                </div>
             </div>
         </div>`;
 
@@ -981,26 +991,77 @@ function openEmailComposeSheet(inv, prefill = null) {
 
     document.getElementById('emailCancelBtn').addEventListener('click', close);
 
-    // Update Send button label when schedule time changes
-    document.getElementById('emailScheduleTime').addEventListener('input', () => {
-        const val = document.getElementById('emailScheduleTime').value;
+    // Schedule send logic
+    let scheduledFor = null;
+    const mailIconSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`;
+    const clockIconSvg = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>`;
+
+    function setScheduledDate(d) {
+        scheduledFor = d ? d.toISOString() : null;
         const sendBtn = document.getElementById('emailSendBtn');
-        if (val) {
-            const d = new Date(val);
+        if (d) {
             const label = d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-            sendBtn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg> Send ${label}`;
+            sendBtn.innerHTML = `${clockIconSvg} Send ${label}`;
         } else {
-            sendBtn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> Send`;
+            sendBtn.innerHTML = `${mailIconSvg} Send`;
+        }
+    }
+
+    function getPresetDate(preset) {
+        const d = new Date();
+        if (preset === 'tomorrow-morning') {
+            d.setDate(d.getDate() + 1);
+            d.setHours(9, 0, 0, 0);
+        } else if (preset === 'this-afternoon') {
+            d.setHours(14, 0, 0, 0);
+        } else if (preset === 'monday-morning') {
+            const day = d.getDay();
+            const daysUntilMonday = day === 1 ? 7 : (8 - day) % 7;
+            d.setDate(d.getDate() + daysUntilMonday);
+            d.setHours(9, 0, 0, 0);
+        }
+        return d;
+    }
+
+    const dropdown = document.getElementById('emailScheduleDropdown');
+
+    document.getElementById('emailScheduleBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = dropdown.style.display !== 'none';
+        dropdown.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen) {
+            setTimeout(() => document.addEventListener('click', () => { dropdown.style.display = 'none'; }, { once: true }), 0);
         }
     });
 
+    dropdown.addEventListener('click', (e) => e.stopPropagation());
+
+    document.querySelectorAll('.schedule-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+            dropdown.style.display = 'none';
+            const preset = btn.dataset.preset;
+            if (preset === 'pick') {
+                const pickerRow = document.getElementById('emailPickerRow');
+                pickerRow.style.display = 'block';
+                const input = document.getElementById('emailScheduleTime');
+                try { input.showPicker(); } catch(e) { input.focus(); }
+            } else {
+                document.getElementById('emailPickerRow').style.display = 'none';
+                setScheduledDate(getPresetDate(preset));
+            }
+        });
+    });
+
+    document.getElementById('emailScheduleTime').addEventListener('change', () => {
+        const val = document.getElementById('emailScheduleTime').value;
+        setScheduledDate(val ? new Date(val) : null);
+    });
+
     document.getElementById('emailSendBtn').addEventListener('click', async () => {
-        const to           = document.getElementById('emailTo').value.trim();
-        const subject      = document.getElementById('emailSubject').value.trim();
-        const bodyText     = document.getElementById('emailBody').value.trim();
-        const markIssued   = document.getElementById('emailMarkIssued').checked;
-        const scheduleVal  = document.getElementById('emailScheduleTime').value;
-        const scheduledFor = scheduleVal ? new Date(scheduleVal).toISOString() : null;
+        const to         = document.getElementById('emailTo').value.trim();
+        const subject    = document.getElementById('emailSubject').value.trim();
+        const bodyText   = document.getElementById('emailBody').value.trim();
+        const markIssued = document.getElementById('emailMarkIssued').checked;
 
         if (!to)      { document.getElementById('emailTo').focus();      return; }
         if (!subject) { document.getElementById('emailSubject').focus(); return; }
@@ -1012,14 +1073,14 @@ function openEmailComposeSheet(inv, prefill = null) {
         const err = await _sendInvoiceEmail(inv, to, subject, bodyText, markIssued, scheduledFor);
         if (err) {
             sendBtn.disabled = false;
-            sendBtn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> Send`;
+            sendBtn.innerHTML = `${mailIconSvg} Send`;
             alert('Failed: ' + err);
             return;
         }
 
         close();
         if (scheduledFor) {
-            const d = new Date(scheduleVal);
+            const d = new Date(scheduledFor);
             _showToast(`Scheduled for ${d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`);
         } else {
             _showToast(`Invoice emailed to ${to}`);
