@@ -283,7 +283,10 @@ function buildEmailLog(emails) {
             <div style="display:flex;align-items:center;gap:10px;min-width:0;">
                 ${icon}
                 <div style="min-width:0;">
-                    <div style="font-size:12px;font-weight:700;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${clientName}</div>
+                    <div style="display:flex;align-items:baseline;gap:5px;overflow:hidden;">
+                        <div style="font-size:12px;font-weight:700;color:#111827;white-space:nowrap;flex-shrink:0;">${clientName}</div>
+                        <div style="font-size:10px;color:#c0c4cc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.to_address}</div>
+                    </div>
                     <div style="font-size:10px;color:#6b7280;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                         ${e.subject}<span style="color:#c0c4cc;"> — </span><span style="color:#b0b4bc;font-weight:400;">${emailBodyPreview(e.body_text)}</span>
                     </div>
