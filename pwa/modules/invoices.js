@@ -1091,14 +1091,27 @@ async function _loadScheduledEmailBanner(inv, container) {
 
     const { data } = await sb
         .from('scheduled_emails')
-        .select('id, to_address, subject, body_text, scheduled_for, status, error')
+        .select('id, to_address, subject, body_text, scheduled_for, sent_at, status, error')
         .eq('invoice_id', inv.id)
-        .in('status', ['pending', 'failed'])
+        .in('status', ['pending', 'failed', 'sent'])
         .order('created_at', { ascending: false })
         .limit(1);
 
     const row = data?.[0];
     if (!row) return;
+
+    if (row.status === 'sent') {
+        const d = new Date(row.sent_at);
+        const dateStr = d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        slot.innerHTML = `
+            <div style="margin-top:6px;margin-bottom:4px;padding:12px 14px;background:var(--color-sent-bg);border:1.5px solid var(--color-sent-border);border-radius:12px;">
+                <p style="font-size:13px;font-weight:600;color:var(--color-sent-text);margin:0;display:flex;align-items:center;gap:6px;">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m16 19 2 2 4-4"/></svg>
+                    Sent to ${escText(row.to_address)} · ${escText(dateStr)}
+                </p>
+            </div>`;
+        return;
+    }
 
     if (row.status === 'pending') {
         const d = new Date(row.scheduled_for);
