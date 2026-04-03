@@ -278,7 +278,7 @@ function buildEmailLog(emails) {
         const statusColor = isPending ? '#007AFF' : '#34c759';
 
         const onclick = e.invoice_id ? `onclick="window.navigateToInvoice('${e.invoice_id}')"` : '';
-        return `<div ${onclick} style="display:grid;grid-template-columns:0.6fr 1fr 120px;align-items:center;gap:12px;padding:12px 14px;
+        return `<div ${onclick} style="display:grid;grid-template-columns:140px 1fr auto;align-items:center;gap:12px;padding:12px 14px;
                 ${e.invoice_id ? 'cursor:pointer;' : ''}${i < arr.length - 1 ? 'border-bottom:1px solid #f3f4f6;' : ''}">
             <div style="display:flex;align-items:center;gap:8px;overflow:hidden;">
                 <div style="flex-shrink:0;">${icon}</div>
@@ -287,7 +287,7 @@ function buildEmailLog(emails) {
             <div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                 <span style="font-weight:700;color:#374151;">${e.subject}</span><span style="color:#d1d5db;"> — </span><span style="color:#b0b4bc;">${emailBodyPreview(e.body_text)}</span>
             </div>
-            <div style="text-align:right;flex-shrink:0;">
+            <div style="text-align:right;flex-shrink:0;white-space:nowrap;">
                 <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:${statusColor};">${statusLabel}</span>
                 <span style="font-size:12px;color:#c0c4cc;margin:0 3px;">·</span>
                 <span style="font-size:12px;color:#9ca3af;font-weight:600;">${dateLabel}</span>
