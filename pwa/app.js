@@ -18,12 +18,13 @@ const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ── View constants ────────────────────────────
-const VIEW_DASHBOARD = 0;
-const VIEW_ENTRIES   = 1;
-const VIEW_INVOICES  = 2;
-const VIEW_SETTINGS  = 3;
-const VIEW_CALENDAR  = 4;
-const VIEW_CLIENTS   = 5;
+const VIEW_DASHBOARD        = 0;
+const VIEW_ENTRIES          = 1;
+const VIEW_INVOICES         = 2;
+const VIEW_SETTINGS         = 3;
+const VIEW_CALENDAR         = 4;
+const VIEW_CLIENTS          = 5;
+const VIEW_INVOICE_PREVIEW  = 6;
 
 // ── Global state ─────────────────────────────
 let allClients              = [];
@@ -290,6 +291,33 @@ function closeOverflowMenu() {
 window.openOverflowMenu  = openOverflowMenu;
 window.closeOverflowMenu = closeOverflowMenu;
 
+// Drag-to-dismiss on overflow sheet
+(function() {
+    const sheet = document.getElementById('overflowSheet');
+    let startY = 0, isDragging = false;
+    sheet.addEventListener('touchstart', e => {
+        startY = e.touches[0].clientY;
+        isDragging = true;
+        sheet.style.transition = 'none';
+    }, { passive: true });
+    sheet.addEventListener('touchmove', e => {
+        if (!isDragging) return;
+        const dy = e.touches[0].clientY - startY;
+        if (dy > 0) sheet.style.transform = `translateY(${dy}px)`;
+    }, { passive: true });
+    sheet.addEventListener('touchend', e => {
+        if (!isDragging) return;
+        isDragging = false;
+        sheet.style.transition = '';
+        const dy = e.changedTouches[0].clientY - startY;
+        if (dy > 60) {
+            closeOverflowMenu();
+        } else {
+            sheet.style.transform = 'translateY(0)';
+        }
+    });
+})();
+
 export function switchView(index) {
     currentViewIndex = index;
     sessionStorage.setItem('activeView', index);
@@ -299,13 +327,32 @@ export function switchView(index) {
     if (isDesktop) {
         // Clear any mobile transform so the desktop flex layout takes over
         document.getElementById('viewSlider').style.transform = '';
-        // On desktop: show/hide panes directly (no slider transform)
-        ['viewDashboard','viewEntries','viewInvoices','viewSettings','viewCalendar','viewClients'].forEach((id, i) => {
+        const DESKTOP_PANES = ['viewDashboard','viewEntries','viewInvoices','viewSettings','viewCalendar','viewClients','viewInvoicePreview'];
+        DESKTOP_PANES.forEach((id, i) => {
             const el = document.getElementById(id);
-            if (el) el.style.display = i === index ? '' : 'none';
+            if (!el) return;
+            if (i === VIEW_INVOICE_PREVIEW) {
+                if (index === VIEW_INVOICE_PREVIEW) {
+                    // Slide up into view
+                    el.style.display = 'block';
+                    el.style.transform = 'translateY(100%)';
+                    el.style.transition = 'none';
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                        el.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+                        el.style.transform  = 'translateY(0)';
+                    }));
+                } else {
+                    el.style.display = 'none';
+                    el.style.transform = '';
+                    el.style.transition = '';
+                }
+            } else {
+                el.style.display = i === index ? '' : 'none';
+            }
         });
+        // Sidebar: no item highlights when preview is active
         document.querySelectorAll('.sidebar-btn[data-view]').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.view === SIDEBAR_VIEWS[index]);
+            btn.classList.toggle('active', index !== VIEW_INVOICE_PREVIEW && btn.dataset.view === SIDEBAR_VIEWS[index]);
         });
     } else {
         // On mobile: slider transform
@@ -404,15 +451,34 @@ window.navigateToInvoice = (id) => {
 // INVOICE PREVIEW BACK / PRINT
 // ─────────────────────────────────────────────
 document.getElementById('invoicePreviewBack').addEventListener('click', () => {
-    const overlay = document.getElementById('invoicePreviewOverlay');
-    const slider  = document.getElementById('viewSlider');
-    overlay.style.transform = 'translateX(100%)';
-    slider.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
-    slider.style.transform  = 'translateX(-100vw)';
-    setTimeout(() => {
-        overlay.style.display = 'none';
-        document.getElementById('invoicePreviewFrame').srcdoc = '';
-    }, 350);
+    const isDesktop    = window.innerWidth >= 768;
+    const previewPane  = document.getElementById('viewInvoicePreview');
+    const scrollArea   = document.getElementById('invoicePreviewScrollArea');
+    const frame        = document.getElementById('invoicePreviewFrame');
+
+    const cleanup = () => {
+        Invoices.cleanupPreview();
+        scrollArea.scrollTop = 0;
+        frame.srcdoc = '';
+        document.getElementById('invoicePreviewScaleWrap').style.marginBottom = '';
+    };
+
+    if (isDesktop) {
+        // Reveal invoices behind the preview, then slide preview down
+        document.getElementById('viewInvoices').style.display = '';
+        previewPane.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+        previewPane.style.transform  = 'translateY(100%)';
+        setTimeout(() => {
+            previewPane.style.display    = 'none';
+            previewPane.style.transform  = '';
+            previewPane.style.transition = '';
+            cleanup();
+            switchView(VIEW_INVOICES); // updates currentViewIndex + sidebar
+        }, 350);
+    } else {
+        switchView(VIEW_INVOICES);
+        setTimeout(cleanup, 350);
+    }
 });
 
 document.getElementById('invoicePreviewPrint').addEventListener('click', () => {

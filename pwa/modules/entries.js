@@ -235,6 +235,7 @@ function renderEntryClientWeeks(list, data, startCardIndex, beforeSentinel = fal
             const locked = !!entry.invoice_id && entry.invoices?.status !== 'draft';
             el.className = 'entry-row' + (locked ? ' entry-row-invoiced' : ' entry-row-tappable');
             const dateParts = formatEntryDateParts(entry.date);
+            const lockIcon = locked ? `<svg width="11" height="11" fill="none" stroke="#9ca3af" stroke-width="2.2" viewBox="0 0 24 24" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path stroke-linecap="round" d="M7 11V7a5 5 0 0110 0v4"/></svg>` : '';
             el.innerHTML = `
                 <div class="entry-date-col">
                     <span class="dow ${dowColor}">${dateParts.dow}</span>
@@ -245,6 +246,7 @@ function renderEntryClientWeeks(list, data, startCardIndex, beforeSentinel = fal
                     <p class="text-[15px] font-semibold text-gray-800 truncate">${description}</p>
                 </div>
                 <div class="flex flex-col items-end gap-1 shrink-0">
+                    ${lockIcon}
                     <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
                 </div>`;
 
@@ -325,6 +327,7 @@ function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
             el.className = 'entry-row' + (locked ? ' entry-row-invoiced' : ' entry-row-tappable');
             const dateParts = formatEntryDateParts(entry.date);
             const dowColor  = clientDowColor(clientName);
+            const lockIconW = locked ? `<svg width="11" height="11" fill="none" stroke="#9ca3af" stroke-width="2.2" viewBox="0 0 24 24" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path stroke-linecap="round" d="M7 11V7a5 5 0 0110 0v4"/></svg>` : '';
             el.innerHTML = `
                 <div class="entry-date-col">
                     <span class="dow ${dowColor}">${dateParts.dow}</span>
@@ -338,7 +341,7 @@ function renderEntryWeeks(list, data, startCardIndex, beforeSentinel = false) {
                     <p class="text-[15px] font-semibold text-gray-800 truncate">${description}</p>
                 </div>
                 <div class="flex flex-col items-end gap-1 shrink-0">
-                    ${chipHtml || '<span class="h-[18px]"></span>'}
+                    ${chipHtml ? chipHtml : lockIconW || '<span class="h-[18px]"></span>'}
                     <span class="text-[16px] font-bold text-gray-800 tracking-tight">${total}</span>
                 </div>`;
 
@@ -401,6 +404,7 @@ function renderEntryFlat(list, data, startCardIndex, beforeSentinel = false) {
         el.className = 'entry-row' + (locked ? ' entry-row-invoiced' : ' entry-row-tappable');
         const dateParts = formatEntryDateParts(entry.date);
         const dowColor  = clientDowColor(clientName);
+        const lockIconF = locked ? `<svg width="11" height="11" fill="none" stroke="#9ca3af" stroke-width="2.2" viewBox="0 0 24 24" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path stroke-linecap="round" d="M7 11V7a5 5 0 0110 0v4"/></svg>` : '';
         el.innerHTML = `
             <div class="entry-date-col">
                 <span class="dow ${dowColor}">${dateParts.dow}</span>
@@ -414,7 +418,7 @@ function renderEntryFlat(list, data, startCardIndex, beforeSentinel = false) {
                 <p class="text-[15px] font-semibold text-gray-800 truncate">${description}</p>
             </div>
             <div class="flex flex-col items-end gap-1 shrink-0">
-                ${chipHtml || '<span class="h-[18px]"></span>'}
+                ${chipHtml ? chipHtml : lockIconF || '<span class="h-[18px]"></span>'}
                 <span class="text-[16px] font-bold text-gray-800 tracking-tight">${amount}</span>
             </div>`;
 
