@@ -860,66 +860,38 @@ export function openInvoicePreviewById(id) {
 function openInvoicePreview(inv) {
     const html = buildInvoiceHTML(inv);
     currentPreviewHTML = html;
-    const overlay   = document.getElementById('invoicePreviewOverlay');
     const frame     = document.getElementById('invoicePreviewFrame');
     const scaleWrap = document.getElementById('invoicePreviewScaleWrap');
-    const slider    = document.getElementById('viewSlider');
     const isDesktop = window.innerWidth >= 768;
 
     const docWidth  = 794, docHeight = 1123;
 
+    let availableWidth;
     if (isDesktop) {
-        const mainContent   = document.getElementById('mainContent');
-        const detailOpen    = document.getElementById('detailPanel').classList.contains('open');
-        const detailWidth   = detailOpen ? 380 : 0;
-        const contentWidth  = mainContent.offsetWidth - detailWidth;
-        const scale         = contentWidth / docWidth;
-        const scaledH       = docHeight * scale;
-        const topOffset     = Math.max(0, (mainContent.offsetHeight - scaledH) / 2);
-
-        overlay.style.position = 'absolute';
-        overlay.style.right    = detailWidth + 'px';
-        frame.style.width  = docWidth + 'px';
-        frame.style.height = docHeight + 'px';
-        scaleWrap.style.width     = docWidth + 'px';
-        scaleWrap.style.top       = topOffset + 'px';
-        scaleWrap.style.transform = `scale(${scale})`;
-        frame.srcdoc = html;
-
-        overlay.style.transition = 'none';
-        overlay.style.transform  = 'translateY(100%)';
-        overlay.style.display    = 'block';
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                overlay.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
-                overlay.style.transform  = 'translateY(0)';
-            });
-        });
+        const mainContent = document.getElementById('mainContent');
+        const detailOpen  = document.getElementById('detailPanel').classList.contains('open');
+        availableWidth = mainContent.offsetWidth - (detailOpen ? 380 : 0);
     } else {
-        const scale     = window.innerWidth / docWidth;
-        const scaledH   = docHeight * scale;
-        const topOffset = Math.max(0, (window.innerHeight - scaledH) / 2);
-
-        overlay.style.position = 'fixed';
-        frame.style.width  = docWidth + 'px';
-        frame.style.height = docHeight + 'px';
-        scaleWrap.style.width     = docWidth + 'px';
-        scaleWrap.style.top       = topOffset + 'px';
-        scaleWrap.style.transform = `scale(${scale})`;
-        frame.srcdoc = html;
-
-        slider.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
-        slider.style.transform  = 'translateX(-200vw)';
-        overlay.style.transition = 'none';
-        overlay.style.transform  = 'translateX(100%)';
-        overlay.style.display    = 'block';
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                overlay.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
-                overlay.style.transform  = 'translateX(0)';
-            });
-        });
+        availableWidth = window.innerWidth;
     }
+
+    const scale = isDesktop
+        ? Math.min(availableWidth, 800) / docWidth
+        : availableWidth / docWidth;
+
+    frame.style.width  = docWidth + 'px';
+    frame.style.height = docHeight + 'px';
+    scaleWrap.style.width           = docWidth + 'px';
+    scaleWrap.style.transformOrigin = 'top center';
+    scaleWrap.style.transform       = `scale(${scale})`;
+    scaleWrap.style.marginBottom    = `${Math.max(0, docHeight * scale - docHeight)}px`;
+    frame.srcdoc = html;
+
+    // On mobile, make the pane visible in the flow before the slider moves to it
+    if (!isDesktop) {
+        document.getElementById('viewInvoicePreview').style.display = '';
+    }
+    window.switchView(6);
 }
 
 export function getPrintHTML() { return currentPreviewHTML; }
