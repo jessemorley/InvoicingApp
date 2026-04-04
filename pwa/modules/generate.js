@@ -32,7 +32,6 @@ export async function scanAndRender() {
     if (error || !entries?.length) {
         if (bar) bar.style.display = 'none';
         uninvoicedGroups = [];
-        _updatePill();
         return;
     }
 
@@ -55,8 +54,6 @@ export async function scanAndRender() {
         return ad < bd ? -1 : 1;
     });
 
-    _updatePill();
-
     if (!uninvoicedGroups.length) {
         if (bar) bar.style.display = 'none';
         return;
@@ -67,11 +64,6 @@ export async function scanAndRender() {
         barExpanded = false;
         _renderBar();
     }
-}
-
-export function getUninvoicedTotal() {
-    return uninvoicedGroups.reduce((s, g) =>
-        s + g.entries.reduce((es, e) => es + (e.total_amount || 0), 0), 0);
 }
 
 export function getUninvoicedCount() {
@@ -134,18 +126,6 @@ function _updateSheetBtn(container) {
     const selected = uninvoicedGroups.filter(g => g.selected).length;
     btn.disabled = selected === 0;
     btn.textContent = `Generate ${selected} Invoice${selected !== 1 ? 's' : ''}`;
-}
-
-function _updatePill() {
-    const pill = document.getElementById('entriesUninvoicedPill');
-    if (!pill) return;
-    const total = getUninvoicedTotal();
-    if (uninvoicedGroups.length && total > 0) {
-        pill.textContent = `${fmt(total)} uninvoiced`;
-        pill.style.display = 'inline-block';
-    } else {
-        pill.style.display = 'none';
-    }
 }
 
 // ─────────────────────────────────────────────
