@@ -291,6 +291,33 @@ function closeOverflowMenu() {
 window.openOverflowMenu  = openOverflowMenu;
 window.closeOverflowMenu = closeOverflowMenu;
 
+// Drag-to-dismiss on overflow sheet
+(function() {
+    const sheet = document.getElementById('overflowSheet');
+    let startY = 0, isDragging = false;
+    sheet.addEventListener('touchstart', e => {
+        startY = e.touches[0].clientY;
+        isDragging = true;
+        sheet.style.transition = 'none';
+    }, { passive: true });
+    sheet.addEventListener('touchmove', e => {
+        if (!isDragging) return;
+        const dy = e.touches[0].clientY - startY;
+        if (dy > 0) sheet.style.transform = `translateY(${dy}px)`;
+    }, { passive: true });
+    sheet.addEventListener('touchend', e => {
+        if (!isDragging) return;
+        isDragging = false;
+        sheet.style.transition = '';
+        const dy = e.changedTouches[0].clientY - startY;
+        if (dy > 60) {
+            closeOverflowMenu();
+        } else {
+            sheet.style.transform = 'translateY(0)';
+        }
+    });
+})();
+
 export function switchView(index) {
     currentViewIndex = index;
     sessionStorage.setItem('activeView', index);
