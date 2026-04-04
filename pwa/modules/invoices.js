@@ -6,6 +6,7 @@ import {
     fmt, fmtInvoiceAmount, fmtInvoiceRate, fmtInvoiceTime,
     abbreviateRole, formatEntryDate, formatInvoiceDate, formatInvoiceEntryDate,
     clientBadgeColor, invoiceChipColors, entryDescription,
+    calcDayRate, calcHourly, calcManual,
 } from './utils.js';
 
 let sb, getState;
@@ -25,6 +26,7 @@ let invoicesRenderedCount = 0;
 const INVOICES_PAGE_SIZE  = 18;
 let currentPreviewHTML    = null;
 let pendingOpenId         = null;
+let _previewInv           = null;  // invoice currently shown in preview
 
 const ICON_GROUP = `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M11 18h2"/></svg>`;
 const ICON_LIST  = `<svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>`;
@@ -451,7 +453,7 @@ async function _deleteLineItem(inv, lineItemId, container) {
     if (error) { alert('Error removing line item: ' + error.message); return; }
     inv.invoice_line_items = (inv.invoice_line_items || []).filter(li => li.id !== lineItemId);
     await _recalcAndSaveInvoiceTotals(inv);
-    _renderInvoicePanelBody(container, inv);
+    if (container) _renderInvoicePanelBody(container, inv);
 }
 
 function _renderInvoicePanelBody(container, inv) {
@@ -738,7 +740,7 @@ function buildInvoiceLineItemsHTML(inv) {
             rate = '';
             amount = fmtInvoiceAmount(e.base_amount);
         }
-        html += `<tr><td class="col-date">${dateStr}</td><td class="col-item">${description}</td><td class="col-qty">${hours}</td><td class="col-rate">${rate}</td><td class="col-amount">${amount}</td></tr>\n`;
+        html += `<tr class="inv-row" data-entry-id="${e.id}"><td class="col-date">${dateStr}</td><td class="col-item">${description}</td><td class="col-qty">${hours}</td><td class="col-rate">${rate}</td><td class="col-amount">${amount}</td></tr>\n`;
         const bonus = parseFloat(e.bonus_amount) || 0;
         if (bonus > 0 && e.skus) {
             html += `<tr><td class="col-date"></td><td class="col-item">&nbsp;&nbsp;+ SKU bonus (${e.skus} SKUs)</td><td class="col-qty"></td><td class="col-rate"></td><td class="col-amount">${fmtInvoiceAmount(bonus)}</td></tr>\n`;
@@ -752,7 +754,7 @@ function buildInvoiceLineItemsHTML(inv) {
     const customLineItems = [...(inv.invoice_line_items || [])].sort((a, b) => a.sort_order - b.sort_order);
     for (const li of customLineItems) {
         const qtyStr = li.quantity != null ? `${li.quantity}×` : '';
-        html += `<tr><td class="col-date">—</td><td class="col-item">${li.description}</td><td class="col-qty">${qtyStr}</td><td class="col-rate"></td><td class="col-amount">${fmtInvoiceAmount(li.amount)}</td></tr>\n`;
+        html += `<tr class="inv-row" data-line-item-id="${li.id}"><td class="col-date">—</td><td class="col-item">${li.description}</td><td class="col-qty">${qtyStr}</td><td class="col-rate"></td><td class="col-amount">${fmtInvoiceAmount(li.amount)}</td></tr>\n`;
     }
     return html;
 }
@@ -807,6 +809,10 @@ function buildInvoiceHTML(inv) {
   .totals-row.grand-total { margin-top: 40px; }
   .label { text-align: left; }
   .value { text-align: right; width: 100px; }
+  .inv-row { cursor: pointer; transition: background 0.12s; }
+  .inv-row:hover { background: rgba(0,0,0,0.045); }
+  #addLineItemRow { display: inline-block; margin-top: 6px; font-size: 13px; color: #777; cursor: pointer; background: none; border: none; padding: 4px 0; font-family: inherit; letter-spacing: 0; }
+  #addLineItemRow:hover { color: #111; }
 </style>
 </head>
 <body>
@@ -842,12 +848,26 @@ function buildInvoiceHTML(inv) {
     </thead>
     <tbody>${lineItems}</tbody>
   </table>
+  <button id="addLineItemRow">+ Add line item</button>
   <div class="totals-section">
     <div class="totals-row"><span class="label">Subtotal</span><span class="value">${fmtInvoiceAmount(inv.subtotal)}</span></div>
     ${superRow}
     <div class="totals-row grand-total"><span class="label">Total</span><span class="value">${fmtInvoiceAmount(inv.total)}</span></div>
   </div>
 </div>
+<script>
+document.querySelectorAll('.inv-row').forEach(function(row) {
+    row.addEventListener('click', function() {
+        var msg = row.dataset.entryId
+            ? { type: 'editEntry', id: row.dataset.entryId }
+            : { type: 'editLineItem', id: row.dataset.lineItemId };
+        window.parent.postMessage(msg, '*');
+    });
+});
+document.getElementById('addLineItemRow').addEventListener('click', function() {
+    window.parent.postMessage({ type: 'addLineItem' }, '*');
+});
+</script>
 </body>
 </html>`;
 }
@@ -858,6 +878,7 @@ export function openInvoicePreviewById(id) {
 }
 
 function openInvoicePreview(inv) {
+    _previewInv = inv;
     const html = buildInvoiceHTML(inv);
     currentPreviewHTML = html;
     const frame     = document.getElementById('invoicePreviewFrame');
@@ -887,6 +908,10 @@ function openInvoicePreview(inv) {
     scaleWrap.style.marginBottom    = `${Math.max(0, docHeight * scale - docHeight)}px`;
     frame.srcdoc = html;
 
+    // Attach (or re-attach) the postMessage listener for row clicks in the iframe
+    window.removeEventListener('message', _handlePreviewMessage);
+    window.addEventListener('message', _handlePreviewMessage);
+
     // On mobile, make the pane visible in the flow before the slider moves to it
     if (!isDesktop) {
         document.getElementById('viewInvoicePreview').style.display = '';
@@ -895,6 +920,303 @@ function openInvoicePreview(inv) {
 }
 
 export function getPrintHTML() { return currentPreviewHTML; }
+
+// ─────────────────────────────────────────────
+// INVOICE PREVIEW — INLINE EDITING
+// ─────────────────────────────────────────────
+
+function _handlePreviewMessage(e) {
+    const frame = document.getElementById('invoicePreviewFrame');
+    if (!_previewInv || e.source !== frame?.contentWindow) return;
+    const { type, id } = e.data || {};
+    if (type === 'editEntry')    _openPreviewEntrySheet(id);
+    if (type === 'editLineItem') _openPreviewLineItemSheet(id);
+    if (type === 'addLineItem')  _openPreviewLineItemSheet(null);
+}
+
+// Generic slide-up sheet anchored to the bottom of #viewInvoicePreview
+function _openPreviewSheet(title, bodyHTML, onMount) {
+    document.getElementById('previewEditSheet')?.remove();
+    const pane = document.getElementById('viewInvoicePreview');
+    const sheet = document.createElement('div');
+    sheet.id = 'previewEditSheet';
+    sheet.style.cssText = 'position:absolute;bottom:0;left:0;right:0;z-index:20;background:#fff;border-radius:16px 16px 0 0;padding:0 0 env(safe-area-inset-bottom);box-shadow:0 -4px 24px rgba(0,0,0,0.13);transform:translateY(100%);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);';
+    sheet.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;">
+            <span style="font-size:15px;font-weight:700;color:#111;">${title}</span>
+            <button id="previewSheetClose" style="background:none;border:none;cursor:pointer;color:#6b7280;padding:4px;display:flex;align-items:center;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div style="padding:0 20px 24px;">${bodyHTML}</div>`;
+    pane.appendChild(sheet);
+    requestAnimationFrame(() => requestAnimationFrame(() => { sheet.style.transform = 'translateY(0)'; }));
+    const close = () => {
+        sheet.style.transform = 'translateY(100%)';
+        setTimeout(() => sheet.remove(), 280);
+    };
+    sheet.querySelector('#previewSheetClose').addEventListener('click', close);
+    onMount(sheet, close);
+}
+
+async function _refreshPreview() {
+    _previewInv.entries = null;
+    await _fetchFullInvoice(_previewInv);
+    const html = buildInvoiceHTML(_previewInv);
+    currentPreviewHTML = html;
+    document.getElementById('invoicePreviewFrame').srcdoc = html;
+    const panel = document.getElementById('detailPanel');
+    const body  = panel?.querySelector('#invoicePanelBody');
+    if (body && panel.dataset.invoiceId === _previewInv.id) {
+        _renderInvoicePanelBody(body, _previewInv);
+    }
+}
+
+// ── Entry edit sheet ──────────────────────────
+
+function _openPreviewEntrySheet(entryId) {
+    const entry = (_previewInv.entries || []).find(e => e.id === entryId);
+    if (!entry) return;
+    const client = _previewInv.clients || {};
+    const type = (entry.billing_type_snapshot || '').toLowerCase();
+
+    let bodyHTML;
+    if (type === 'day_rate' || (!type && entry.day_type)) {
+        const workflows = ['Apparel', 'Own Brand', 'Creative Assist', 'Content', 'Look Book'];
+        const wfOptions = workflows.map(w =>
+            `<option value="${w}"${entry.workflow_type === w ? ' selected' : ''}>${w}</option>`).join('');
+        bodyHTML = `
+            <div style="margin-bottom:12px;">
+                <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Day Type</label>
+                <div style="display:flex;gap:8px;margin-top:6px;">
+                    <button class="day-type-btn${entry.day_type === 'full' ? ' active' : ''}" data-val="full"
+                        style="flex:1;padding:9px;border-radius:8px;border:1.5px solid ${entry.day_type === 'full' ? '#111' : '#e5e7eb'};background:${entry.day_type === 'full' ? '#111' : '#fff'};color:${entry.day_type === 'full' ? '#fff' : '#374151'};font-size:14px;cursor:pointer;">Full day</button>
+                    <button class="day-type-btn${entry.day_type === 'half' ? ' active' : ''}" data-val="half"
+                        style="flex:1;padding:9px;border-radius:8px;border:1.5px solid ${entry.day_type === 'half' ? '#111' : '#e5e7eb'};background:${entry.day_type === 'half' ? '#111' : '#fff'};color:${entry.day_type === 'half' ? '#fff' : '#374151'};font-size:14px;cursor:pointer;">Half day</button>
+                </div>
+            </div>
+            <div id="wfRow" style="margin-bottom:12px;${entry.day_type !== 'full' ? 'display:none;' : ''}">
+                <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Workflow</label>
+                <select id="ps_workflow" style="width:100%;margin-top:6px;padding:9px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;outline:none;">${wfOptions}</select>
+            </div>
+            <div id="brandRow" style="margin-bottom:12px;${entry.workflow_type !== 'Own Brand' ? 'display:none;' : ''}">
+                <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Brand</label>
+                <input id="ps_brand" value="${entry.brand || ''}" style="width:100%;margin-top:6px;padding:9px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" placeholder="Brand name"/>
+            </div>
+            <div id="skuRow" style="margin-bottom:16px;${(!entry.workflow_type || entry.workflow_type === 'Own Brand') ? 'display:none;' : ''}">
+                <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">SKUs</label>
+                <input id="ps_skus" type="number" min="0" value="${entry.skus ?? ''}" style="width:100%;margin-top:6px;padding:9px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" placeholder="0"/>
+            </div>
+            <button id="ps_save" class="btn-primary" style="width:100%;">Save</button>`;
+    } else if (type === 'hourly' || (!type && entry.hours_worked != null)) {
+        const roleField = client.show_role ? `
+            <div style="margin-bottom:12px;">
+                <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Role</label>
+                <select id="ps_role" style="width:100%;margin-top:6px;padding:9px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;outline:none;">
+                    <option value="Photographer"${entry.role === 'Photographer' ? ' selected' : ''}>Photographer</option>
+                    <option value="Operator"${entry.role === 'Operator' ? ' selected' : ''}>Operator</option>
+                </select>
+            </div>` : '';
+        bodyHTML = `
+            <div style="margin-bottom:12px;">
+                <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Description</label>
+                <input id="ps_desc" value="${entry.shoot_client || entry.description || ''}" style="width:100%;margin-top:6px;padding:9px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;"/>
+            </div>
+            ${roleField}
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <div style="flex:1;">
+                    <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Start</label>
+                    <input id="ps_start" type="time" value="${entry.start_time || ''}" style="width:100%;margin-top:6px;padding:9px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;"/>
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Finish</label>
+                    <input id="ps_finish" type="time" value="${entry.finish_time || ''}" style="width:100%;margin-top:6px;padding:9px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;"/>
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Break (min)</label>
+                    <input id="ps_break" type="number" min="0" value="${entry.break_minutes || ''}" style="width:100%;margin-top:6px;padding:9px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" placeholder="0"/>
+                </div>
+            </div>
+            <button id="ps_save" class="btn-primary" style="width:100%;">Save</button>`;
+    } else {
+        bodyHTML = `
+            <div style="margin-bottom:12px;">
+                <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Description</label>
+                <input id="ps_desc" value="${entry.description || ''}" style="width:100%;margin-top:6px;padding:9px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;"/>
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Amount ($)</label>
+                <input id="ps_amount" type="number" min="0" step="0.01" value="${entry.base_amount ?? ''}" style="width:100%;margin-top:6px;padding:9px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;"/>
+            </div>
+            <button id="ps_save" class="btn-primary" style="width:100%;">Save</button>`;
+    }
+
+    const dateLabel = entry.date ? new Date(entry.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) : '';
+    _openPreviewSheet(dateLabel, bodyHTML, (sheet, close) => {
+        // Day type toggle wiring
+        sheet.querySelectorAll('.day-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                sheet.querySelectorAll('.day-type-btn').forEach(b => {
+                    const active = b === btn;
+                    b.classList.toggle('active', active);
+                    b.style.background = active ? '#111' : '#fff';
+                    b.style.color = active ? '#fff' : '#374151';
+                    b.style.borderColor = active ? '#111' : '#e5e7eb';
+                });
+                const isHalf = btn.dataset.val === 'half';
+                sheet.querySelector('#wfRow')?.style && (sheet.querySelector('#wfRow').style.display = isHalf ? 'none' : '');
+                sheet.querySelector('#brandRow')?.style && (sheet.querySelector('#brandRow').style.display = 'none');
+                sheet.querySelector('#skuRow')?.style && (sheet.querySelector('#skuRow').style.display = 'none');
+            });
+        });
+        // Workflow change wiring
+        sheet.querySelector('#ps_workflow')?.addEventListener('change', e => {
+            const wf = e.target.value;
+            if (sheet.querySelector('#brandRow')) sheet.querySelector('#brandRow').style.display = wf === 'Own Brand' ? '' : 'none';
+            if (sheet.querySelector('#skuRow')) sheet.querySelector('#skuRow').style.display = (wf && wf !== 'Own Brand') ? '' : 'none';
+        });
+        sheet.querySelector('#ps_save').addEventListener('click', async () => {
+            const btn = sheet.querySelector('#ps_save');
+            btn.disabled = true; btn.textContent = 'Saving…';
+            try {
+                await _savePreviewEntry(entry, sheet, client);
+                close();
+                await _refreshPreview();
+            } catch (err) {
+                alert('Error: ' + err.message);
+                btn.disabled = false; btn.textContent = 'Save';
+            }
+        });
+    });
+}
+
+async function _savePreviewEntry(entry, sheet, client) {
+    const type = (entry.billing_type_snapshot || '').toLowerCase();
+    const { workflowRates } = getState();
+    let payload;
+
+    if (type === 'day_rate' || (!type && entry.day_type)) {
+        const dayType = sheet.querySelector('.day-type-btn.active')?.dataset.val || entry.day_type;
+        const workflow = sheet.querySelector('#ps_workflow')?.value || entry.workflow_type || 'Apparel';
+        const brand    = sheet.querySelector('#ps_brand')?.value.trim() || null;
+        const skus     = parseInt(sheet.querySelector('#ps_skus')?.value) || null;
+        const result   = calcDayRate(client, dayType, dayType === 'full' ? workflow : null, skus, workflowRates);
+        payload = {
+            day_type: dayType,
+            workflow_type: dayType === 'full' ? workflow : null,
+            brand:    dayType === 'full' && workflow === 'Own Brand' ? brand : null,
+            skus:     dayType === 'full' && workflow !== 'Own Brand' ? skus : null,
+            base_amount: result.base, bonus_amount: result.bonus,
+            super_amount: result.superAmt, total_amount: result.total,
+        };
+    } else if (type === 'hourly' || (!type && entry.hours_worked != null)) {
+        const desc   = sheet.querySelector('#ps_desc')?.value.trim() || null;
+        const role   = sheet.querySelector('#ps_role')?.value || entry.role || null;
+        const start  = sheet.querySelector('#ps_start')?.value || entry.start_time;
+        const finish = sheet.querySelector('#ps_finish')?.value || entry.finish_time;
+        const brk    = parseInt(sheet.querySelector('#ps_break')?.value) || 0;
+        const result = calcHourly(client, start, finish, brk, role);
+        if (!result) throw new Error('Invalid times');
+        payload = {
+            description: desc, shoot_client: null, role,
+            start_time: start, finish_time: finish, break_minutes: brk,
+            hours_worked: result.hoursWorked,
+            base_amount: result.base, bonus_amount: 0,
+            super_amount: result.superAmt, total_amount: result.total,
+        };
+    } else {
+        const desc   = sheet.querySelector('#ps_desc')?.value.trim() || null;
+        const amount = parseFloat(sheet.querySelector('#ps_amount')?.value) || 0;
+        const result = calcManual(amount, client);
+        payload = {
+            description: desc,
+            base_amount: result.base, bonus_amount: 0,
+            super_amount: result.superAmt, total_amount: result.total,
+        };
+    }
+
+    const { error } = await sb.from('entries').update(payload).eq('id', entry.id);
+    if (error) throw error;
+    await _recalcAndSaveInvoiceTotals(_previewInv);
+}
+
+// ── Line item add/edit sheet ──────────────────
+
+function _openPreviewLineItemSheet(lineItemId) {
+    const existing = lineItemId ? (_previewInv.invoice_line_items || []).find(li => li.id === lineItemId) : null;
+    const title    = existing ? 'Edit line item' : 'Add line item';
+    const bodyHTML = `
+        <div style="margin-bottom:12px;">
+            <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Description</label>
+            <input id="ps_li_desc" value="${existing?.description || ''}" placeholder="e.g. Hire: Ronin R5"
+                style="width:100%;margin-top:6px;padding:9px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;"/>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <div style="flex:1;">
+                <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Qty (optional)</label>
+                <input id="ps_li_qty" type="number" min="0" step="any" value="${existing?.quantity ?? ''}"
+                    style="width:100%;margin-top:6px;padding:9px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;"/>
+            </div>
+            <div style="flex:1;">
+                <label style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">Amount ($)</label>
+                <input id="ps_li_amount" type="number" min="0" step="0.01" value="${existing?.amount ?? ''}"
+                    style="width:100%;margin-top:6px;padding:9px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;" placeholder="0.00"/>
+            </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+            <button id="ps_li_save" class="btn-primary" style="flex:1;">Save</button>
+            ${existing ? '<button id="ps_li_delete" class="btn-ghost" style="flex:1;color:#ef4444;">Delete</button>' : ''}
+        </div>`;
+
+    _openPreviewSheet(title, bodyHTML, (sheet, close) => {
+        sheet.querySelector('#ps_li_desc').focus();
+        sheet.querySelector('#ps_li_save').addEventListener('click', async () => {
+            const btn    = sheet.querySelector('#ps_li_save');
+            const desc   = sheet.querySelector('#ps_li_desc').value.trim();
+            const qty    = sheet.querySelector('#ps_li_qty').value;
+            const amount = parseFloat(sheet.querySelector('#ps_li_amount').value);
+            if (!desc)              { sheet.querySelector('#ps_li_desc').focus();   return; }
+            if (isNaN(amount) || amount <= 0) { sheet.querySelector('#ps_li_amount').focus(); return; }
+            btn.disabled = true; btn.textContent = 'Saving…';
+            try {
+                if (existing) {
+                    const { error } = await sb.from('invoice_line_items').update({
+                        description: desc,
+                        quantity: qty !== '' ? parseFloat(qty) : null,
+                        amount,
+                    }).eq('id', lineItemId);
+                    if (error) throw error;
+                } else {
+                    const { data: { user } } = await sb.auth.getUser();
+                    const { error } = await sb.from('invoice_line_items').insert({
+                        invoice_id: _previewInv.id, user_id: user.id,
+                        description: desc,
+                        quantity: qty !== '' ? parseFloat(qty) : null,
+                        amount,
+                        sort_order: _previewInv.invoice_line_items?.length ?? 0,
+                    });
+                    if (error) throw error;
+                }
+                await _recalcAndSaveInvoiceTotals(_previewInv);
+                close();
+                await _refreshPreview();
+            } catch (err) {
+                alert('Error: ' + err.message);
+                btn.disabled = false; btn.textContent = 'Save';
+            }
+        });
+        sheet.querySelector('#ps_li_delete')?.addEventListener('click', async () => {
+            if (!confirm('Delete this line item?')) return;
+            try {
+                await _deleteLineItem(_previewInv, lineItemId, null);
+                close();
+                await _refreshPreview();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+    });
+}
 
 // ─────────────────────────────────────────────
 // EMAIL INVOICE
