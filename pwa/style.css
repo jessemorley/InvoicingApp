@@ -827,8 +827,11 @@
             max-height: 1400px;
         }
         .invoice-detail-inner {
-            padding: 0 1rem 1rem;
+            padding: 14px 1rem 1rem;
             border-top: 1px solid #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         .li-delete-btn:hover svg {
