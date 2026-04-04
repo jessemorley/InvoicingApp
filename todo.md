@@ -31,21 +31,15 @@
 - [ ] Add line items to invoice (e.g. gear hire)
 
 ## PWA
-- [ ] Add link to invoice from entries detail view
-- [ ] Allow entries from previously-invoiced invoices, once...
 - [ ] Add search
-- [ ] Filter invoices by status
-- [ ] Record issues and paid dates in database
 - [ ] Print to initiate PDF download instead of html page to print
 - [ ] Invoice preview to be scollable/resize on desktop
-- [ ] Bug: after generating an invoice 
 
-- move account to settings
-- Move settings to hamburger menu
-- Email pending/sent chip size doesn’t match
 - How are client colours set?
 - Feature: Expenses logging
 - Emails: log page?
+- Clients view animation to match entries and invoices
+
 
 
 ## App Name Ideas
