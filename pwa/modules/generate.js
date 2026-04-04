@@ -22,7 +22,6 @@ let barExpanded      = false;
 
 export async function scanAndRender() {
     const bar = document.getElementById('generateBar');
-    if (!bar) return;
 
     const { data: entries, error } = await sb
         .from('entries')
@@ -31,8 +30,9 @@ export async function scanAndRender() {
         .order('date', { ascending: false });
 
     if (error || !entries?.length) {
-        bar.style.display = 'none';
+        if (bar) bar.style.display = 'none';
         uninvoicedGroups = [];
+        _updatePill();
         return;
     }
 
@@ -55,14 +55,97 @@ export async function scanAndRender() {
         return ad < bd ? -1 : 1;
     });
 
+    _updatePill();
+
     if (!uninvoicedGroups.length) {
-        bar.style.display = 'none';
+        if (bar) bar.style.display = 'none';
         return;
     }
 
-    bar.style.display = '';
-    barExpanded = false;
-    _renderBar();
+    if (bar) {
+        bar.style.display = '';
+        barExpanded = false;
+        _renderBar();
+    }
+}
+
+export function getUninvoicedTotal() {
+    return uninvoicedGroups.reduce((s, g) =>
+        s + g.entries.reduce((es, e) => es + (e.total_amount || 0), 0), 0);
+}
+
+export function getUninvoicedCount() {
+    return uninvoicedGroups.length;
+}
+
+// Render the generate UI into an arbitrary container (used by the Invoices sheet)
+export function renderIntoContainer(container, onDone) {
+    if (!uninvoicedGroups.length) {
+        container.innerHTML = `<p style="text-align:center;color:#9ca3af;font-size:14px;padding:24px 0;">No uninvoiced entries.</p>`;
+        return;
+    }
+
+    let groupRows = '';
+    uninvoicedGroups.forEach((group, idx) => {
+        const weekStart = isoWeekStart(group.entries[0].date);
+        const weekEnd   = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        const opts      = { day: 'numeric', month: 'short' };
+        const dateRange = `${weekStart.toLocaleDateString('en-AU', opts)} – ${weekEnd.toLocaleDateString('en-AU', opts)}`;
+        const subtotal  = group.entries.reduce((s, e) => s + (e.base_amount || 0) + (e.bonus_amount || 0), 0);
+        groupRows += `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6;">
+            <label class="toggle-wrap" style="flex-shrink:0;">
+                <input type="checkbox" class="gen-sheet-check" data-idx="${idx}" ${group.selected ? 'checked' : ''}>
+                <div class="toggle-track"><div class="toggle-thumb"></div></div>
+            </label>
+            <div style="flex:1;min-width:0;">
+                <p style="font-size:14px;font-weight:700;color:#111827;margin:0;">${group.client.name}</p>
+                <p style="font-size:12px;color:#9ca3af;margin:0;">${dateRange} · ${group.entries.length} ${group.entries.length === 1 ? 'entry' : 'entries'}</p>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:#111827;flex-shrink:0;">${fmt(subtotal)}</span>
+        </div>`;
+    });
+
+    const selected = uninvoicedGroups.filter(g => g.selected).length;
+    container.innerHTML = `
+        <div style="padding:0 20px;">
+            ${groupRows}
+        </div>
+        <div style="padding:16px 20px 0;">
+            <button id="genSheetBtn" class="btn-primary" ${selected === 0 ? 'disabled' : ''}>
+                Generate ${selected} Invoice${selected !== 1 ? 's' : ''}
+            </button>
+        </div>`;
+
+    container.querySelectorAll('.gen-sheet-check').forEach(cb => {
+        cb.addEventListener('change', e => {
+            uninvoicedGroups[parseInt(e.target.dataset.idx)].selected = e.target.checked;
+            _updateSheetBtn(container);
+        });
+    });
+
+    document.getElementById('genSheetBtn').addEventListener('click', () => _generateFromSheet(container, onDone));
+}
+
+function _updateSheetBtn(container) {
+    const btn = container.querySelector('#genSheetBtn');
+    if (!btn) return;
+    const selected = uninvoicedGroups.filter(g => g.selected).length;
+    btn.disabled = selected === 0;
+    btn.textContent = `Generate ${selected} Invoice${selected !== 1 ? 's' : ''}`;
+}
+
+function _updatePill() {
+    const pill = document.getElementById('entriesUninvoicedPill');
+    if (!pill) return;
+    const total = getUninvoicedTotal();
+    if (uninvoicedGroups.length && total > 0) {
+        pill.textContent = `${fmt(total)} uninvoiced`;
+        pill.style.display = 'inline-block';
+    } else {
+        pill.style.display = 'none';
+    }
 }
 
 // ─────────────────────────────────────────────
@@ -170,25 +253,36 @@ function _updateGenerateBtn() {
 
 async function _generate() {
     const btn = document.getElementById('generateInvoicesBtn');
-    btn.disabled = true;
-    btn.textContent = 'Generating…';
+    await _runGeneration(btn, () => {
+        barExpanded = false;
+        const bar = document.getElementById('generateBar');
+        if (bar) bar.style.display = 'none';
+    });
+}
+
+async function _generateFromSheet(container, onDone) {
+    const btn = container.querySelector('#genSheetBtn');
+    await _runGeneration(btn, onDone);
+}
+
+async function _runGeneration(btn, onSuccess) {
+    if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
 
     const { invoiceSequence, businessDetails, currentUserId } = getState();
     const selectedGroups = uninvoicedGroups.filter(g => g.selected);
+    const invoicePrefix  = invoiceSequence?.invoice_prefix || businessDetails?.invoice_prefix || 'INV';
+    const dueDays        = businessDetails?.due_date_offset_days || 14;
 
     try {
         for (const group of selectedGroups) {
-            // Call RPC to get next invoice number
             const { data: nextNum, error: rpcErr } = await sb.rpc('next_invoice_number');
             if (rpcErr) throw rpcErr;
 
-            const invoicePrefix = invoiceSequence?.invoice_prefix || businessDetails?.invoice_prefix || 'INV';
-            const dueDays       = businessDetails?.due_date_offset_days || 14;
             const now     = new Date();
             const dueDate = new Date(now);
             dueDate.setDate(dueDate.getDate() + dueDays);
 
-            const invoice = {
+            const { data: inv, error: invErr } = await sb.from('invoices').insert({
                 user_id:       currentUserId,
                 invoice_number:`${invoicePrefix}${nextNum}`,
                 client_id:     group.client.id,
@@ -198,12 +292,9 @@ async function _generate() {
                 super_amount:  group.entries.reduce((s, e) => s + (e.super_amount || 0), 0),
                 total:         group.entries.reduce((s, e) => s + (e.total_amount || 0), 0),
                 status:        'draft',
-            };
-
-            const { data: inv, error: invErr } = await sb.from('invoices').insert(invoice).select().single();
+            }).select().single();
             if (invErr) throw invErr;
 
-            // Link entries to invoice
             const { error: updateErr } = await sb
                 .from('entries')
                 .update({ invoice_id: inv.id })
@@ -211,21 +302,13 @@ async function _generate() {
             if (updateErr) throw updateErr;
         }
 
-        btn.textContent = `Generated ✓`;
-        btn.classList.add('success');
-
-        // Notify app to reload data
+        if (btn) { btn.textContent = 'Generated ✓'; btn.classList.add('success'); }
         document.dispatchEvent(new CustomEvent('generate:done'));
-
-        setTimeout(() => {
-            barExpanded = false;
-            document.getElementById('generateBar').style.display = 'none';
-        }, 2000);
+        setTimeout(() => { if (onSuccess) onSuccess(); }, 1500);
 
     } catch (err) {
         alert('Error generating invoices: ' + err.message);
-        btn.disabled = false;
-        btn.textContent = 'Try Again';
+        if (btn) { btn.disabled = false; btn.textContent = 'Try Again'; }
     }
 }
 

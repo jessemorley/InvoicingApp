@@ -6,8 +6,9 @@ import {
     fmt, fmtInvoiceAmount, fmtInvoiceRate, fmtInvoiceTime,
     abbreviateRole, formatEntryDate, formatInvoiceDate, formatInvoiceEntryDate,
     clientBadgeColor, invoiceChipColors, entryDescription,
-    calcDayRate, calcHourly, calcManual,
+    calcDayRate, calcHourly, calcManual, localDateStr,
 } from './utils.js';
+import * as Generate from './generate.js';
 
 let sb, getState;
 
@@ -877,49 +878,62 @@ export function openInvoicePreviewById(id) {
     if (inv) openInvoicePreview(inv);
 }
 
+const _DOC_WIDTH = 794, _DOC_HEIGHT = 1123;
+let _previewResizeObserver = null;
+
+function _applyPreviewScale() {
+    const scaleWrap = document.getElementById('invoicePreviewScaleWrap');
+    if (!scaleWrap) return;
+    const isDesktop = window.innerWidth >= 768;
+    const availableWidth = isDesktop
+        ? document.getElementById('mainContent').offsetWidth
+        : window.innerWidth;
+    const scale = isDesktop
+        ? Math.min(availableWidth, 800) / _DOC_WIDTH
+        : availableWidth / _DOC_WIDTH;
+    scaleWrap.style.transform    = `scale(${scale})`;
+    scaleWrap.style.marginBottom = `${Math.max(0, _DOC_HEIGHT * scale - _DOC_HEIGHT)}px`;
+}
+
 function openInvoicePreview(inv) {
     _previewInv = inv;
     const html = buildInvoiceHTML(inv);
     currentPreviewHTML = html;
     const frame     = document.getElementById('invoicePreviewFrame');
     const scaleWrap = document.getElementById('invoicePreviewScaleWrap');
-    const isDesktop = window.innerWidth >= 768;
 
-    const docWidth  = 794, docHeight = 1123;
-
-    let availableWidth;
-    if (isDesktop) {
-        const mainContent = document.getElementById('mainContent');
-        const detailOpen  = document.getElementById('detailPanel').classList.contains('open');
-        availableWidth = mainContent.offsetWidth - (detailOpen ? 380 : 0);
-    } else {
-        availableWidth = window.innerWidth;
-    }
-
-    const scale = isDesktop
-        ? Math.min(availableWidth, 800) / docWidth
-        : availableWidth / docWidth;
-
-    frame.style.width  = docWidth + 'px';
-    frame.style.height = docHeight + 'px';
-    scaleWrap.style.width           = docWidth + 'px';
+    frame.style.width           = _DOC_WIDTH + 'px';
+    frame.style.height          = _DOC_HEIGHT + 'px';
+    scaleWrap.style.width       = _DOC_WIDTH + 'px';
     scaleWrap.style.transformOrigin = 'top center';
-    scaleWrap.style.transform       = `scale(${scale})`;
-    scaleWrap.style.marginBottom    = `${Math.max(0, docHeight * scale - docHeight)}px`;
+    _applyPreviewScale();
     frame.srcdoc = html;
+
+    // Recompute scale whenever mainContent changes width (detail panel open/close)
+    if (_previewResizeObserver) _previewResizeObserver.disconnect();
+    const mainContent = document.getElementById('mainContent');
+    _previewResizeObserver = new ResizeObserver(_applyPreviewScale);
+    _previewResizeObserver.observe(mainContent);
 
     // Attach (or re-attach) the postMessage listener for row clicks in the iframe
     window.removeEventListener('message', _handlePreviewMessage);
     window.addEventListener('message', _handlePreviewMessage);
 
     // On mobile, make the pane visible in the flow before the slider moves to it
-    if (!isDesktop) {
+    if (window.innerWidth < 768) {
         document.getElementById('viewInvoicePreview').style.display = '';
     }
     window.switchView(6);
 }
 
 export function getPrintHTML() { return currentPreviewHTML; }
+
+export function cleanupPreview() {
+    if (_previewResizeObserver) {
+        _previewResizeObserver.disconnect();
+        _previewResizeObserver = null;
+    }
+}
 
 // ─────────────────────────────────────────────
 // INVOICE PREVIEW — INLINE EDITING
@@ -1749,4 +1763,162 @@ export function initScrollHandlers() {
     btn.addEventListener('click', toggleInvoiceSort);
     btn.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
     btn.addEventListener('touchend',   e => e.stopPropagation(), { passive: true });
+
+    // New invoice "+" button
+    document.getElementById('invoiceNewBtn').addEventListener('click', _openNewInvoiceSheet);
+}
+
+// ─────────────────────────────────────────────
+// NEW INVOICE SHEET
+// ─────────────────────────────────────────────
+
+function _openNewInvoiceSheet() {
+    // Remove any existing sheet
+    document.getElementById('invoiceNewSheet')?.remove();
+    document.getElementById('invoiceNewBackdrop')?.remove();
+
+    const uninvoicedCount = Generate.getUninvoicedCount();
+
+    const backdrop = document.createElement('div');
+    backdrop.id = 'invoiceNewBackdrop';
+    backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:150;opacity:0;transition:opacity 0.25s;';
+    backdrop.addEventListener('click', _closeNewInvoiceSheet);
+
+    const sheet = document.createElement('div');
+    sheet.id = 'invoiceNewSheet';
+    sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:151;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);padding-bottom:env(safe-area-inset-bottom);max-height:85dvh;overflow-y:auto;';
+
+    sheet.innerHTML = `
+        <div style="width:36px;height:4px;background:#d1d5db;border-radius:2px;margin:12px auto 0;"></div>
+        <div style="padding:16px 20px 4px;display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:17px;font-weight:700;color:#111827;">New Invoice</span>
+            <button id="invoiceNewSheetClose" style="background:none;border:none;cursor:pointer;color:#9ca3af;padding:4px;display:flex;align-items:center;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div style="padding:8px 20px 12px;border-bottom:1px solid #f3f4f6;">
+            <div style="display:flex;gap:8px;">
+                <button id="invoiceSheetTabGenerate" class="invoice-sheet-tab active" data-tab="generate">
+                    From entries${uninvoicedCount > 0 ? ` <span style="background:rgba(245,158,11,0.15);color:#f59e0b;border-radius:6px;padding:1px 6px;font-size:11px;">${uninvoicedCount}</span>` : ''}
+                </button>
+                <button id="invoiceSheetTabBlank" class="invoice-sheet-tab" data-tab="blank">
+                    Blank invoice
+                </button>
+            </div>
+        </div>
+        <div id="invoiceSheetBody" style="padding:16px 0 8px;"></div>`;
+
+    document.body.appendChild(backdrop);
+    document.body.appendChild(sheet);
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        backdrop.style.opacity = '1';
+        sheet.style.transform  = 'translateY(0)';
+    }));
+
+    const body = sheet.querySelector('#invoiceSheetBody');
+    Generate.renderIntoContainer(body, _closeNewInvoiceSheet);
+
+    sheet.querySelector('#invoiceNewSheetClose').addEventListener('click', _closeNewInvoiceSheet);
+
+    // Tab switching
+    sheet.querySelectorAll('.invoice-sheet-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            sheet.querySelectorAll('.invoice-sheet-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            if (tab.dataset.tab === 'generate') {
+                Generate.renderIntoContainer(body, _closeNewInvoiceSheet);
+            } else {
+                _renderBlankInvoiceForm(body);
+            }
+        });
+    });
+
+    // Drag to dismiss
+    let startY = 0;
+    sheet.addEventListener('touchstart', e => { startY = e.touches[0].clientY; sheet.style.transition = 'none'; }, { passive: true });
+    sheet.addEventListener('touchmove',  e => {
+        const dy = e.touches[0].clientY - startY;
+        if (dy > 0) sheet.style.transform = `translateY(${dy}px)`;
+    }, { passive: true });
+    sheet.addEventListener('touchend', e => {
+        sheet.style.transition = '';
+        if (e.changedTouches[0].clientY - startY > 60) _closeNewInvoiceSheet();
+        else sheet.style.transform = 'translateY(0)';
+    });
+}
+
+function _closeNewInvoiceSheet() {
+    const sheet   = document.getElementById('invoiceNewSheet');
+    const backdrop = document.getElementById('invoiceNewBackdrop');
+    if (!sheet) return;
+    sheet.style.transform  = 'translateY(100%)';
+    backdrop.style.opacity = '0';
+    setTimeout(() => { sheet.remove(); backdrop.remove(); }, 300);
+}
+
+function _renderBlankInvoiceForm(container) {
+    const { allClients } = getState();
+    const options = allClients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+    container.innerHTML = `
+        <div style="padding:0 20px 16px;display:flex;flex-direction:column;gap:12px;">
+            <div style="background:#f9fafb;border-radius:14px;padding:14px 16px;">
+                <div style="font-size:11px;font-weight:700;color:#60a5fa;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Client</div>
+                <select id="blankInvClient" style="width:100%;background:transparent;border:none;outline:none;font-size:15px;font-weight:600;color:#111827;font-family:inherit;cursor:pointer;">
+                    <option value="">Select client…</option>
+                    ${options}
+                </select>
+            </div>
+            <button id="blankInvCreate" class="btn-primary" disabled>Create Draft Invoice</button>
+        </div>`;
+
+    const select = container.querySelector('#blankInvClient');
+    const createBtn = container.querySelector('#blankInvCreate');
+    select.addEventListener('change', () => {
+        createBtn.disabled = !select.value;
+    });
+    createBtn.addEventListener('click', () => _createBlankInvoice(select.value, container));
+}
+
+async function _createBlankInvoice(clientId, container) {
+    const createBtn = container.querySelector('#blankInvCreate');
+    createBtn.disabled = true;
+    createBtn.textContent = 'Creating…';
+
+    const { invoiceSequence, businessDetails, currentUserId } = getState();
+    try {
+        const { data: nextNum, error: rpcErr } = await sb.rpc('next_invoice_number');
+        if (rpcErr) throw rpcErr;
+
+        const invoicePrefix = invoiceSequence?.invoice_prefix || businessDetails?.invoice_prefix || 'INV';
+        const dueDays = businessDetails?.due_date_offset_days || 14;
+        const now     = new Date();
+        const dueDate = new Date(now);
+        dueDate.setDate(dueDate.getDate() + dueDays);
+
+        const { data: inv, error: invErr } = await sb.from('invoices').insert({
+            user_id:       currentUserId,
+            invoice_number:`${invoicePrefix}${nextNum}`,
+            client_id:     clientId,
+            issued_date:   localDateStr(now),
+            due_date:      localDateStr(dueDate),
+            subtotal:      0,
+            super_amount:  0,
+            total:         0,
+            status:        'draft',
+        }).select().single();
+        if (invErr) throw invErr;
+
+        _closeNewInvoiceSheet();
+        markStale();
+        await loadInvoices();
+        // Open the new invoice immediately
+        openInvoiceById(inv.id);
+
+    } catch (err) {
+        alert('Error creating invoice: ' + err.message);
+        createBtn.disabled = false;
+        createBtn.textContent = 'Create Draft Invoice';
+    }
 }

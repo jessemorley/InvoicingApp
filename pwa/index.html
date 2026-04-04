@@ -307,7 +307,10 @@
                         <div class="px-5 view-content">
                             <div id="newEntrySlot"></div>
                             <div class="page-header">
-                                <h1>Entries</h1>
+                                <div style="display:flex;align-items:baseline;gap:10px;min-width:0;">
+                                    <h1>Entries</h1>
+                                    <span id="entriesUninvoicedPill" style="display:none;font-size:12px;font-weight:700;color:#f59e0b;background:rgba(245,158,11,0.1);padding:3px 8px;border-radius:8px;white-space:nowrap;flex-shrink:0;"></span>
+                                </div>
                                 <div id="entriesToggleBtn" style="position:relative; display:flex; align-items:center; gap:6px; padding:6px 10px; border-radius:6px; border:1px solid #e5e7eb; font-size:12px; font-weight:600; color:#374151; cursor:pointer; transition:background 0.15s; user-select:none;">
                                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M7 12h10M11 18h2"/>
@@ -343,9 +346,13 @@
                     <div class="px-5 view-content">
                         <div class="page-header">
                             <h1>Invoices</h1>
-                            <button id="invoiceSortBtn" class="invoice-sort-btn" aria-label="Toggle invoice grouping"></button>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <button id="invoiceNewBtn" class="invoice-sort-btn" aria-label="New invoice">
+                                    <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                                </button>
+                                <button id="invoiceSortBtn" class="invoice-sort-btn" aria-label="Toggle invoice grouping"></button>
+                            </div>
                         </div>
-                        <div id="generateBar" class="mb-3" style="display:none;"></div>
                         <div id="invoicesPullIndicator" class="pull-indicator"><div class="spinner" id="invoicesPullSpinner"></div></div>
                         <div id="invoicesList" class="pb-36">
                             <p class="text-gray-400 text-sm py-8 text-center">Loading invoices...</p>

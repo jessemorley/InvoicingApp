@@ -457,6 +457,7 @@ document.getElementById('invoicePreviewBack').addEventListener('click', () => {
     const frame        = document.getElementById('invoicePreviewFrame');
 
     const cleanup = () => {
+        Invoices.cleanupPreview();
         scrollArea.scrollTop = 0;
         frame.srcdoc = '';
         document.getElementById('invoicePreviewScaleWrap').style.marginBottom = '';

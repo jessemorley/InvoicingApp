@@ -801,6 +801,29 @@
             background: rgba(0,0,0,0.14);
         }
 
+        /* Invoice new-sheet tabs */
+        .invoice-sheet-tab {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .invoice-sheet-tab.active {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
         /* Invoice sort toggle */
         .invoice-sort-btn {
             width: 36px;
