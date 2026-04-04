@@ -404,11 +404,16 @@ window.navigateToInvoice = (id) => {
 // INVOICE PREVIEW BACK / PRINT
 // ─────────────────────────────────────────────
 document.getElementById('invoicePreviewBack').addEventListener('click', () => {
-    const overlay = document.getElementById('invoicePreviewOverlay');
-    const slider  = document.getElementById('viewSlider');
-    overlay.style.transform = 'translateX(100%)';
-    slider.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
-    slider.style.transform  = 'translateX(-100vw)';
+    const overlay    = document.getElementById('invoicePreviewOverlay');
+    const isDesktop  = window.innerWidth >= 768;
+    if (isDesktop) {
+        overlay.style.transform = 'translateY(100%)';
+    } else {
+        const slider = document.getElementById('viewSlider');
+        overlay.style.transform = 'translateX(100%)';
+        slider.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+        slider.style.transform  = 'translateX(-100vw)';
+    }
     setTimeout(() => {
         overlay.style.display = 'none';
         document.getElementById('invoicePreviewFrame').srcdoc = '';

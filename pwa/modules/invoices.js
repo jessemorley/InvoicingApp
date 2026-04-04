@@ -556,7 +556,7 @@ function _renderInvoicePanelBody(container, inv) {
                 </button>
                 <button id="emailBtn_${inv.id}" class="btn-primary" style="flex:1;">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    Send
+                    Compose
                 </button>
             </div>
         </div>`;
@@ -864,30 +864,62 @@ function openInvoicePreview(inv) {
     const frame     = document.getElementById('invoicePreviewFrame');
     const scaleWrap = document.getElementById('invoicePreviewScaleWrap');
     const slider    = document.getElementById('viewSlider');
+    const isDesktop = window.innerWidth >= 768;
 
     const docWidth  = 794, docHeight = 1123;
-    const scale     = window.innerWidth / docWidth;
-    const scaledH   = docHeight * scale;
-    const topOffset = Math.max(0, (window.innerHeight - scaledH) / 2);
 
-    frame.style.width  = docWidth + 'px';
-    frame.style.height = docHeight + 'px';
-    scaleWrap.style.width     = docWidth + 'px';
-    scaleWrap.style.top       = topOffset + 'px';
-    scaleWrap.style.transform = `scale(${scale})`;
-    frame.srcdoc = html;
+    if (isDesktop) {
+        const mainContent   = document.getElementById('mainContent');
+        const detailOpen    = document.getElementById('detailPanel').classList.contains('open');
+        const detailWidth   = detailOpen ? 380 : 0;
+        const contentWidth  = mainContent.offsetWidth - detailWidth;
+        const scale         = contentWidth / docWidth;
+        const scaledH       = docHeight * scale;
+        const topOffset     = Math.max(0, (mainContent.offsetHeight - scaledH) / 2);
 
-    slider.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
-    slider.style.transform  = 'translateX(-200vw)';
-    overlay.style.transition = 'none';
-    overlay.style.transform  = 'translateX(100%)';
-    overlay.style.display    = 'block';
-    requestAnimationFrame(() => {
+        overlay.style.position = 'absolute';
+        overlay.style.right    = detailWidth + 'px';
+        frame.style.width  = docWidth + 'px';
+        frame.style.height = docHeight + 'px';
+        scaleWrap.style.width     = docWidth + 'px';
+        scaleWrap.style.top       = topOffset + 'px';
+        scaleWrap.style.transform = `scale(${scale})`;
+        frame.srcdoc = html;
+
+        overlay.style.transition = 'none';
+        overlay.style.transform  = 'translateY(100%)';
+        overlay.style.display    = 'block';
         requestAnimationFrame(() => {
-            overlay.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
-            overlay.style.transform  = 'translateX(0)';
+            requestAnimationFrame(() => {
+                overlay.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+                overlay.style.transform  = 'translateY(0)';
+            });
         });
-    });
+    } else {
+        const scale     = window.innerWidth / docWidth;
+        const scaledH   = docHeight * scale;
+        const topOffset = Math.max(0, (window.innerHeight - scaledH) / 2);
+
+        overlay.style.position = 'fixed';
+        frame.style.width  = docWidth + 'px';
+        frame.style.height = docHeight + 'px';
+        scaleWrap.style.width     = docWidth + 'px';
+        scaleWrap.style.top       = topOffset + 'px';
+        scaleWrap.style.transform = `scale(${scale})`;
+        frame.srcdoc = html;
+
+        slider.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+        slider.style.transform  = 'translateX(-200vw)';
+        overlay.style.transition = 'none';
+        overlay.style.transform  = 'translateX(100%)';
+        overlay.style.display    = 'block';
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                overlay.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+                overlay.style.transform  = 'translateX(0)';
+            });
+        });
+    }
 }
 
 export function getPrintHTML() { return currentPreviewHTML; }
