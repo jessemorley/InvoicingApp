@@ -1248,6 +1248,8 @@ function openEmailComposeSheet(inv, prefill = null) {
     const defaultSubject = prefill?.subject  || `Invoice ${inv.invoice_number}`;
     const defaultBody    = prefill?.body     || `Hi ${client.contact_name || client.name || ''},\n\nPlease find Invoice ${inv.invoice_number} attached.\n\nKind regards,\n${biz.name || biz.business_name || ''}`.trim();
 
+    const replacingScheduleId = prefill?.replacingScheduleId || null;
+
     const isCurrentlyDraft = inv.status === 'draft';
 
     const sheet = document.createElement('div');
@@ -1384,6 +1386,20 @@ function openEmailComposeSheet(inv, prefill = null) {
         setScheduledDate(val ? new Date(val) : null);
     });
 
+    // Prefill the scheduled date when editing an existing scheduled send.
+    // The Send button label updates to e.g. "Send 13 Apr, 1:00 PM".
+    if (prefill?.scheduledFor) {
+        setScheduledDate(new Date(prefill.scheduledFor));
+    }
+
+    // Auto-open the schedule dropdown when invoked from "Reschedule"
+    if (prefill?.openScheduleDropdown) {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            dropdown.style.display = 'block';
+            setTimeout(() => document.addEventListener('click', () => { dropdown.style.display = 'none'; }, { once: true }), 0);
+        }));
+    }
+
     document.getElementById('emailSendBtn').addEventListener('click', async () => {
         const to         = document.getElementById('emailTo').value.trim();
         const subject    = document.getElementById('emailSubject').value.trim();
@@ -1403,6 +1419,29 @@ function openEmailComposeSheet(inv, prefill = null) {
             sendBtn.innerHTML = `${mailIconSvg} Send`;
             alert('Failed: ' + err);
             return;
+        }
+
+        // If this compose was editing an existing scheduled send, cancel the old row
+        // now that the replacement was created successfully. This makes the edit flow
+        // non-destructive — dismissing the sheet leaves the original schedule intact.
+        if (replacingScheduleId) {
+            await sb.from('scheduled_emails').update({ status: 'cancelled' }).eq('id', replacingScheduleId);
+            const cachedR = invoicesCache.find(i => i.id === inv.id);
+            if (cachedR) {
+                // Keep at most one pending row — drop the older one
+                const pending = (cachedR.scheduled_emails || []).filter(e => e.status === 'pending');
+                if (pending.length > 1) {
+                    cachedR.scheduled_emails = (cachedR.scheduled_emails || []).filter((e, i, arr) =>
+                        e.status !== 'pending' || i === arr.length - 1
+                    );
+                }
+            }
+            // Refresh the banner in the currently-open detail panel, if any
+            const bannerSlot = document.getElementById(`scheduledEmailBanner_${inv.id}`);
+            if (bannerSlot) {
+                bannerSlot.innerHTML = '';
+                _loadScheduledEmailBanner(inv, bannerSlot);
+            }
         }
 
         close();
@@ -1563,24 +1602,25 @@ async function _loadScheduledEmailBanner(inv, container) {
     if (row.status === 'pending') {
         const d = new Date(row.scheduled_for);
         const dateStr = d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        const toStr = row.to_address || '';
         slot.innerHTML = `
-            <div id="schedBannerWrap" style="padding:12px 14px;background:var(--color-pending-bg);border:1.5px solid var(--color-pending-border);border-radius:12px;cursor:pointer;">
-                <p style="font-size:13px;font-weight:600;color:var(--color-pending-text);margin:0;display:flex;align-items:center;gap:6px;">
-                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>
-                    Scheduled to send ${escText(dateStr)}
-                </p>
-                <div id="schedBannerButtons" style="display:none;gap:8px;margin-top:10px;">
-                    <button id="schedBannerSendNow" class="btn-banner-warn">Send now</button>
-                    <button id="schedBannerEdit"    class="btn-banner-warn">Edit</button>
-                    <button id="schedBannerCancel"  class="btn-banner-warn">Cancel</button>
+            <div class="sched-banner-card">
+                <div class="sched-banner-header">
+                    <div class="sched-banner-icon">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>
+                    </div>
+                    <div class="sched-banner-text">
+                        <p class="sched-banner-title">Scheduled for ${escText(dateStr)}</p>
+                        <p class="sched-banner-meta">to ${escText(toStr)}</p>
+                    </div>
                 </div>
+                <div class="sched-banner-row">
+                    <button id="schedBannerEdit" class="sched-banner-secondary">Edit email</button>
+                    <button id="schedBannerReschedule" class="sched-banner-secondary">Reschedule</button>
+                    <button id="schedBannerSendNow" class="sched-banner-secondary">Send now</button>
+                </div>
+                <button id="schedBannerCancel" class="sched-banner-cancel">Cancel scheduled send</button>
             </div>`;
-
-        slot.querySelector('#schedBannerWrap').addEventListener('click', (e) => {
-            if (e.target.closest('button')) return; // let button clicks pass through
-            const btns = slot.querySelector('#schedBannerButtons');
-            btns.style.display = btns.style.display === 'none' ? 'flex' : 'none';
-        });
 
         slot.querySelector('#schedBannerSendNow').addEventListener('click', async () => {
             const btn = slot.querySelector('#schedBannerSendNow');
@@ -1595,21 +1635,38 @@ async function _loadScheduledEmailBanner(inv, container) {
             _showToast(`Invoice emailed to ${row.to_address}`);
         });
 
-        slot.querySelector('#schedBannerEdit').addEventListener('click', async () => {
-            await sb.from('scheduled_emails').update({ status: 'cancelled' }).eq('id', row.id);
-            const cachedEdit = invoicesCache.find(i => i.id === inv.id);
-            if (cachedEdit) cachedEdit.scheduled_emails = (cachedEdit.scheduled_emails || []).filter(e => e.status !== 'pending');
-            _updateCardEmailIcon(inv.id);
-            slot.innerHTML = '';
-            openEmailComposeSheet(inv, { to: row.to_address, subject: row.subject, body: row.body_text });
+        // Edit email — non-destructive: only cancel existing schedule if user actually
+        // re-schedules/sends from the compose sheet. If they dismiss, original stays.
+        slot.querySelector('#schedBannerEdit').addEventListener('click', () => {
+            openEmailComposeSheet(inv, {
+                to: row.to_address,
+                subject: row.subject,
+                body: row.body_text,
+                replacingScheduleId: row.id,
+                scheduledFor: row.scheduled_for,
+            });
+        });
+
+        // Reschedule — same compose sheet prefilled, with the schedule dropdown pre-opened
+        slot.querySelector('#schedBannerReschedule').addEventListener('click', () => {
+            openEmailComposeSheet(inv, {
+                to: row.to_address,
+                subject: row.subject,
+                body: row.body_text,
+                replacingScheduleId: row.id,
+                scheduledFor: row.scheduled_for,
+                openScheduleDropdown: true,
+            });
         });
 
         slot.querySelector('#schedBannerCancel').addEventListener('click', async () => {
+            if (!confirm('Cancel this scheduled send? The invoice will not be sent automatically.')) return;
             await sb.from('scheduled_emails').update({ status: 'cancelled' }).eq('id', row.id);
             const cachedCancel = invoicesCache.find(i => i.id === inv.id);
             if (cachedCancel) cachedCancel.scheduled_emails = (cachedCancel.scheduled_emails || []).filter(e => e.status !== 'pending');
             _updateCardEmailIcon(inv.id);
             slot.innerHTML = '';
+            _showToast('Scheduled send cancelled');
         });
 
     } else { // failed
