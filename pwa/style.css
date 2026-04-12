@@ -807,7 +807,7 @@
         ───────────────────────────────────────────── */
         #viewSlider {
             display: flex;
-            width: 700vw;
+            width: 800vw;
             height: 100%;
             /* transition added by JS after swipe ends */
         }
@@ -968,6 +968,44 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+        }
+
+        /* ─────────────────────────────────────────────
+           EXPENSE CARDS
+        ───────────────────────────────────────────── */
+        .expense-card-wrap {
+            animation: cardIn 0.3s ease both;
+        }
+        .expense-card-wrap.expanded .expense-row {
+            border-radius: 0 !important;
+        }
+        .expense-detail-panel {
+            background: #fff;
+            border-radius: 0 0 14px 14px;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
+        }
+        .expense-card-wrap.expanded .expense-detail-panel {
+            max-height: 900px;
+        }
+        .expense-detail-inner {
+            padding: 0.75rem 1rem 1rem;
+            border-top: 1px solid #f0f0f0;
+        }
+        .expense-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 14px;
+        }
+        .expense-detail-label {
+            color: #6b7280;
+        }
+        .expense-detail-value {
+            font-weight: 500;
+            color: #111827;
+            font-variant-numeric: tabular-nums;
         }
 
         .li-delete-btn:hover svg {
@@ -1195,6 +1233,16 @@
 
             /* Selected invoice row highlight */
             .invoice-selected .invoice-row {
+                background: #f0f4ff;
+            }
+
+            /* On desktop: disable expand-in-place for expenses */
+            .expense-detail-panel {
+                display: none !important;
+            }
+
+            /* Selected expense row highlight */
+            .expense-selected .expense-row {
                 background: #f0f4ff;
             }
         }

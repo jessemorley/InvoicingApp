@@ -8,6 +8,7 @@ import * as Clients  from './modules/clients.js';
 import * as Calendar from './modules/calendar.js';
 import * as Generate from './modules/generate.js';
 import * as Settings from './modules/settings.js';
+import * as Expenses from './modules/expenses.js';
 import { clientDotColor } from './modules/utils.js';
 
 // ── Supabase ─────────────────────────────────
@@ -25,6 +26,7 @@ const VIEW_SETTINGS         = 3;
 const VIEW_CALENDAR         = 4;
 const VIEW_CLIENTS          = 5;
 const VIEW_INVOICE_PREVIEW  = 6;
+const VIEW_EXPENSES         = 7;
 
 // ── Global state ─────────────────────────────
 let allClients              = [];
@@ -54,6 +56,7 @@ Clients.init(sb, getState);
 Calendar.init(sb, getState);
 Generate.init(sb, getState);
 Settings.init(sb, getState);
+Expenses.init(sb, getState);
 
 // ─────────────────────────────────────────────
 // AUTH
@@ -272,7 +275,7 @@ document.addEventListener('clients:saved', async () => {
 // VIEW SWITCHING
 // ─────────────────────────────────────────────
 const TAB_IDS = ['tabDashboardBtn', 'tabEntriesBtn', 'tabInvoicesBtn'];
-const SIDEBAR_VIEWS = ['dashboard', 'entries', 'invoices', 'settings', 'calendar', 'clients'];
+const SIDEBAR_VIEWS = ['dashboard', 'entries', 'invoices', 'settings', 'calendar', 'clients', null, 'expenses'];
 
 function openOverflowMenu() {
     const backdrop = document.getElementById('overflowBackdrop');
@@ -327,7 +330,7 @@ export function switchView(index) {
     if (isDesktop) {
         // Clear any mobile transform so the desktop flex layout takes over
         document.getElementById('viewSlider').style.transform = '';
-        const DESKTOP_PANES = ['viewDashboard','viewEntries','viewInvoices','viewSettings','viewCalendar','viewClients','viewInvoicePreview'];
+        const DESKTOP_PANES = ['viewDashboard','viewEntries','viewInvoices','viewSettings','viewCalendar','viewClients','viewInvoicePreview','viewExpenses'];
         DESKTOP_PANES.forEach((id, i) => {
             const el = document.getElementById(id);
             if (!el) return;
@@ -381,6 +384,7 @@ export function switchView(index) {
     if (index === VIEW_CALENDAR) Calendar.loadCalendar();
     if (index === VIEW_CLIENTS)  Clients.loadClients();
     if (index === VIEW_SETTINGS) Settings.loadSettings();
+    if (index === VIEW_EXPENSES) Expenses.loadExpenses();
 }
 // Expose for onclick= attributes in HTML
 window.switchView = switchView;

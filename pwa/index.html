@@ -73,6 +73,10 @@
             <i data-lucide="users" class="w-4 h-4"></i>
             Clients
         </button>
+        <button class="sidebar-btn" data-view="expenses" onclick="switchView(7)">
+            <i data-lucide="wallet" class="w-4 h-4"></i>
+            Expenses
+        </button>
         <button class="sidebar-btn" data-view="settings" onclick="switchView(3)">
             <i data-lucide="settings" class="w-4 h-4"></i>
             Settings
@@ -435,6 +439,25 @@
             </div>
         </div><!-- /viewClients -->
 
+        <!-- ════ VIEW 7: EXPENSES ════ -->
+        <div id="viewExpenses" class="view-pane">
+            <div style="width:100%; height:100dvh; overflow-y:auto; overflow-x:hidden;">
+                <div style="padding-top:env(safe-area-inset-top);">
+                    <div class="px-5 view-content">
+                        <div class="page-header">
+                            <h1>Expenses</h1>
+                            <button id="newExpenseBtn" class="invoice-sort-btn" aria-label="New expense">
+                                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            </button>
+                        </div>
+                        <div id="expensesContent" class="pb-36">
+                            <p class="text-gray-400 text-sm py-8 text-center">Loading…</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /viewExpenses -->
+
         <!-- ════ VIEW 6: INVOICE PREVIEW ════ -->
         <div id="viewInvoicePreview" class="view-pane" style="display:none; position:relative; overflow:hidden;">
             <!-- Floating back button — sits above the scroll area -->
@@ -500,6 +523,12 @@
     <div id="overflowSheet" style="position:fixed; bottom:0; left:0; right:0; background:#fff; border-radius:20px 20px 0 0; z-index:151; transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.4,0,0.2,1); padding-bottom:env(safe-area-inset-bottom);">
         <div style="width:36px; height:4px; background:#d1d5db; border-radius:2px; margin:12px auto 4px;"></div>
         <div style="padding:8px 0 4px;">
+            <button onclick="switchView(7)" style="display:flex; width:100%; align-items:center; gap:16px; padding:14px 24px; background:none; border:none; cursor:pointer; font-family:inherit; text-align:left;">
+                <svg width="22" height="22" fill="none" stroke="#3c3c43" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                </svg>
+                <span style="font-size:17px; font-weight:500; color:#111827;">Expenses</span>
+            </button>
             <button onclick="switchView(4)" style="display:flex; width:100%; align-items:center; gap:16px; padding:14px 24px; background:none; border:none; cursor:pointer; font-family:inherit; text-align:left;">
                 <svg width="22" height="22" fill="none" stroke="#3c3c43" stroke-width="1.8" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>

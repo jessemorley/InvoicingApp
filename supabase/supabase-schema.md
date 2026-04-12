@@ -13,13 +13,14 @@
 | `day_type` | `full`, `half` |
 | `invoice_status` | `draft`, `issued`, `paid` |
 | `invoice_frequency` | `weekly`, `per_job` |
+| `expense_category` | `gear_permanent`, `gear_consumable`, `gear_rental`, `lab`, `education`, `software`, `travel`, `other` |
 
 ---
 
 ## Tables
 
 ### `clients`
-Stores each billing client. ~11 rows.
+Stores each billing client. ~15 rows.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -67,7 +68,7 @@ Per-client ICONIC-style workflow bonus rate config. ~8 rows.
 ---
 
 ### `entries`
-Individual work/shoot log entries. ~114 rows.
+Individual work/shoot log entries. ~211 rows.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -86,7 +87,7 @@ Individual work/shoot log entries. ~114 rows.
 | `description` | text? | Free-form description |
 | `start_time` | time? | Start time — for hourly entries |
 | `finish_time` | time? | Finish time — for hourly entries |
-| `break_minutes` | integer | Break duration in minutes (default 0) |
+| `break_minutes` | integer? | Break duration in minutes (default 0) |
 | `hours_worked` | numeric? | Computed hours (finish − start − break) |
 | `base_amount` | numeric | Base pay amount (default 0) |
 | `bonus_amount` | numeric | Bonus/incentive amount (default 0) |
@@ -97,7 +98,7 @@ Individual work/shoot log entries. ~114 rows.
 ---
 
 ### `invoices`
-Invoice headers. ~51 rows.
+Invoice headers. ~144 rows.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -168,6 +169,50 @@ Custom line items attached to an invoice (free-form, not linked to entries). Cas
 
 ---
 
+### `scheduled_emails`
+Queued invoice emails awaiting delivery by the send-invoice Edge Function. ~3 rows.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid PK | `gen_random_uuid()` |
+| `user_id` | uuid FK → `auth.users.id` | RLS owner |
+| `invoice_id` | uuid? FK → `invoices.id` | The associated invoice (nullable) |
+| `to_address` | text | Recipient email address |
+| `subject` | text | Email subject line |
+| `body_text` | text | Plain-text email body |
+| `invoice_html` | text | HTML invoice content to attach/embed |
+| `filename` | text | Suggested attachment filename |
+| `scheduled_for` | timestamptz | When to send the email |
+| `mark_issued` | boolean | If true, mark invoice as `issued` after sending (default false) |
+| `status` | text | `pending`, `sent`, or `error` (default `pending`) |
+| `error` | text? | Error message if sending failed |
+| `sent_at` | timestamptz? | Timestamp when email was successfully sent |
+| `created_at` | timestamptz | |
+
+---
+
+### `expenses`
+Personal expense records for Australian sole trader tax purposes. ~0 rows initially.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid PK | `gen_random_uuid()` |
+| `user_id` | uuid FK → `auth.users.id` | RLS owner |
+| `date` | date | Expense date (`"YYYY-MM-DD"`) |
+| `category` | `expense_category` enum | |
+| `description` | text | |
+| `amount` | numeric | GST-inclusive when `gst_included = true` |
+| `gst_included` | boolean | Whether amount includes GST (default true). BAS-ready for when user crosses GST threshold. |
+| `notes` | text? | Optional free-form notes |
+| `receipt_path` | text? | Supabase Storage path in `receipts` bucket (`{user_id}/{expense_id}/{filename}`) |
+| `is_billable` | boolean | Default false — reserved for future invoice integration |
+| `invoice_id` | uuid? FK → `invoices.id` | Always null in v1 |
+| `created_at` | timestamptz | |
+
+**GST helpers (computed):** GST component = `amount / 11`; ex-GST = `amount × 10/11`.
+
+---
+
 ## RPC Functions
 
 ### `next_invoice_number() → integer`
@@ -194,7 +239,9 @@ auth.users
   │     └── invoices (invoice_id)  ← null until invoiced
   ├── invoices (user_id)
   │     ├── clients (client_id)
-  │     └── invoice_line_items (invoice_id, cascade delete)
+  │     ├── invoice_line_items (invoice_id, cascade delete)
+  │     └── scheduled_emails (invoice_id)
+  ├── scheduled_emails (user_id)
   ├── invoice_sequence (user_id, 1:1)
   └── business_details (user_id, 1:1)
 ```
@@ -207,5 +254,6 @@ auth.users
 - **ICONIC bonus:** When `workflow_type` is set on a day_rate entry, a bonus is calculated from `client_workflow_rates` — either flat (`is_flat_bonus=true`) or per-SKU above `kpi`, capped at `max_bonus`.
 - **Super:** If `clients.pays_super = true`, super is calculated as `(base + bonus) × super_rate` and stored in `entries.super_amount`.
 - **Invoice generation:** Scans entries where `invoice_id IS NULL`, groups by client, calls `next_invoice_number()` RPC, inserts `invoices` row, then bulk-updates `entries.invoice_id`.
+- **Scheduled emails:** Created when user queues an invoice email for delivery. The send-invoice Edge Function polls for `status = 'pending'` rows where `scheduled_for <= now()`, sends the email, and updates `status` to `sent` (or `error`). If `mark_issued = true`, the linked invoice is also updated to `issued`.
 - **Dates:** All `date` columns return `"YYYY-MM-DD"` strings via PostgREST. Do not decode as `Date` — use string handling.
 - **Invoice number format:** `{invoice_prefix}-{last_number}` e.g. `INV-042`. Prefix stored in `invoice_sequence`.
