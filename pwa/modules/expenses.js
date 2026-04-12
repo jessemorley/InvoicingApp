@@ -547,40 +547,41 @@ function _formFieldsHTML(expense) {
     const receiptFilename = expense?.receipt_path ? expense.receipt_path.split('/').pop() : null;
 
     return `
-        <div class="settings-group" style="margin-bottom:16px;">
-            <div class="settings-row">
-                <label class="settings-label" for="expDate">Date</label>
-                <input id="expDate" type="date" class="settings-input settings-input-short"
-                    value="${expense?.date || today}">
+        <div class="exp-form-section">
+            <div class="invoice-date-field">
+                <label for="expDate">Date</label>
+                <input id="expDate" type="date" value="${expense?.date || today}">
             </div>
-            <div class="settings-row">
-                <label class="settings-label" for="expCategory">Category</label>
-                <select id="expCategory" class="settings-select">
-                    ${catOptions}
-                </select>
+        </div>
+
+        <div class="exp-form-section">
+            <span class="invoice-section-header">Category</span>
+            <select id="expCategory" class="exp-form-input">
+                ${catOptions}
+            </select>
+        </div>
+
+        <div class="exp-form-section">
+            <span class="invoice-section-header">Description</span>
+            <input id="expDescription" type="text" class="exp-form-input"
+                placeholder="e.g. Adobe Creative Cloud" value="${_esc(expense?.description || '')}">
+        </div>
+
+        <div class="exp-form-section">
+            <span class="invoice-section-header">Amount</span>
+            <div class="exp-form-amount-wrap">
+                <span class="exp-form-currency">$</span>
+                <input id="expAmount" type="number" inputmode="decimal" step="0.01" min="0"
+                    placeholder="0.00" value="${expense?.amount || ''}">
             </div>
-            <div class="settings-field">
-                <label class="settings-field-label" for="expDescription">Description</label>
-                <input id="expDescription" type="text" class="settings-input settings-input-full"
-                    placeholder="e.g. Adobe Creative Cloud" value="${_esc(expense?.description || '')}">
-            </div>
-            <div class="settings-row">
-                <label class="settings-label" for="expAmount">Amount</label>
-                <div class="settings-input-row">
-                    <span style="color:#8e8e93; font-size:15px;">$</span>
-                    <input id="expAmount" type="number" inputmode="decimal" step="0.01" min="0"
-                        class="settings-input settings-input-short"
-                        placeholder="0.00" value="${expense?.amount || ''}">
-                </div>
-            </div>
-            <div class="settings-row settings-row-toggle">
-                <span class="settings-label">Amount includes GST</span>
+            <div class="exp-form-toggle-row">
+                <span class="exp-form-toggle-label">Includes GST</span>
                 <label class="settings-toggle">
                     <input id="expGstIncluded" type="checkbox" ${(expense?.gst_included ?? true) ? 'checked' : ''}>
                     <span class="settings-toggle-track"></span>
                 </label>
             </div>
-            <div id="expGstBreakdown" style="display:none; padding:8px 16px 4px; background:#f9fafb; border-top:1px solid #f3f4f6;">
+            <div id="expGstBreakdown" style="display:none;" class="exp-form-gst-breakdown">
                 <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280; padding:3px 0;">
                     <span>GST component</span>
                     <span id="expGstAmount" style="font-variant-numeric:tabular-nums;"></span>
@@ -590,14 +591,16 @@ function _formFieldsHTML(expense) {
                     <span id="expExGstAmount" style="font-variant-numeric:tabular-nums;"></span>
                 </div>
             </div>
-            <div class="settings-field">
-                <label class="settings-field-label" for="expNotes">Notes</label>
-                <textarea id="expNotes" class="settings-input settings-input-full" rows="3"
-                    placeholder="Optional notes…" style="resize:vertical;">${_esc(expense?.notes || '')}</textarea>
-            </div>
         </div>
-        <div style="margin-bottom:16px;">
-            <div style="font-size:14px; font-weight:600; color:#374151; margin-bottom:10px;">Receipt</div>
+
+        <div class="exp-form-section">
+            <span class="invoice-section-header">Notes</span>
+            <textarea id="expNotes" class="exp-form-input" rows="3"
+                placeholder="Optional notes…" style="resize:vertical;">${_esc(expense?.notes || '')}</textarea>
+        </div>
+
+        <div class="exp-form-section">
+            <span class="invoice-section-header">Receipt</span>
             <div id="expReceiptSection">${_receiptSectionHTML(receiptFilename)}</div>
         </div>
     `;

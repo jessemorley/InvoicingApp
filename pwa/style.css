@@ -1012,6 +1012,66 @@
             stroke: #ef4444;
         }
 
+        /* ── Expense form fields ── */
+        .exp-form-section { margin-bottom: 16px; }
+        .exp-form-input {
+            width: 100%;
+            background: #fff;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #111827;
+            font-family: inherit;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.15s;
+        }
+        .exp-form-input:focus { border-color: #93c5fd; }
+        .exp-form-amount-wrap {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 10px 12px;
+            gap: 6px;
+            box-sizing: border-box;
+            transition: border-color 0.15s;
+        }
+        .exp-form-amount-wrap:focus-within { border-color: #93c5fd; }
+        .exp-form-amount-wrap input {
+            border: none;
+            outline: none;
+            font-size: 13px;
+            font-weight: 600;
+            color: #111827;
+            font-family: inherit;
+            background: transparent;
+            flex: 1;
+            min-width: 0;
+        }
+        .exp-form-currency { font-size: 13px; font-weight: 600; color: #9ca3af; }
+        .exp-form-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-top: 8px;
+        }
+        .exp-form-toggle-label { font-size: 13px; font-weight: 600; color: #111827; }
+        .exp-form-gst-breakdown {
+            margin-top: 6px;
+            padding: 8px 12px 4px;
+            background: #f9fafb;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 12px;
+        }
+
         /* ─────────────────────────────────────────────
            DESKTOP LAYOUT  (≥ 768px)
         ───────────────────────────────────────────── */
