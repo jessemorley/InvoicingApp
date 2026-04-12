@@ -919,10 +919,6 @@ function openInvoicePreview(inv) {
     window.removeEventListener('message', _handlePreviewMessage);
     window.addEventListener('message', _handlePreviewMessage);
 
-    // On mobile, make the pane visible in the flow before the slider moves to it
-    if (window.innerWidth < 768) {
-        document.getElementById('viewInvoicePreview').style.display = '';
-    }
     window.switchView(6);
 }
 

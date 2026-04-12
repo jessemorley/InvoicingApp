@@ -439,27 +439,8 @@
             </div>
         </div><!-- /viewClients -->
 
-        <!-- ════ VIEW 7: EXPENSES ════ -->
-        <div id="viewExpenses" class="view-pane">
-            <div style="width:100%; height:100dvh; overflow-y:auto; overflow-x:hidden;">
-                <div style="padding-top:env(safe-area-inset-top);">
-                    <div class="px-5 view-content">
-                        <div class="page-header">
-                            <h1>Expenses</h1>
-                            <button id="newExpenseBtn" class="invoice-sort-btn" aria-label="New expense">
-                                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                            </button>
-                        </div>
-                        <div id="expensesContent" class="pb-36">
-                            <p class="text-gray-400 text-sm py-8 text-center">Loading…</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div><!-- /viewExpenses -->
-
         <!-- ════ VIEW 6: INVOICE PREVIEW ════ -->
-        <div id="viewInvoicePreview" class="view-pane" style="display:none; position:relative; overflow:hidden;">
+        <div id="viewInvoicePreview" class="view-pane" style="position:relative; overflow:hidden;">
             <!-- Floating back button — sits above the scroll area -->
             <button id="invoicePreviewBack" style="position:absolute; top:calc(16px + env(safe-area-inset-top)); left:16px; z-index:10; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.85); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1.5px solid rgba(0,0,0,0.08); cursor:pointer; color:#111827; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
                 <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -480,6 +461,25 @@
                 </div>
             </div>
         </div><!-- /viewInvoicePreview -->
+
+        <!-- ════ VIEW 7: EXPENSES ════ -->
+        <div id="viewExpenses" class="view-pane">
+            <div style="width:100%; height:100dvh; overflow-y:auto; overflow-x:hidden;">
+                <div style="padding-top:env(safe-area-inset-top);">
+                    <div class="px-5 view-content">
+                        <div class="page-header">
+                            <h1>Expenses</h1>
+                            <button id="newExpenseBtn" class="invoice-sort-btn" aria-label="New expense">
+                                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            </button>
+                        </div>
+                        <div id="expensesContent" class="pb-36">
+                            <p class="text-gray-400 text-sm py-8 text-center">Loading…</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /viewExpenses -->
 
     </div><!-- /viewSlider -->
 
